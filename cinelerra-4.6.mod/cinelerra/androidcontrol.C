@@ -51,7 +51,7 @@ AndroidControl::AndroidControl(MWindowGUI *mwindow_gui)
 
 bool AndroidControl::is_msg(const char *cp)
 {
-	if( msg_len != strlen(cp) ) return false;
+	if( msg_len != (int)strlen(cp) ) return false;
 	if( strncmp(cp, msg, msg_len) ) return false;
 	return true;
 }

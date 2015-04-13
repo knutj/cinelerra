@@ -219,7 +219,7 @@ int FileJPEG::read_frame_header(char *path)
 	(void)fread(test, 2, 1, stream);
 	if(test[0] != 0xff || test[1] != 0xd8)
 	{
-		eprintf("FileJPEG::read_frame_header %d %s bad header %02x%02x\n",
+		eprintf("FileJPEG::read_frame_header %s bad header %02x%02x\n",
 			path, test[0], test[1]);
 		fclose(stream);
 		return 1;

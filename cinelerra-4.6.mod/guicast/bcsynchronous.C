@@ -467,7 +467,7 @@ void BC_Synchronous::delete_window_sync(BC_SynchronousCommand *command)
 	Window win = command->win;
 	GLXWindow glx_win = command->glx_win;
 	GLXContext glx_context = command->glx_context;
-int debug = 0;
+//int debug = 0;
 
 // texture ID's are unique to different contexts
 	glXMakeContextCurrent(display, glx_win, glx_win, glx_context);

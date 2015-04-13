@@ -442,7 +442,7 @@ void FileMOV::format_to_asset()
 		{
 			char tc[12];
 			dv_decoder_t *tmp_decoder = dv_decoder_new(0,0,0);
-			VFrame *frame = new VFrame(0, 0, 0, BC_COMPRESSED);
+			VFrame *frame = new VFrame(0, 0, BC_COMPRESSED);
 			read_frame(frame);
 			set_video_position(0);
 			if(dv_parse_header(tmp_decoder, frame->get_data()) > -1)

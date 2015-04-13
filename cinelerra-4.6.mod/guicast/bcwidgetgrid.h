@@ -36,8 +36,8 @@
 
 class BC_WidgetGrid : public BC_RelocatableWidget {
 public:  
-//	BC_WidgetGrid();
 	BC_WidgetGrid(int x, int y, int x_r, int y_b, int colgaps, int rowgaps);
+	virtual ~BC_WidgetGrid() {}
 
 	BC_RelocatableWidget * add(BC_RelocatableWidget *h, int row, int column);
 	void calculate_maxs();

@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "funcprotos.h"
 #include "quicktime.h"
 
@@ -40,7 +40,7 @@ typedef struct
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 // Default number of samples to allocate in work buffer
-#define OUTPUT_ALLOCATION MAX(0x100000, AVCODEC_MAX_AUDIO_FRAME_SIZE * 2 * 2)
+#define OUTPUT_ALLOCATION 0x100000
 
 
 
@@ -101,8 +101,7 @@ static int decode(quicktime_t *file,
 		if(!ffmpeg_initialized)
 		{
 			ffmpeg_initialized = 1;
-  			avcodec_init();
-			avcodec_register_all();
+			av_register_all();
 		}
 
 		codec->decoder = avcodec_find_decoder(CODEC_ID_QDM2);
@@ -115,7 +114,8 @@ static int decode(quicktime_t *file,
 		uint32_t samplerate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
 
 // allocate the codec and fill in header
-		AVCodecContext *context = codec->decoder_context = avcodec_alloc_context();
+		AVCodecContext *context = avcodec_alloc_context3(codec->decoder);
+		codec->decoder_context = context;
 		codec->decoder_context->sample_rate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
 		codec->decoder_context->channels = track_map->channels;
 
@@ -127,12 +127,11 @@ static int decode(quicktime_t *file,
 
 		if(file->cpus > 1)
 		{
-			avcodec_thread_init(context, file->cpus);
-// Not exactly user friendly.
-//			context->thread_count = file->cpus;
+//			avcodec_thread_init(context, file->cpus);
+			context->thread_count = file->cpus;
 		}
 	
-		if(avcodec_open(context, codec->decoder) < 0)
+		if(avcodec_open2(context, codec->decoder, 0) < 0)
 		{
 			printf("qdm2.c: decode: avcodec_open failed.\n");
 			return 1;
@@ -236,25 +235,28 @@ static int decode(quicktime_t *file,
 
 			codec->compressed_size += fragment_size;
 
+			AVPacket avpkt;
+			av_init_packet(&avpkt);
+			avpkt.data = codec->compressed_buffer;
+			avpkt.size = codec->compressed_size;
+
+			int count = 0;
 // Repeat this sequence until ffmpeg stops outputting samples
 			while(1)
 			{
 				if(!codec->temp_buffer)
 					codec->temp_buffer = calloc(sizeof(int16_t), OUTPUT_ALLOCATION);
-				int bytes_decoded = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-				int result = avcodec_decode_audio2(codec->decoder_context, 
-					codec->temp_buffer,
-					&bytes_decoded,
-            		codec->compressed_buffer, 
-					codec->compressed_size);
+				int got_frame = 0;
+				int bytes_decoded = OUTPUT_ALLOCATION * sizeof(int16_t);
+				int result = quicktime_decode_audio3(codec->decoder_context, 
+					codec->temp_buffer, &bytes_decoded, &avpkt);
 
 // Shift compressed buffer
 				if(result > 0)
 				{
-					memcpy(codec->compressed_buffer,
-						codec->compressed_buffer + result,
-						codec->compressed_size - result);
-					codec->compressed_size -= result;
+					avpkt.size -= result;
+					avpkt.data += result;
+					count += result;
 				}
 
 //printf("avcodec_decode_audio result=%d bytes_decoded=%d fragment_size=%d codec->compressed_size=%d\n", 
@@ -278,6 +280,12 @@ static int decode(quicktime_t *file,
 				codec->input_size += bytes_decoded / channels / sizeof(int16_t);
 
 				if(bytes_decoded <= 0) break;
+			}
+
+			if( count > 0 ) {
+				memcpy(codec->compressed_buffer,
+					codec->compressed_buffer + count,
+					codec->compressed_size -= count);
 			}
 		}
 

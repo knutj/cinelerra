@@ -287,10 +287,10 @@ void EditSvgButton::run()
 {
 // ======================================= get path from user
 	Timer pausetimer;
-	long delay;
-	int result;
-	struct stat st_png;
-	char filename[1024];
+	//long delay;
+	//int result;
+	//struct stat st_png;
+	//char filename[1024];
 	char filename_png[1024];
 	char filename_fifo[1024];
 	struct fifo_struct fifo_buf;

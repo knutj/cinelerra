@@ -286,7 +286,17 @@ For each pixel,
 
 Similar is defined as in abs(difference)/(sum) < threshold
 */
-#define FABS(a) (((a)<0)?(0-(a)):(a))
+// cplr warns, #define FABS(a) (((a)<0)?(0-(a)):(a))
+static inline int FABS(int8_t v) { return v<0 ? -v : v; }
+static inline int FABS(uint8_t v) { return v; }
+static inline int FABS(int16_t v) { return v<0 ? -v : v; }
+static inline int FABS(uint16_t v) { return v; }
+static inline int FABS(int32_t v) { return v<0 ? -v : v; }
+static inline int64_t FABS(uint32_t v) { return v; }
+static inline int64_t FABS(int64_t v) { return v<0 ? -v : v; }
+static inline int64_t FABS(uint64_t v) { return v; }
+static inline float FABS(float v) { return v<0 ? -v : v; }
+static inline double FABS(double v) { return v<0 ? -v : v; }
 #define FMAX(a,b) (((a)>(b))?(a):(b))
 #define FMIN(a,b) (((a)<(b))?(a):(b))
 

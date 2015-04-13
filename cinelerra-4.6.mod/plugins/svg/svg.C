@@ -38,7 +38,7 @@
 #define gettext_noop(String) String
 #define N_(String) gettext_noop (String)
 
-#include "empty_svg.h"
+//#include "empty_svg.h"
 
 REGISTER_PLUGIN(SvgMain)
 

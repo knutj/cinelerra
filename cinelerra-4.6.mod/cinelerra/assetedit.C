@@ -34,6 +34,7 @@
 #include "edlsession.h"
 #include "file.h"
 #include "filempeg.h"
+#include "fileffmpeg.h"
 #include "filesystem.h"
 #include "format.inc"
 #include "indexable.h"
@@ -301,7 +302,7 @@ void AssetEditWindow::create_objects()
 	
 
 		add_subwindow(new BC_Title(x2, y, string, MEDIUMFONT, mwindow->theme->assetedit_color));
-		if(asset->format == FILE_MPEG)
+		if(asset->format == FILE_MPEG || asset->format == FILE_FFMPEG)
 		{
 			detail_thread = new DetailAssetThread(mwindow);
 			BC_GenericButton *detail = new DetailAssetButton(this, x2+120, y);
@@ -537,7 +538,7 @@ void AssetEditWindow::create_objects()
 		add_subwindow(win_height);
 		y += win_height->get_h() + 5;
 
-		if(asset && asset->format == FILE_MPEG)
+		if(asset && (asset->format == FILE_MPEG || asset->format == FILE_FFMPEG ) )
 		{
 			y += 5;
 			x = x1;
@@ -808,8 +809,17 @@ void DetailAssetWindow::create_objects()
 	int y = 10, x = 10;
 	char file_name[BCTEXTLEN];
 	int len = sizeof(info);
-	if( !mwindow->preferences->get_asset_file_path(asset, file_name) )
-		FileMPEG::get_info(asset->path, file_name, &info[0]);
+	strncpy(info,"no info available",len);
+	if( !mwindow->preferences->get_asset_file_path(asset, file_name) ) {
+		switch( asset->format ) {
+		case FILE_MPEG:
+			FileMPEG::get_info(asset->path, file_name, &info[0]);
+			break;
+		case FILE_FFMPEG:
+			FileFFMPEG::get_info(asset->path, &info[0]);
+			break;
+		}
+	}
 	lock_window("DetailAssetThread::create_objects");
 	text = new BC_ScrollTextBox(this, x, y, get_w()-32, 23, info, -len);
 	text->create_objects();  text->set_text_row(0);

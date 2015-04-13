@@ -509,7 +509,7 @@ TRACE("FileDV::write_samples 220")
 		stream_lock->lock("FileDV::write_samples 10");
 		if(fseeko(stream, (off_t) audio_frames_written * output_size, SEEK_SET) != 0)
 		{
-			eprintf("Unable to set audio write position to %lli\n", (off_t) audio_frames_written * output_size);
+			eprintf("Unable to set audio write position to %ji\n", (off_t) audio_frames_written * output_size);
 
 			stream_lock->unlock();
 			return 1;
@@ -571,7 +571,7 @@ TRACE("FileDV::write_samples 270")
 		stream_lock->lock("FileDV::write_samples 20");
 		if(fseeko(stream, (off_t) audio_frames_written * output_size, SEEK_SET) != 0)
 		{
-			eprintf("ERROR: Unable to relocate for audio write to %lli\n", (off_t) audio_frames_written * output_size);
+			eprintf("ERROR: Unable to relocate for audio write to %ji\n", (off_t) audio_frames_written * output_size);
 			stream_lock->unlock();
 			return 1;
 		}
@@ -676,7 +676,7 @@ int FileDV::write_frames(VFrame ***frames, int len)
 		stream_lock->lock("FileDV::write_frames");
 		if(fseeko(stream, (off_t) video_position * output_size, SEEK_SET) != 0)
 		{
-			eprintf("Unable to seek file to %lli\n", (off_t)(video_position * output_size));
+			eprintf("Unable to seek file to %ji\n", (off_t)(video_position * output_size));
 		}
 		if(fwrite(video_buffer, output_size, 1, stream) < 1)
 		{
@@ -699,7 +699,7 @@ int FileDV::read_compressed_frame(VFrame *buffer)
 
 	if (fseeko(stream, (off_t) video_position * output_size, SEEK_SET))
 	{
-		eprintf("Unable to seek file to %lli\n", (off_t)(video_position * output_size));
+		eprintf("Unable to seek file to %ji\n", (off_t)(video_position * output_size));
 	}
 	result = fread(buffer->get_data(), output_size, 1, stream);
 	video_position++;
@@ -716,7 +716,7 @@ int FileDV::write_compressed_frame(VFrame *buffer)
 
 	if (fseeko(stream, (off_t) video_position * output_size, SEEK_SET))
 	{
-		eprintf("Unable to seek file to %lli\n", (off_t)(video_position * output_size));
+		eprintf("Unable to seek file to %ji\n", (off_t)(video_position * output_size));
 	}
 	result = fwrite(buffer->get_data(), buffer->get_compressed_size(), 1, stream);
 	video_position++;
@@ -819,7 +819,7 @@ TRACE("FileDV::read_frame 10")
 	stream_lock->lock("FileDV::read_frame");
 	if(fseeko(stream, (off_t) video_position * output_size, SEEK_SET) < 0)
 	{
-		eprintf("Unable to seek file to %lli", (off_t)(video_position * output_size));
+		eprintf("Unable to seek file to %ji", (off_t)(video_position * output_size));
 		stream_lock->unlock();
 		return 1;
 	}

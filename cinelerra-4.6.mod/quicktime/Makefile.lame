@@ -1,5 +1,4 @@
-LAME_DIR := $(shell expr thirdparty/lame* )
-
+LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
 
 LAME_OBJS := \
 		$(OBJDIR)/$(LAME_DIR)/libmp3lame/bitstream.o \

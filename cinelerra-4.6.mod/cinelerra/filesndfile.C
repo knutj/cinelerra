@@ -266,7 +266,7 @@ int FileSndFile::set_audio_position(int64_t sample)
 // Commented out /* && psf->dataoffset */ in sndfile.c: 761
 	if(sf_seek(fd, sample, SEEK_SET) < 0)
 	{
-		eprintf("sf_seek() to sample %lld failed, reason: %s\n", sample, sf_strerror(fd));
+		eprintf("sf_seek() to sample %jd failed, reason: %s\n", sample, sf_strerror(fd));
 		sf_perror(fd);
 		return 1;
 	}

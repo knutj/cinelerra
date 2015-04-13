@@ -1,6 +1,6 @@
 include ../../global_config
 
-OPENCV_DIR := $(shell expr ../../thirdparty/OpenCV* )
+OPENCV_DIR := $(shell cd ../../thirdparty/OpenCV*; pwd)
 
 OBJS := \
 	$(OBJDIR)/findobject.o \

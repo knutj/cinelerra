@@ -383,8 +383,8 @@ int ThresholdMain::handle_opengl()
 	glUseProgram(0);
 	get_output()->set_opengl_state(VFrame::SCREEN);
 #endif
+	return 0;
 }
-
 
 
 
@@ -494,7 +494,7 @@ void ThresholdUnit::render_data(LoadPackage *package)
 	const int min = (int)(config->min * 0xffff);
 	const int max = (int)(config->max * 0xffff);
 	const int w = data->get_w();
-	const int h = data->get_h();
+	//const int h = data->get_h();
 	
 	const TYPE r_low = scale_to_range<TYPE>(config->low_color.r);
 	const TYPE g_low = scale_to_range<TYPE>(config->low_color.g);

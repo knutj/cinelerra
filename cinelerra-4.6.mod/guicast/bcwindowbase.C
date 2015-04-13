@@ -1971,8 +1971,8 @@ int BC_WindowBase::get_atoms()
 {
 	SetDoneXAtom =  create_xatom("BC_REPEAT_EVENT");
 	RepeaterXAtom = create_xatom("BC_CLOSE_EVENT");
-	DelWinXAtom =   create_xatom("WM_DELETE_WINDOW");
-	if(ProtoXAtom = create_xatom("WM_PROTOCOLS"))
+	DelWinXAtom = create_xatom("WM_DELETE_WINDOW");
+	ProtoXAtom = create_xatom("WM_PROTOCOLS");
 	SetDoneXAtom =  XInternAtom(display, "BC_REPEAT_EVENT", False);
 	RepeaterXAtom = XInternAtom(display, "BC_CLOSE_EVENT", False);
 	DelWinXAtom =   XInternAtom(display, "WM_DELETE_WINDOW", False);
@@ -2872,7 +2872,7 @@ int BC_WindowBase::get_text_ascent(int font)
 {
 #ifdef HAVE_XFT
 	XftFont *fstruct;
-	if(fstruct = get_xft_struct(font))
+	if( (fstruct = get_xft_struct(font)) != 0 )
 		return fstruct->ascent;
 #endif
 	if(get_resources()->use_fontset && top_level->get_fontset(font))
@@ -2897,7 +2897,7 @@ int BC_WindowBase::get_text_descent(int font)
 {
 #ifdef HAVE_XFT
 	XftFont *fstruct;
-	if(fstruct = get_xft_struct(font))
+	if( (fstruct = get_xft_struct(font)) != 0 )
 		return fstruct->descent;
 #endif
 	if(get_resources()->use_fontset && top_level->get_fontset(font)) {
@@ -2918,7 +2918,7 @@ int BC_WindowBase::get_text_height(int font, const char *text)
 	int rowh;
 #ifdef HAVE_XFT
 	XftFont *fstruct;
-	if(fstruct = get_xft_struct(font))
+	if( (fstruct = get_xft_struct(font)) != 0 )
 		rowh = fstruct->height;
 	else
 #endif

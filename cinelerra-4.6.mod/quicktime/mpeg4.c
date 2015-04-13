@@ -7,7 +7,7 @@
 
 
 
-#include "avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "colormodels.h"
 #include "funcprotos.h"
 #include "qtffmpeg.h"
@@ -567,6 +567,39 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 }
 
 
+static int encode_video2(AVCodecContext *avctx, uint8_t *buf, int buf_size,
+                                             const AVFrame *pict)
+{       
+	AVPacket pkt;
+	av_init_packet(&pkt);
+	pkt.data = buf;
+	pkt.size = buf_size;
+
+	int got_packet = 0;
+	int ret = avcodec_encode_video2(avctx, &pkt, pict, &got_packet);
+	if (!ret && got_packet && avctx->coded_frame) {
+		avctx->coded_frame->pts = pkt.pts;
+		avctx->coded_frame->key_frame = !!(pkt.flags & AV_PKT_FLAG_KEY);
+	}
+
+	if( pkt.side_data_elems > 0 ) {
+		int i = pkt.side_data_elems;
+		while( --i >= 0 ) av_free(pkt.side_data[i].data);
+		av_freep(&pkt.side_data);
+		pkt.side_data_elems = 0;
+	}
+
+	return ret ? ret : pkt.size;
+}
+
+
+static void frame_defaults(AVFrame *frame)
+{
+    memset(frame, 0, sizeof(AVFrame));
+    av_frame_unref(frame);
+}
+
+
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
 	int64_t offset = quicktime_position(file);
@@ -629,11 +662,12 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			if(!ffmpeg_initialized)
 			{
 				ffmpeg_initialized = 1;
-  				avcodec_init();
-				avcodec_register_all();
+				av_register_all();
 			}
 
-			codec->encoder[current_field] = avcodec_find_encoder(codec->ffmpeg_id);
+			AVCodec *av_codec = avcodec_find_encoder(codec->ffmpeg_id);
+			codec->encoder[current_field] = av_codec;
+
 			if(!codec->encoder[current_field])
 			{
 				printf("encode: avcodec_find_encoder returned NULL.\n");
@@ -641,8 +675,8 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 				return 1;
 			}
 
-			codec->encoder_context[current_field] = avcodec_alloc_context();
-			AVCodecContext *context = codec->encoder_context[current_field];
+			AVCodecContext *context = avcodec_alloc_context3(av_codec);
+			codec->encoder_context[current_field] = context;
 
 			context->width = width_i;
 			context->height = height_i;
@@ -650,56 +684,17 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			context->pix_fmt = PIX_FMT_YUV420P;
 			context->bit_rate = codec->bitrate / codec->total_fields;
 			context->bit_rate_tolerance = codec->bitrate_tolerance;
-//			context->rc_eq = video_rc_eq;
-//        	context->rc_max_rate = 0;
-//        	context->rc_min_rate = 0;
-//        	context->rc_buffer_size = 10000000;
 			context->qmin = 
 				(!codec->fix_bitrate ? codec->quantizer : 2);
 			context->qmax = 
 				(!codec->fix_bitrate ? codec->quantizer : 31);
-//			context->lmin = 2 * FF_QP2LAMBDA;
-//			context->lmax = 31 * FF_QP2LAMBDA;
-//			context->mb_lmin = 2 * FF_QP2LAMBDA;
-//			context->mb_lmax = 31 * FF_QP2LAMBDA;
-//			context->max_qdiff = 3;
-//			context->qblur = 0.5;
-//			context->qcompress = 0.5;
 // It needs the time per frame, not the frame rate.
 			context->time_base.den = quicktime_frame_rate_n(file, track);
 			context->time_base.num = quicktime_frame_rate_d(file, track);
 
-//        	context->b_quant_factor = 1.25;
-//        	context->b_quant_offset = 1.25;
-//#if LIBAVCODEC_VERSION_INT < ((52<<16)+(0<<8)+0)
-//			context->error_resilience = FF_ER_CAREFUL;
-//#else
-//			context->error_recognition = FF_ER_CAREFUL;
-//#endif
-//			context->error_concealment = 3;
-//			context->frame_skip_cmp = FF_CMP_DCTMAX;
-//			context->ildct_cmp = FF_CMP_VSAD;
-//			context->intra_dc_precision = 0;
-//        	context->intra_quant_bias = FF_DEFAULT_QUANT_BIAS;
-//        	context->inter_quant_bias = FF_DEFAULT_QUANT_BIAS;
-//        	context->i_quant_factor = -0.8;
-//        	context->i_quant_offset = 0.0;
-//			context->mb_decision = FF_MB_DECISION_SIMPLE;
-//			context->mb_cmp = FF_CMP_SAD;
-//			context->me_sub_cmp = FF_CMP_SAD;
-//			context->me_cmp = FF_CMP_SAD;
-//			context->me_pre_cmp = FF_CMP_SAD;
-//			context->me_method = ME_EPZS;
-//			context->me_subpel_quality = 8;
-//			context->me_penalty_compensation = 256;
-//			context->me_range = 0;
-//			context->me_threshold = 0;
-//			context->mb_threshold = 0;
-//			context->nsse_weight= 8;
-        	context->profile= FF_PROFILE_UNKNOWN;
-//			context->rc_buffer_aggressivity = 1.0;
-        	context->level= FF_LEVEL_UNKNOWN;
-			context->flags |= CODEC_FLAG_H263P_UMV;
+			context->profile= FF_PROFILE_UNKNOWN;
+			context->level= FF_LEVEL_UNKNOWN;
+//			context->flags |= CODEC_FLAG_H263P_UMV;
 			context->flags |= CODEC_FLAG_AC_PRED;
 			context->flags |= CODEC_FLAG_4MV;
 
@@ -710,7 +705,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 			if(file->cpus > 1)
 			{
-				avcodec_thread_init(context, file->cpus);
+//				avcodec_thread_init(context, file->cpus);
 				context->thread_count = file->cpus;
 			}
 
@@ -730,10 +725,8 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
  * codec->fix_bitrate,
  * codec->quantizer);
  */
-			avcodec_open(context, codec->encoder[current_field]);
-
-   			avcodec_get_frame_defaults(&codec->picture[current_field]);
-
+			avcodec_open2(context, codec->encoder[current_field], 0);
+   			frame_defaults(&codec->picture[current_field]);
 		}
 	}
 
@@ -883,10 +876,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 		picture->quality = 0;
 		picture->pts = vtrack->current_position * quicktime_frame_rate_d(file, track);
 		picture->key_frame = 0;
-		bytes = avcodec_encode_video(context, 
-			codec->work_buffer, 
-        	codec->buffer_size, 
-        	picture);
+		bytes = encode_video2(context, codec->work_buffer, codec->buffer_size, picture);
 		is_keyframe = context->coded_frame && context->coded_frame->key_frame;
 /*
  * printf("encode current_position=%d is_keyframe=%d\n", 

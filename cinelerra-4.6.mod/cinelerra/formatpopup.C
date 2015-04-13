@@ -56,6 +56,7 @@ void FormatPopup::create_objects()
 		format_items.append(new BC_ListBoxItem(_(EXR_LIST_NAME)));
 		format_items.append(new BC_ListBoxItem(_(WAV_NAME)));
 		format_items.append(new BC_ListBoxItem(_(MOV_NAME)));
+		format_items.append(new BC_ListBoxItem(_(FFMPEG_NAME)));
 		format_items.append(new BC_ListBoxItem(_(AMPEG_NAME)));
 		format_items.append(new BC_ListBoxItem(_(VMPEG_NAME)));
 		format_items.append(new BC_ListBoxItem(_(OGG_NAME)));

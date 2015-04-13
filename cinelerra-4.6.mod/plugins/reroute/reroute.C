@@ -507,7 +507,6 @@ void Reroute::read_data(KeyFrame *keyframe)
 {
 	FileXML input;
 	input.set_shared_input(keyframe->get_data(), strlen(keyframe->get_data()));
-	int result = 0;
 
 	while(!input.read_tag())
 	{

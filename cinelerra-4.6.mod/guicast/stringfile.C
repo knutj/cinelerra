@@ -218,8 +218,7 @@ int StringFile::writeline(char *arg1, int indent)
 {
 // reallocate the string
 	int len = strlen(arg1);
-	if(len + indent > available - pointer)
-	{
+	if( (len + indent) > (int)(available - pointer) ) {
 		char *newstring = new char[available * 2];
 		strcpy(newstring, string);
 		delete string;

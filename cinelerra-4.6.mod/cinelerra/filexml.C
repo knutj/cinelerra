@@ -90,7 +90,7 @@ int XMLBuffer::write(const char *bp, int len)
 {
 	if( !destroy && lmt-inp < len ) len = lmt-inp;
 	if( len <= 0 ) return 0;
-	unsigned char *sp = demand(otell()+len);
+	demand(otell()+len);
 	memmove(inp,bp,len);
 	inp += len;
 	return len;
@@ -196,12 +196,14 @@ int XMLTag::set_property(const char *text, int32_t value)
 	char text_value[BCSTRLEN];
 	sprintf(text_value, "%d", value);
 	set_property(text, text_value);
+	return 0;
 }
 int XMLTag::set_property(const char *text, int64_t value)
 {
 	char text_value[BCSTRLEN];
 	sprintf(text_value, "" _LD "", value);
 	set_property(text, text_value);
+	return 0;
 }
 int XMLTag::set_property(const char *text, float value)
 {
@@ -211,6 +213,7 @@ int XMLTag::set_property(const char *text, float value)
 	else
 		sprintf(text_value, "%.6e", value);
 	set_property(text, text_value);
+	return 0;
 }
 int XMLTag::set_property(const char *text, double value)
 {
@@ -220,6 +223,7 @@ int XMLTag::set_property(const char *text, double value)
 	else
 		sprintf(text_value, "%.16e", value);
 	set_property(text, text_value);
+	return 0;
 }
 
 
@@ -493,6 +497,7 @@ int FileXML::read_text_until(const char *tag_end, char *out, int len)
 	char data[len+1];
 	int opos = read_data_until(tag_end, data, len);
 	decode(out, data, opos);
+	return 0;
 }
 
 int FileXML::write_to_file(const char *filename)
@@ -702,7 +707,7 @@ long XMLBuffer::encoded_length(const char *sp, int n)
 {
 	long len = 0;
 	if( n < 0 ) n = strlen(sp);
-	const char *cp, *ep = sp + n;
+	const char *ep = sp + n;
 	while( sp < ep ) {
 		int ch = *sp++;
 		switch( ch ) {

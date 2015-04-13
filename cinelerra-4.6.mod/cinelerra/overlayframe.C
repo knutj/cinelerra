@@ -476,6 +476,12 @@ int OverlayFrame::overlay(VFrame *output, VFrame *input,
 #define COLOR_XOR(mx, Sc, Sa, Dc, Da) ((Sc * (mx - Da) + Dc * (mx - Sa)) / mx)
 #define CHROMA_XOR COLOR_XOR
 
+#define ZTYP(ty) typedef ty z_##ty __attribute__ ((__unused__))
+ZTYP(int8_t);	ZTYP(uint8_t);
+ZTYP(int16_t);	ZTYP(uint16_t);
+ZTYP(int32_t);	ZTYP(uint32_t);
+ZTYP(int64_t);	ZTYP(uint64_t);
+ZTYP(float);	ZTYP(double);
 
 #define ALPHA3_BLEND(FN, typ, inp, out, mx, ofs, rnd) \
   typ inp0 = (typ)inp[0], inp1 = (typ)inp[1] - ofs; \
@@ -559,16 +565,16 @@ int OverlayFrame::overlay(VFrame *output, VFrame *input,
 
 #define XBLEND_ONLY(FN) { \
 	switch(input->get_color_model()) { \
-	case BC_RGB_FLOAT:	XBLEND(FN, float,   float,    1.f,    3, 0,      0.f); \
-	case BC_RGBA_FLOAT:	XBLEND(FN, float,   float,    1.f,    4, 0,      0.f); \
-	case BC_RGB888:		XBLEND(FN, int32_t, uint8_t,  0xff,   3, 0,      .5f); \
-	case BC_YUV888:		XBLEND(FN, int32_t, uint8_t,  0xff,   3, 0x80,   .5f); \
-	case BC_RGBA8888:	XBLEND(FN, int32_t, uint8_t,  0xff,   4, 0,      .5f); \
-	case BC_YUVA8888:	XBLEND(FN, int32_t, uint8_t,  0xff,   4, 0x80,   .5f); \
-	case BC_RGB161616:	XBLEND(FN, int64_t, uint16_t, 0xffff, 3, 0,      .5f); \
-	case BC_YUV161616:	XBLEND(FN, int64_t, uint16_t, 0xffff, 3, 0x8000, .5f); \
-	case BC_RGBA16161616:	XBLEND(FN, int64_t, uint16_t, 0xffff, 4, 0,      .5f); \
-	case BC_YUVA16161616:	XBLEND(FN, int64_t, uint16_t, 0xffff, 4, 0x8000, .5f); \
+	case BC_RGB_FLOAT:	XBLEND(FN, z_float,   z_float,    1.f,    3, 0,      0.f); \
+	case BC_RGBA_FLOAT:	XBLEND(FN, z_float,   z_float,    1.f,    4, 0,      0.f); \
+	case BC_RGB888:		XBLEND(FN, z_int32_t, z_uint8_t,  0xff,   3, 0,      .5f); \
+	case BC_YUV888:		XBLEND(FN, z_int32_t, z_uint8_t,  0xff,   3, 0x80,   .5f); \
+	case BC_RGBA8888:	XBLEND(FN, z_int32_t, z_uint8_t,  0xff,   4, 0,      .5f); \
+	case BC_YUVA8888:	XBLEND(FN, z_int32_t, z_uint8_t,  0xff,   4, 0x80,   .5f); \
+	case BC_RGB161616:	XBLEND(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0,      .5f); \
+	case BC_YUV161616:	XBLEND(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0x8000, .5f); \
+	case BC_RGBA16161616:	XBLEND(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0,      .5f); \
+	case BC_YUVA16161616:	XBLEND(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0x8000, .5f); \
 	} \
 	break; \
 }
@@ -707,16 +713,16 @@ LoadPackage* DirectEngine::new_package()
 
 #define XBLEND_NN(FN) { \
 	switch(input->get_color_model()) { \
-	case BC_RGB_FLOAT:	XBLEND_3NN(FN, float,   float,    1.f,    3, 0,       0.f); \
-	case BC_RGBA_FLOAT:	XBLEND_3NN(FN, float,   float,    1.f,    4, 0,       0.f); \
-	case BC_RGB888:		XBLEND_3NN(FN, int32_t, uint8_t,  0xff,   3, 0,      .5f); \
-	case BC_YUV888:		XBLEND_3NN(FN, int32_t, uint8_t,  0xff,   3, 0x80,   .5f); \
-	case BC_RGBA8888:	XBLEND_3NN(FN, int32_t, uint8_t,  0xff,   4, 0,      .5f); \
-	case BC_YUVA8888:	XBLEND_3NN(FN, int32_t, uint8_t,  0xff,   4, 0x80,   .5f); \
-	case BC_RGB161616:	XBLEND_3NN(FN, int64_t, uint16_t, 0xffff, 3, 0,      .5f); \
-	case BC_YUV161616:	XBLEND_3NN(FN, int64_t, uint16_t, 0xffff, 3, 0x8000, .5f); \
-	case BC_RGBA16161616:	XBLEND_3NN(FN, int64_t, uint16_t, 0xffff, 4, 0,      .5f); \
-	case BC_YUVA16161616:	XBLEND_3NN(FN, int64_t, uint16_t, 0xffff, 4, 0x8000, .5f); \
+	case BC_RGB_FLOAT:	XBLEND_3NN(FN, z_float,   z_float,    1.f,    3, 0,       0.f); \
+	case BC_RGBA_FLOAT:	XBLEND_3NN(FN, z_float,   z_float,    1.f,    4, 0,       0.f); \
+	case BC_RGB888:		XBLEND_3NN(FN, z_int32_t, z_uint8_t,  0xff,   3, 0,      .5f); \
+	case BC_YUV888:		XBLEND_3NN(FN, z_int32_t, z_uint8_t,  0xff,   3, 0x80,   .5f); \
+	case BC_RGBA8888:	XBLEND_3NN(FN, z_int32_t, z_uint8_t,  0xff,   4, 0,      .5f); \
+	case BC_YUVA8888:	XBLEND_3NN(FN, z_int32_t, z_uint8_t,  0xff,   4, 0x80,   .5f); \
+	case BC_RGB161616:	XBLEND_3NN(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0,      .5f); \
+	case BC_YUV161616:	XBLEND_3NN(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0x8000, .5f); \
+	case BC_RGBA16161616:	XBLEND_3NN(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0,      .5f); \
+	case BC_YUVA16161616:	XBLEND_3NN(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0x8000, .5f); \
 	} \
 	break; \
 }
@@ -971,16 +977,16 @@ LoadPackage* NNEngine::new_package()
 
 #define XBLEND_SAMPLE(FN) { \
         switch(vinput->get_color_model()) { \
-        case BC_RGB_FLOAT:      XSAMPLE(FN, float,   float,    1.f,    3, 0.f,    0.f); \
-        case BC_RGBA_FLOAT:     XSAMPLE(FN, float,   float,    1.f,    4, 0.f,    0.f); \
-        case BC_RGB888:         XSAMPLE(FN, int32_t, uint8_t,  0xff,   3, 0,      .5f); \
-        case BC_YUV888:         XSAMPLE(FN, int32_t, uint8_t,  0xff,   3, 0x80,   .5f); \
-        case BC_RGBA8888:       XSAMPLE(FN, int32_t, uint8_t,  0xff,   4, 0,      .5f); \
-        case BC_YUVA8888:       XSAMPLE(FN, int32_t, uint8_t,  0xff,   4, 0x80,   .5f); \
-        case BC_RGB161616:      XSAMPLE(FN, int64_t, uint16_t, 0xffff, 3, 0,      .5f); \
-        case BC_YUV161616:      XSAMPLE(FN, int64_t, uint16_t, 0xffff, 3, 0x8000, .5f); \
-        case BC_RGBA16161616:   XSAMPLE(FN, int64_t, uint16_t, 0xffff, 4, 0,      .5f); \
-        case BC_YUVA16161616:   XSAMPLE(FN, int64_t, uint16_t, 0xffff, 4, 0x8000, .5f); \
+        case BC_RGB_FLOAT:      XSAMPLE(FN, z_float,   z_float,    1.f,    3, 0.f,    0.f); \
+        case BC_RGBA_FLOAT:     XSAMPLE(FN, z_float,   z_float,    1.f,    4, 0.f,    0.f); \
+        case BC_RGB888:         XSAMPLE(FN, z_int32_t, z_uint8_t,  0xff,   3, 0,      .5f); \
+        case BC_YUV888:         XSAMPLE(FN, z_int32_t, z_uint8_t,  0xff,   3, 0x80,   .5f); \
+        case BC_RGBA8888:       XSAMPLE(FN, z_int32_t, z_uint8_t,  0xff,   4, 0,      .5f); \
+        case BC_YUVA8888:       XSAMPLE(FN, z_int32_t, z_uint8_t,  0xff,   4, 0x80,   .5f); \
+        case BC_RGB161616:      XSAMPLE(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0,      .5f); \
+        case BC_YUV161616:      XSAMPLE(FN, z_int64_t, z_uint16_t, 0xffff, 3, 0x8000, .5f); \
+        case BC_RGBA16161616:   XSAMPLE(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0,      .5f); \
+        case BC_YUVA16161616:   XSAMPLE(FN, z_int64_t, z_uint16_t, 0xffff, 4, 0x8000, .5f); \
         } \
         break; \
 }
@@ -1020,7 +1026,7 @@ void SampleUnit::process_package(LoadPackage *package)
 		BC_CModels::has_alpha(vinput->get_color_model()) &&
 		mode == TRANSFER_REPLACE ? 1.f : engine->alpha;
 
-	int   iw  = vinput->get_w();
+	//int   iw  = vinput->get_w();
 	int   i1i = floor(i1);
 	int   i2i = ceil(i2);
 	float i1f = 1.f - i1 + i1i;
@@ -1033,14 +1039,14 @@ void SampleUnit::process_package(LoadPackage *package)
 	int   oh  = o2i - o1i;
 
 	float *k  = engine->kernel->lookup;
-	float kw  = engine->kernel->width;
-	int   kn  = engine->kernel->n;
+	//float kw  = engine->kernel->width;
+	//int   kn  = engine->kernel->n;
 	int   kd = engine->kd;
 
 	int *lookup_sx0 = engine->lookup_sx0;
 	int *lookup_sx1 = engine->lookup_sx1;
 	int *lookup_sk = engine->lookup_sk;
-	float *lookup_wacc = engine->lookup_wacc;
+	//float *lookup_wacc = engine->lookup_wacc;
 
 	switch( mode ) {
         case TRANSFER_NORMAL: 		XBLEND_SAMPLE(NORMAL);

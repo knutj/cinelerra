@@ -143,20 +143,20 @@ int BC_WidgetGrid::get_w_wm(){
 
 int BC_WidgetGrid::getw_h(int row, int column) {
 	switch (widget_types[row][column]) {
-	case BC_WT_NONE:
-		return(0);
 	case BC_WT_RelocatableWidget: 
 		return(widget_widgs[row][column]->get_h());
+	default: break;
 	}
+	return 0;
 }
 
 int BC_WidgetGrid::getw_w(int row, int column) {
 	switch (widget_types[row][column]) {
-	case BC_WT_NONE:
-		return(0);
 	case BC_WT_RelocatableWidget: 
 		return(widget_widgs[row][column]->get_w());
+	default: break;
 	}
+	return 0;
 }
 
 int BC_WidgetGrid::guess_x(int colno){
@@ -184,6 +184,7 @@ void BC_WidgetGrid::move_widgets(){
 		x = x_l;
 		for (c = 0; c < BC_WG_Cols; c++) {
 			switch (widget_valign[r][c]){
+			default:
 			case VALIGN_TOP:
 				yn = y;
 				break;
@@ -196,6 +197,7 @@ void BC_WidgetGrid::move_widgets(){
 			}
 				
 			switch (widget_halign[r][c]){
+			default:
 			case HALIGN_LEFT:
 				xn = x;
 				break;

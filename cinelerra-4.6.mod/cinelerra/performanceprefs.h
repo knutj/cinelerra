@@ -61,6 +61,7 @@ public:
 	FormatTools *brender_tools;
 	BC_Title *master_rate;
 	PrefsFileForking *file_forking;
+	PrefsFFMPEGEarlyProbe *ffmpeg_early_probe;
 };
 
 
@@ -151,6 +152,17 @@ public:
 	
 	int handle_event();
 	void check_enable();
+
+	PerformancePrefs *perf_prefs;
+};
+
+class PrefsFFMPEGEarlyProbe : public BC_CheckBox
+{
+public:
+	PrefsFFMPEGEarlyProbe(PerformancePrefs *perf_prefs, int x, int y);
+	~PrefsFFMPEGEarlyProbe();
+	
+	int handle_event();
 
 	PerformancePrefs *perf_prefs;
 };

@@ -1,0 +1,11 @@
+--- a/include/faac.h	2015-04-12 16:20:12.928884670 -0600
++++ b/include/faac.h	2015-02-01 22:20:26.815003153 -0700
+@@ -22,8 +22,6 @@
+ #ifndef _FAAC_H_
+ #define _FAAC_H_
+ 
++#include <stdint.h>
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif /* __cplusplus */

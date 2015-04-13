@@ -32,6 +32,7 @@ MJPEGFIXS += yuv4mpeg/mjpeg_types.h yuv4mpeg/mjpeg_types.h
  
 all: $(OBJDIR)/soundtest
 	mkdir -p bin
+	$(MAKE) -C thirdparty
 	$(MAKE) -C $(MJPEGDIR) install-data DESTDIR=$(MJPEGPATH)
 	for ff in $(MJPEGFIXS); do \
 		f=`basename $$ff`; fn=$(MJPEGINC)/`dirname $$ff`.h; \
@@ -40,7 +41,6 @@ all: $(OBJDIR)/soundtest
 	$(MAKE) -C $(MJPEGDIR)/utils 
 	$(MAKE) -C $(MJPEGDIR)/mpeg2enc 
 	$(MAKE) -C $(MJPEGDIR)/mplex
-	$(MAKE) -C quicktime
 	$(MAKE) -f build/Makefile.toolame
 	$(MAKE) -f build/Makefile.uuid
 ifeq ($(STATIC_LIBRARIES), y)
@@ -67,6 +67,7 @@ endif
 	MAKE='make -j1' make -j1 -C thirdparty/speech_tools
 	MAKE='make -j1' make -j1 -C thirdparty/festival
 endif
+	$(MAKE) -C quicktime
 	@ for i in $(DIRS) ; \
 	do \
 		 $(MAKE) -C $$i ; \
@@ -147,6 +148,7 @@ endif
 	rm -f bin/new_db
 	$(MAKE) -C db/utils new_db
 	cp -a db/utils/new_db bin/.
+	cp -a ffmpeg bin/.
 	@if [ ! -f "/cinelerra/media.db" ]; then \
 		echo "need to run:"; \
 		echo "	mkdir /cinelerra"; \

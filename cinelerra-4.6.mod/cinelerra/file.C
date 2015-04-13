@@ -163,7 +163,7 @@ int File::get_options(FormatTools *format,
 	int audio_options, int video_options)
 {
 	BC_WindowBase *parent_window = format->window;
-	ArrayList<PluginServer*> *plugindb = format->plugindb;
+	//ArrayList<PluginServer*> *plugindb = format->plugindb;
 	Asset *asset = format->asset;
 	const char *locked_compressor = format->locked_compressor;
 
@@ -203,6 +203,13 @@ int File::get_options(FormatTools *format,
 				audio_options, 
 				video_options,
 				locked_compressor);
+			break;
+		case FILE_FFMPEG:
+			FileFFMPEG::get_parameters(parent_window, 
+				asset, 
+				format_window, 
+				audio_options, 
+				video_options);
 			break;
 		case FILE_AMPEG:
 		case FILE_VMPEG:
@@ -246,13 +253,6 @@ int File::get_options(FormatTools *format,
 				format_window, 
 				audio_options, 
 				video_options);
-			break;
-	        case FILE_YUV:
-			FileYUV::get_parameters(parent_window,
-				asset,
-				format_window,
-				video_options,
-				format);
 			break;
 		case FILE_FLAC:
 			FileFLAC::get_parameters(parent_window, 
@@ -544,16 +544,20 @@ int File::open_file(Preferences *preferences,
 // If you add another format to case 0, you also need to add another case for the
 // file format #define.
 		case FILE_UNKNOWN:
-			if(FileDB::check_sig(this->asset))
-			{
+			if(FileDB::check_sig(this->asset)) {
 // MediaDb file
 				file = new FileDB(this->asset, this);
 				break;
 			}
+// if early probe enabled
+			if( preferences->ffmpeg_early_probe &&
+			    FileFFMPEG::check_sig(this->asset)) {
+				file = new FileFFMPEG(this->asset, this);
+				break;
+			}
 
 			FILE *stream;
-			if(!(stream = fopen(this->asset->path, "rb")))
-			{
+			if(!(stream = fopen(this->asset->path, "rb"))) {
 // file not found
 				return 1;
 			}
@@ -561,147 +565,120 @@ int File::open_file(Preferences *preferences,
 			char test[16];
 			result = fread(test, 16, 1, stream);
 
-			if(FileScene::check_sig(this->asset, test))
-			{
+			if(FileScene::check_sig(this->asset, test)) {
 // libsndfile
 				fclose(stream);
 				file = new FileScene(this->asset, this);
+				break;
 			}
-			else
-			if(FileDV::check_sig(this->asset))
-			{
+			if(FileDV::check_sig(this->asset)) {
 // libdv
 				fclose(stream);
 				file = new FileDV(this->asset, this);
+				break;
 			}
-			else if(FileSndFile::check_sig(this->asset))
-			{
+			if(FileSndFile::check_sig(this->asset)) {
 // libsndfile
 				fclose(stream);
 				file = new FileSndFile(this->asset, this);
+				break;
 			}
-			else
-			if(FilePNG::check_sig(this->asset))
-			{
+			if(FilePNG::check_sig(this->asset)) {
 // PNG file
 				fclose(stream);
 				file = new FilePNG(this->asset, this);
+				break;
 			}
-			else
-			if(FileJPEG::check_sig(this->asset))
-			{
+			if(FileJPEG::check_sig(this->asset)) {
 // JPEG file
 				fclose(stream);
 				file = new FileJPEG(this->asset, this);
+				break;
 			}
-			else
-			if(FileGIF::check_sig(this->asset))
-			{
+			if(FileGIF::check_sig(this->asset)) {
 // GIF file
 				fclose(stream);
 				file = new FileGIF(this->asset, this);
+				break;
 			}
-			else
-			if(FileEXR::check_sig(this->asset, test))
-			{
+			if(FileEXR::check_sig(this->asset, test)) {
 // EXR file
 				fclose(stream);
 				file = new FileEXR(this->asset, this);
+				break;
 			}
-			else
-			if(FileYUV::check_sig(this->asset))
-			{
-// YUV file
-				fclose(stream);
-				file = new FileYUV(this->asset, this);
-			}
-			else
-			if(FileFLAC::check_sig(this->asset, test))
-			{
+			if(FileFLAC::check_sig(this->asset, test)) {
 // FLAC file
 				fclose(stream);
 				file = new FileFLAC(this->asset, this);
+				break;
 			}
-			else
-			if(FileCR2::check_sig(this->asset))
-			{
+			if(FileCR2::check_sig(this->asset)) {
 // CR2 file
 				fclose(stream);
 				file = new FileCR2(this->asset, this);
+				break;
 			}
-			else
-			if(FileTGA::check_sig(this->asset))
-			{
+			if(FileTGA::check_sig(this->asset)) {
 // TGA file
 				fclose(stream);
 				file = new FileTGA(this->asset, this);
+				break;
 			}
-			else
-			if(FileTIFF::check_sig(this->asset))
-			{
+			if(FileTIFF::check_sig(this->asset)) {
 // TIFF file
 				fclose(stream);
 				file = new FileTIFF(this->asset, this);
+				break;
 			}
-			else
-			if(FileOGG::check_sig(this->asset))
-			{
+			if(FileOGG::check_sig(this->asset)) {
 // OGG file
 				fclose(stream);
 				file = new FileOGG(this->asset, this);
+				break;
 			}
-			else
-			if(FileVorbis::check_sig(this->asset))
-			{
+			if(FileVorbis::check_sig(this->asset)) {
 // VorbisFile file
 				fclose(stream);
 				file = new FileVorbis(this->asset, this);
+				break;
 			}
-			else
-			if(FileOGG::check_sig(this->asset))
-			{
+			if(FileOGG::check_sig(this->asset)) {
 // OGG file.  Doesn't always work with pure audio files.
 				fclose(stream);
 				file = new FileOGG(this->asset, this);
+				break;
 			}
-			else
-			if(FileMPEG::check_sig(this->asset))
-			{
+			if(FileMPEG::check_sig(this->asset)) {
 // MPEG file
 				fclose(stream);
 				file = new FileMPEG(this->asset, this);
+				break;
 			}
-			else
 			if( test[0] == '<' && (
 				!strncmp(&test[1],"EDL>",4) ||
 				!strncmp(&test[1],"HTAL>",5) ||
-				!strncmp(&test[1],"?xml",4) ) )
-			{
+				!strncmp(&test[1],"?xml",4) ) ) {
 // XML file
 				fclose(stream);
 				return FILE_IS_XML;
 			}    // can't load project file
-			else
-			if(FileMOV::check_sig(this->asset))
-			{
+			if(FileMOV::check_sig(this->asset)) {
 // MOV file
 // should be last because quicktime lacks a magic number
 				fclose(stream);
 				file = new FileMOV(this->asset, this);
+				break;
 			}
-			else
-// FFMPEG last because it sux
-			if(FileFFMPEG::check_sig(this->asset))
-			{
+			if( !preferences->ffmpeg_early_probe &&
+			    FileFFMPEG::check_sig(this->asset) ) {
 				fclose(stream);
 				file = new FileFFMPEG(this->asset, this);
+				break;
 			}
-			else
-			{
 // PCM file
-				fclose(stream);
-				return FILE_UNRECOGNIZED_CODEC;
-			}   // need more info
+			fclose(stream);
+			return FILE_UNRECOGNIZED_CODEC;
 			break;
 
 // format already determined
@@ -769,10 +746,6 @@ int File::open_file(Preferences *preferences,
 			file = new FileDB(this->asset, this);
 			break;
 
-		case FILE_YUV:
-			file = new FileYUV(this->asset, this);
-			break;
-
 		case FILE_MOV:
 			file = new FileMOV(this->asset, this);
 			break;
@@ -814,8 +787,7 @@ int File::open_file(Preferences *preferences,
 
 
 // Reopen file with correct parser and get header.
-	if(file->open_file(rd, wr))
-	{
+	if(file->open_file(rd, wr)) {
 		delete file;
 		file = 0;
 	}
@@ -823,16 +795,14 @@ int File::open_file(Preferences *preferences,
 
 
 // Set extra writing parameters to mandatory settings.
-	if(file && wr)
-	{
+	if(file && wr) {
 		if(this->asset->dither) file->set_dither();
 	}
 
 
 
 // Synchronize header parameters
-	if(file)
-	{
+	if(file) {
 		asset->copy_from(this->asset, 1);
 //asset->dump();
 	}
@@ -840,21 +810,15 @@ int File::open_file(Preferences *preferences,
 	if(debug) printf("File::open_file %d file=%p\n", __LINE__, file);
 // sleep(1);
 
-	if(file)
-		return FILE_OK;
-	else
-		return FILE_NOT_FOUND;
+	return file ? FILE_OK : FILE_NOT_FOUND;
 }
 
 void File::delete_temp_samples_buffer()
 {
 
-	if(temp_samples_buffer)
-	{
-		for(int j = 0; j < audio_ring_buffers; j++)
-		{
-			for(int i = 0; i < asset->channels; i++)
-			{
+	if(temp_samples_buffer) {
+		for(int j = 0; j < audio_ring_buffers; j++) {
+			for(int i = 0; i < asset->channels; i++) {
 				delete temp_samples_buffer[j][i];
 			}
 			delete [] temp_samples_buffer[j];
@@ -869,14 +833,10 @@ void File::delete_temp_samples_buffer()
 void File::delete_temp_frame_buffer()
 {
 	
-	if(temp_frame_buffer)
-	{
-		for(int k = 0; k < video_ring_buffers; k++)
-		{
-			for(int i = 0; i < asset->layers; i++)
-			{
-				for(int j = 0; j < video_buffer_size; j++)
-				{
+	if(temp_frame_buffer) {
+		for(int k = 0; k < video_ring_buffers; k++) {
+			for(int i = 0; i < asset->layers; i++) {
+				for(int j = 0; j < video_buffer_size; j++) {
 					delete temp_frame_buffer[k][i][j];
 				}
 				delete [] temp_frame_buffer[k][i];
@@ -898,14 +858,12 @@ int File::close_file(int ignore_thread)
 #ifdef USE_FILEFORK
 	if(debug) printf("File::close_file file=%p file_fork=%p %d\n", file, file_fork, __LINE__);
 
-	if(file_fork)
-	{
+	if(file_fork) {
 		FileForker this_is(*forked);
 		file_fork->send_command(FileFork::CLOSE_FILE, 0, 0);
 		file_fork->read_result();
 
-		if(asset && wr)
-		{
+		if(asset && wr) {
 			asset->audio_length = current_sample = *(int64_t*)file_fork->result_data;
 			asset->video_length = current_frame = *(int64_t*)(file_fork->result_data + sizeof(int64_t));
 		}
@@ -923,29 +881,22 @@ int File::close_file(int ignore_thread)
 
 	if(debug) printf("File::close_file file=%p %d\n", file, __LINE__);
 
-	if(!ignore_thread)
-	{
-
+	if(!ignore_thread) {
 		stop_audio_thread();
-
 		stop_video_thread();
-
 	}
 
 
 	if(debug) printf("File::close_file file=%p %d\n", file, __LINE__);
-	if(file) 
-	{
+	if(file) {
 // The file's asset is a copy of the argument passed to open_file so the
 // user must copy lengths from the file's asset.
-		if(asset && wr)
-		{
+		if(asset && wr) {
 			asset->audio_length = current_sample;
 			asset->video_length = current_frame;
 		}
 
 		file->close_file();
-
 		delete file;
 
 	}
@@ -970,8 +921,7 @@ int File::close_file(int ignore_thread)
 int File::get_index(char *index_path)
 {
 #ifdef USE_FILEFORK
-	if(file_fork)
-	{
+	if(file_fork) {
 		FileForker this_is(*forked);
 		file_fork->send_command(FileFork::GET_INDEX, (unsigned char*)index_path, strlen(index_path) + 1);
 		int result = file_fork->read_result();
@@ -979,8 +929,7 @@ int File::get_index(char *index_path)
 	}
 #endif
 
-	if(file)
-	{
+	if(file) {
 		return file->get_index(index_path);
 	}
 	return 1;
@@ -2322,7 +2271,6 @@ int File::get_best_colormodel(Asset *asset, int driver)
 		case FILE_JPEG_LIST:	return FileJPEG::get_best_colormodel(asset, driver);
 		case FILE_EXR:
 		case FILE_EXR_LIST:	return FileEXR::get_best_colormodel(asset, driver);
-		case FILE_YUV:		return FileYUV::get_best_colormodel(asset, driver);
 		case FILE_PNG:
 		case FILE_PNG_LIST:	return FilePNG::get_best_colormodel(asset, driver);
 		case FILE_TGA:
@@ -2432,8 +2380,7 @@ int File::supports_video(int format)
 		case FILE_AVI:
 		case FILE_AVI_ARNE1:
 		case FILE_AVI_AVIFILE:
-	        case FILE_YUV:
-		case FILE_DB:
+	        case FILE_FFMPEG:
 		case FILE_RAWDV:
 			return 1;
 	}
@@ -2460,6 +2407,7 @@ int File::supports_audio(int format)
 		case FILE_AVI_ARNE2:
 		case FILE_AVI_ARNE1:
 		case FILE_AVI_AVIFILE:
+		case FILE_FFMPEG:
 			return 1;
 	}
 	return 0;
@@ -2494,6 +2442,7 @@ const char* File::get_tag(int format)
 		case FILE_VORBIS:       return "ogg";
 		case FILE_WAV:          return "wav";
 		case FILE_YUV:          return "m2v";
+		case FILE_FFMPEG:       return "media";
 	}
 	return 0;
 }

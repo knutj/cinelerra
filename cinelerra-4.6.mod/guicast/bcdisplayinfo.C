@@ -64,9 +64,8 @@ void BC_DisplayInfo::parse_geometry(char *geom, int *x, int *y, int *width, int 
 static void get_top_coords(Display *display, Window win, int &px,int &py, int &tx,int &ty)
 {
 	Window *pcwin;  unsigned int ncwin;
-	Window rwin = 0, cwin = 0, pwin = 0, root = 0;
-	int x=0, y=0, rx=0, ry=0, nx=0, ny=0;
-	unsigned int w=0, h=0, bdr=0, dp=0;
+	Window cwin = 0, pwin = 0, root = 0;
+	int nx=0, ny=0;
 	XQueryTree(display, win, &root, &pwin, &pcwin, &ncwin);
 	if( pcwin ) XFree(pcwin);
 	XTranslateCoordinates(display, pwin, root, 0,0, &px,&py, &cwin);

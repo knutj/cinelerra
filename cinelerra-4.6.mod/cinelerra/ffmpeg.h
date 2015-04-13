@@ -1,43 +1,263 @@
 #ifndef FFMPEG_H
 #define FFMPEG_H
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
+#include "arraylist.h"
+#include "asset.inc"
+#include "bccmodels.h"
+#include "ffmpeg.inc"
+#include "filebase.inc"
+#include "fileffmpeg.inc"
+#include "vframe.inc"
+
 extern "C" {
+#include "libavformat/avformat.h"
+#include "libavformat/avio.h"
 #include "libavcodec/avcodec.h"
+#include "libavfilter/avfilter.h"
+#include "libavutil/avutil.h"
+#include "libavutil/pixdesc.h"
+#include "libswresample/swresample.h"
+#include "libswscale/swscale.h"
 }
 
-#include "asset.h"
-#include "guicast.h"
+class FFPacket  {
+	AVPacket pkt;
+public:
+	FFPacket() {
+		av_init_packet(&pkt);
+		pkt.data = 0; pkt.size = 0;
+	}
+	~FFPacket() {
+		av_free_packet(&pkt);
+	}
+	operator AVPacket*() { return &pkt; }
+	AVPacket *operator ->() { return &pkt; }
+};
 
-#define FFMPEG_LATENCY -9
+class FFAudioHistory {
+public:
+	float *inp, *outp, *bfr, *lmt;
+	long sz, bsz;
+	int nch;
 
-class FFMPEG
-{
- public:
-	FFMPEG(Asset *asset_in);
-	~FFMPEG();
-	int init(char *codec_string);
-	int decode(uint8_t *data, long data_size, VFrame *frame_out);
+	FFAudioHistory();
+	~FFAudioHistory();
+	void reserve(long sz, int nch);
+	void realloc(long sz, int nch);
+	long used();
+	long avail();
+	void reset();
+	int iseek(int64_t ofs);
+	float *rseek(int len);
+	int write(const float *fp, long len);
+	int copy(float *fp, long len);
+	int read(double *dp, long len, int ch);
+	int write(const double *dp, long len, int ch);
+	void swap(float *fp, int fsz, float *dp, int dsz);
+};
 
-	static int convert_cmodel(AVPicture *picture_in, PixelFormat pix_fmt,
-				  int width_in, int height_in, 
-				  VFrame *frame_out);
-	static int convert_cmodel(VFrame *frame_in, VFrame *frame_out);
+class FFStream {
+public:
+	FFStream(FFMPEG *ffmpeg, AVStream *st, int idx);
+	~FFStream();
+	static void ff_lock(const char *cp=0);
+	static void ff_unlock();
 
-	static int convert_cmodel_transfer(VFrame *frame_in,VFrame *frame_out);
-	static int init_picture_from_frame(AVPicture *picture, VFrame *frame);
+	virtual int encode_activate();
+	virtual int decode_activate();
+	int decode_frame(AVFrame *frame);
+	virtual int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) = 0;
 
-	static CodecID codec_id(char *codec_string);
+	FFMPEG *ffmpeg;
+	AVStream *st;
+	AVFormatContext *fmt_ctx;
+	AVDictionary *opts;
+	int64_t nudge;
+	int idx;
+	int eof, reading, writing;
+	int st_eof() { return eof; }
+	void st_eof(int v) { eof = v; }
+};
 
- private:
+class FFAudioStream : public FFStream {
+public:
+	FFAudioStream(FFMPEG *ffmpeg, AVStream *strm, int idx);
+	virtual ~FFAudioStream();
+	int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) {
+		return avcodec_decode_audio4(ctx, frame, done, pkt);
+	}
+	int encode_activate();
+        int nb_samples() {
+		AVCodecContext *ctx = st->codec;
+		return ctx->codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
+	                10000 : ctx->frame_size;
+	}
+	void alloc_history(int len);
+	void reserve_history(int len);
+	void demand_history(int len);
+	void append_history(const float *fp, int len);
+	void load_history(double ** const sp, int len);
+	float *read_history(int len);
+	int in_history(int64_t pos);
+
+	int init_frame(AVCodecContext *ctx, AVFrame *frame);
+	int read_samples();
+	int load(double *samples, int64_t pos, int len);
+	int audio_seek(int64_t pos);
+
+	int encode(double **samples, int len);
+
+	int channel0, channels;
+	int sample_rate;
+	int mbsz, frame_sz;
+	int64_t seek_pos, curr_pos;
+	int64_t length;
+
+	FFAudioHistory history;
+	SwrContext *resample_context;
+	int aud_bfr_sz;
+	float *aud_bfr;
+};
+
+class FFVideoStream : public FFStream {
+public:
+	FFVideoStream(FFMPEG *ffmpeg, AVStream *strm, int idx);
+	virtual ~FFVideoStream();
+	int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) {
+		return avcodec_decode_video2(ctx, frame, done, pkt);
+	}
+
+	int write_frame(AVFrame *picture);
+	int load(VFrame *vframe, int64_t pos);
+	int video_seek(int64_t pos);
+
+	int encode(VFrame *vframe);
+
+	double frame_rate;
+	int width, height;
+	int64_t seek_pos, curr_pos;
+	int64_t length;
+	float aspect_ratio;
+
+	struct SwsContext *convert_ctx;
+	uint8_t *pkt_bfr;
+	int pkt_bfr_sz;
+
 	static PixelFormat color_model_to_pix_fmt(int color_model);
 	static int pix_fmt_to_color_model(PixelFormat pix_fmt);
 
-	int got_picture;
-	Asset *asset;
-	AVCodec *codec;
-	AVCodecContext *context;
-	AVFrame *picture;
+	int convert_picture_vframe(VFrame *frame,
+		AVPicture *ip, PixelFormat ifmt, int iw, int ih);
+	int convert_cmodel(VFrame *frame_out,
+		AVPicture *ip, PixelFormat ifmt, int iw, int ih);
+	int convert_vframe_picture(VFrame *frame,
+		AVPicture *op, PixelFormat ofmt, int ow, int oh);
+	int convert_pixfmt(VFrame *frame_in,
+		 AVPicture *op, PixelFormat ofmt, int ow, int oh);
 };
 
+class FFMPEG {
+public:
+	static Mutex fflock;
+	static void ff_lock(const char *cp=0) { fflock.lock(cp); }
+	static void ff_unlock() { fflock.unlock(); }
+
+	int check_sample_rate(AVCodec *codec, int sample_rate);
+	AVRational check_frame_rate(AVCodec *codec, double frame_rate);
+	AVRational to_sample_aspect_ratio(double aspect_ratio);
+	AVRational to_time_base(int sample_rate);
+
+	static void set_option_path(char *path, const char *fmt, ...);
+	static void get_option_path(char *path, const char *type, const char *spec);
+	int check_option(const char *path, char *spec);
+	const char *get_file_format();
+	int scan_option_line(char *cp,char *tag,char *val);
+	int read_options(const char *options,
+		char *format, char *codec, AVDictionary *&opts);
+	int read_options(FILE *fp, const char *options,
+		char *format, char *codec, AVDictionary *&opts);
+	int read_options(const char *options, AVDictionary *&opts);
+	int read_options(FILE *fp, const char *options, AVDictionary *&opts, int no=0);
+	int load_options(const char *options, AVDictionary *&opts);
+	const char *opt_get(AVDictionary *opts, const char *key);
+	void set_loglevel(const char *ap);
+	static double to_secs(int64_t time, AVRational time_base);
+	int info(char *text, int len);
+
+	int init_decoder(const char *filename);
+	int open_decoder();
+	int init_encoder(const char *filename);
+	int open_encoder(const char *path, const char *spec);
+	int close_encoder();
+
+	int total_audio_channels();
+	int total_video_channels();
+
+	int audio_seek(int ch, int64_t pos);
+	int video_seek(int layer, int64_t pos);
+
+	int decode(int chn, int64_t pos, double *samples, int len);
+	int decode(int layer, int64_t pos, VFrame *frame);
+	int decode_activate();
+	int encode(int stream, double **samples, int len);
+	int encode(int stream, VFrame *frame);
+	int encode_activate();
+
+	FileBase *file_base;
+	AVFormatContext *fmt_ctx;
+	ArrayList<FFAudioStream*> ffaudio;
+	ArrayList<FFVideoStream*> ffvideo;
+	AVDictionary *opts;
+	char file_format[BCTEXTLEN];
+
+	class ffidx {
+	public:
+		uint16_t st_idx, st_ch;
+		ffidx() { st_idx = st_ch = 0; }
+		ffidx(const ffidx &t) { st_idx = t.st_idx;  st_ch = t.st_ch; }
+		ffidx(uint16_t idx, uint16_t ch) { st_idx = idx; st_ch = ch; }
+	};
+
+	ArrayList<ffidx> astrm_index;
+	ArrayList<ffidx> vstrm_index;
+
+	int decoding, encoding;
+	int is_audio, is_video;
+
+	FFMPEG(FileBase *file_base=0);
+	~FFMPEG();
+
+	int ff_total_audio_channels();
+	int ff_total_astreams();
+	int ff_audio_channels(int stream);
+	int ff_sample_rate(int stream);
+	const char *ff_audio_format(int stream);
+	int ff_audio_pid(int stream);
+	int64_t ff_audio_samples(int stream);
+	int64_t ff_audio_for_video(int stream, int layer);
+
+	int ff_total_video_layers();
+	int ff_total_vstreams();
+	int ff_video_width(int stream);
+	int ff_video_height(int stream);
+	int ff_set_video_width(int stream, int width);
+	int ff_set_video_height(int stream, int height);
+	int ff_coded_width(int stream);
+	int ff_coded_height(int stream);
+	float ff_aspect_ratio(int stream);
+	double ff_frame_rate(int stream);
+	const char *ff_video_format(int stream);
+	int64_t ff_video_frames(int stream);
+	int ff_video_pid(int stream);
+
+	int ff_cpus();
+	void dump_context(AVCodecContext *ctx);
+};
 
 #endif /* FFMPEG_H */

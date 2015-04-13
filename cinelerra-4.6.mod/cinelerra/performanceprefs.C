@@ -108,8 +108,11 @@ void PerformancePrefs::create_objects()
 	file_forking = new PrefsFileForking(this, x, y);
 	add_subwindow(file_forking);
 	file_forking->check_enable();
+	y += 30;
 
-	y += 35;
+	ffmpeg_early_probe = new PrefsFFMPEGEarlyProbe(this, x, y);
+	add_subwindow(ffmpeg_early_probe);
+	y += 30;
 
 
 
@@ -166,23 +169,24 @@ void PerformancePrefs::create_objects()
 // Renderfarm
 	add_subwindow(new BC_Bar(5, y, 	get_w() - 10));
 	y += 5;
-
-
 	add_subwindow(new BC_Title(x, y, _("Render Farm"), LARGEFONT, resources->text_default));
+	x1 = x + xmargin4;
+	BC_Title *node_title = new BC_Title(x1, y, _("Nodes:"));
+	add_subwindow(node_title);
+	x1 += node_title->get_w() + 25;
+	sprintf(string, _(MASTER_NODE_FRAMERATE_TEXT), 
+		pwindow->thread->preferences->local_rate);
+	add_subwindow(master_rate = new BC_Title(x1, y, string));
 	y += 25;
-
-	add_subwindow(new PrefsRenderFarm(pwindow, x, y));
-	add_subwindow(new BC_Title(x + xmargin4, y, _("Nodes:")));
-	y += 30;
-	add_subwindow(new BC_Title(x, y, _("Hostname:")));
-	add_subwindow(new BC_Title(x + xmargin3, y, _("Port:")));
 	add_subwindow(node_list = new PrefsRenderFarmNodes(pwindow, 
 		this, 
 		x + xmargin4, 
-		y - 5));
-	sprintf(string, _(MASTER_NODE_FRAMERATE_TEXT), 
-		pwindow->thread->preferences->local_rate);
-	add_subwindow(master_rate = new BC_Title(x + xmargin4, y + node_list->get_h(), string));
+		y));
+	y += 5;
+	add_subwindow(new PrefsRenderFarm(pwindow, x, y));
+	y += 30;
+	add_subwindow(new BC_Title(x, y, _("Hostname:")));
+	add_subwindow(new BC_Title(x + xmargin3, y, _("Port:")));
 
 	y += 25;
 	add_subwindow(edit_node = new PrefsRenderFarmEditNode(pwindow, 
@@ -564,6 +568,23 @@ void PrefsFileForking::check_enable()
 	else if( !preferences->trap_sigsegv && !preferences->trap_sigintr ) {
 		enable();
 	}
+}
+
+
+PrefsFFMPEGEarlyProbe::PrefsFFMPEGEarlyProbe(PerformancePrefs *perf_prefs, int x, int y)
+ : BC_CheckBox(x, y, 
+	perf_prefs->pwindow->thread->preferences->ffmpeg_early_probe,
+	_("On file open, ffmpeg probes early"))
+{
+	this->perf_prefs = perf_prefs;
+}
+PrefsFFMPEGEarlyProbe::~PrefsFFMPEGEarlyProbe()
+{
+}
+int PrefsFFMPEGEarlyProbe::handle_event()
+{
+	perf_prefs->pwindow->thread->preferences->ffmpeg_early_probe = get_value();
+	return 1;
 }
 
 

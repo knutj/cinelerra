@@ -290,7 +290,7 @@ BC_Resources::BC_Resources()
 		new VFrame(usethis_dn_png)
 	};
 
-
+#if 0
 #include "images/checkbox_checked_png.h"
 #include "images/checkbox_dn_png.h"
 #include "images/checkbox_checkedhi_png.h"
@@ -327,7 +327,7 @@ BC_Resources::BC_Resources()
 		new VFrame(radial_dn_png),
 		new VFrame(radial_checkedhi_png)
 	};
-
+#endif
 
 #include "images/file_text_up_png.h"
 #include "images/file_text_hi_png.h"
@@ -849,8 +849,8 @@ int BC_Resources::init_fontconfig(const char *search_path)
   *out = 0; \
 } while(0)
 
-#define skip_str(sep,ptr) do { \
-  while( *ptr && strchr(sep,*ptr) ) *ptr++; \
+#define skip_str(sep, ptr) do { \
+  while( *ptr && strchr(sep,*ptr) ) ++ptr; \
 } while(0)
 
 	char find_command[BCTEXTLEN];
@@ -870,7 +870,6 @@ int BC_Resources::init_fontconfig(const char *search_path)
 		if(!strlen(line)) break;
 
 		char *in_ptr = line;
-		char *out_ptr;
 
 // Get current directory
 		if(line[0] == '/') {
@@ -1502,12 +1501,9 @@ int BC_Resources::find_font_by_char(FT_ULong char_code, char *path_new, const FT
 	if(char_code < ' ')
 		return 0;
 
-	if(ofont = FcFreeTypeQueryFace(oldface, (const FcChar8*)"", 4097, 0))
-	{
-		if(font = find_similar_font(char_code, ofont))
-		{
-			if(FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch)
-			{
+	if( (ofont = FcFreeTypeQueryFace(oldface, (const FcChar8*)"", 4097, 0)) != 0 ) {
+		if( (font = find_similar_font(char_code, ofont)) != 0 ) {
+			if(FcPatternGetString(font, FC_FILE, 0, &file) == FcResultMatch) {
 				strcpy(path_new, (char*)file);
 				result = 1;
 			}
@@ -1524,8 +1520,6 @@ FcPattern* BC_Resources::find_similar_font(FT_ULong char_code, FcPattern *oldfon
 	FcFontSet *fs;
 	FcObjectSet *os;
 	FcCharSet *fcs;
-	FcChar8 *file;
-	double dval;
 	int ival;
 
 	// Do not search control codes
@@ -1542,15 +1536,12 @@ FcPattern* BC_Resources::find_similar_font(FT_ULong char_code, FcPattern *oldfon
 	if(FcCharSetAddChar(fcs, char_code))
 		FcPatternAddCharSet(pat, FC_CHARSET, fcs);
 	FcCharSetDestroy(fcs);
-	for(int i = 0; i < LEN_FCPROP; i++)
-	{
+	for( int i=0; i<(int)LEN_FCPROP; ++i ) {
 		if(FcPatternGetInteger(oldfont, fc_properties[i], 0, &ival) == FcResultMatch)
 			FcPatternAddInteger(pat, fc_properties[i], ival);
 	}
 	fs = FcFontList(0, pat, os);
-
-	for(int i = LEN_FCPROP - 1; i >= 0 && fs->nfont == 0; i--)
-	{
+	for( int i=LEN_FCPROP; --i>=0 && !fs->nfont; ) {
 		FcFontSetDestroy(fs);
 		FcPatternDel(pat, fc_properties[i]);
 		fs = FcFontList(0, pat, os);

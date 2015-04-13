@@ -249,9 +249,8 @@ void BC_Pixmap::resize(int w, int h)
 			h, 
 			top_level->default_depth);
 #ifdef HAVE_XFT
-	XftDraw *new_xft_draw;
-	if(BC_WindowBase::get_resources()->use_xft)
-	{
+	XftDraw *new_xft_draw = 0;
+	if(BC_WindowBase::get_resources()->use_xft) {
 		new_xft_draw = XftDrawCreate(top_level->display,
 		       new_pixmap,
 		       top_level->vis,

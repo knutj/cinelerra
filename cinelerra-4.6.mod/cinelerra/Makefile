@@ -1,24 +1,25 @@
 include ../global_config
 
-AVC_DIR := $(shell expr ../thirdparty/libavc1394* )
-DV_DIR := $(shell expr ../quicktime/thirdparty/libdv-*/ )
-EXRDIR := $(shell expr ../thirdparty/openexr* )
-ILMDIR := $(shell expr ../thirdparty/ilmbase* )
-FLAC_DIR := $(shell expr ../thirdparty/flac*/ )
-FFMPEG_DIR := $(shell expr ../quicktime/thirdparty/ffmpeg* )
-JPEG_DIR := $(shell expr ../quicktime/thirdparty/jpeg-mmx* )
-LAME_DIR := ../quicktime/thirdparty/lame-3.93.1/include
-LIBIEC_DIR := $(shell expr ../thirdparty/libiec61883* )
-LIBRAW_DIR := $(shell expr ../thirdparty/libraw1394* )
-OGG_DIR := $(shell expr ../quicktime/thirdparty/libogg* )
-SNDFILE_DIR := $(shell expr ../thirdparty/libsndfile* )
-THEORA_DIR := $(shell expr ../thirdparty/libtheora* )
-GIF_DIR := $(shell expr ../thirdparty/giflib-* )
-TIFF_DIR := ../thirdparty/tiff-v3.5.7
-TOOLAME_DIR := ../thirdparty/toolame-02l
-UUID_DIR := ../thirdparty/uuid
-VORBIS_DIR := $(shell expr ../quicktime/thirdparty/libvorbis* )
-MJPEG_DIR := $(shell expr ../thirdparty/mjpegtools-* )
+AVC_DIR := $(shell cd ../thirdparty/libavc1394*; pwd)
+DV_DIR := $(shell cd ../thirdparty/libdv*; pwd)
+EXRDIR := $(shell cd ../thirdparty/openexr*; pwd)
+ILMDIR := $(shell cd ../thirdparty/ilmbase*; pwd)
+FLAC_DIR := $(shell cd ../thirdparty/flac*; pwd)
+FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
+JPEG_DIR := $(shell cd ../thirdparty/jpeg-mmx*; pwd)
+LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
+X264_DIR := $(shell cd ../thirdparty/x264*; pwd)
+LIBIEC_DIR := $(shell cd ../thirdparty/libiec61883*; pwd)
+LIBRAW_DIR := $(shell cd ../thirdparty/libraw1394*; pwd)
+OGG_DIR := $(shell cd ../thirdparty/libogg*; pwd)
+SNDFILE_DIR := $(shell cd ../thirdparty/libsndfile*; pwd)
+THEORA_DIR := $(shell cd ../thirdparty/libtheora*; pwd)
+GIF_DIR := $(shell cd ../thirdparty/giflib*; pwd)
+TIFF_DIR := $(shell cd ../thirdparty/tiff*; pwd)
+TOOLAME_DIR := $(shell cd ../thirdparty/toolame*; pwd)
+UUID_DIR := $(shell cd ../thirdparty/uuid*; pwd)
+VORBIS_DIR := $(shell cd ../thirdparty/libvorbis*; pwd)
+MJPEG_DIR := $(shell cd ../thirdparty/mjpegtools*; pwd)
 
 ifeq ($(STATIC_LIBRARIES), y)
 AVC_LIB := $(AVC_DIR)/libavc1394/.libs/libavc1394.a $(AVC_DIR)/librom1394/.libs/librom1394.a
@@ -356,7 +357,6 @@ OBJS = \
 	$(OBJDIR)/vwindow.o \
 	$(OBJDIR)/vwindowgui.o \
 	$(OBJDIR)/wavecache.o \
-	$(OBJDIR)/yuvstream.o \
 	$(OBJDIR)/zoombar.o \
 	$(OBJDIR)/zoompanel.o \
 \
@@ -388,7 +388,6 @@ FILEFLAC := $(OBJDIR)/fileflac.o
 FFMPEG_OBJS := $(OBJDIR)/fileffmpeg.o \
 	$(OBJDIR)/ffmpeg.o \
 	$(OBJDIR)/fileac3.o \
-	$(OBJDIR)/fileyuv.o \
 	$(OBJDIR)/file.o
 
 DCRAW := $(OBJDIR)/dcraw.o
@@ -407,9 +406,9 @@ CUTLIBS = \
 	../libzmpeg3/$(OBJDIR)/libzmpeg3.a -lX11 \
 	../db/$(OBJDIR)/db.a
 
-#ifeq ($(HAVE_AVIFILE), y)
-AVIFILE_DIR := $(shell expr ../avifile* )
-#endif
+ifeq ($(HAVE_AVIFILE), y)
+AVIFILE_DIR := $(shell cd ../avifile* ; pwd)
+endif
 
 
 
@@ -446,15 +445,22 @@ ifeq ($(HAVE_GL), y)
 LIBS += -lGL -lGLU
 endif
 
-
 ifeq ($(HAVE_ALSA), y)
 CFLAGS += -DHAVE_ALSA
 LIBS += -lasound
 endif
 
 LIBS += $(MJPEG_DIR)/utils/.libs/libmjpegutils.a
-LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
 LIBS += $(FFMPEG_DIR)/libswscale/libswscale.a
+LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
+LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
+LIBS += $(FFMPEG_DIR)/libavformat/libavformat.a
+LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
+LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
+LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
+
+LIBS += $(X264_DIR)/libx264.a
+LIBS += $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
 
 LIBS += \
 	-lX11 \
@@ -464,9 +470,10 @@ LIBS += \
 	-lpthread \
 	-lm \
 	-lpng \
-	-lz \
 	-ldl \
+	-lz \
 	-lbz2 \
+	-llzma \
 	-lfontconfig \
 	-lfreetype
 
@@ -490,7 +497,7 @@ CFLAGS += \
 	-I$(AVC_DIR) \
 	-I$(LIBIEC_DIR)/src/ \
 	-I$(TOOLAME_DIR) \
-	-I$(LAME_DIR) \
+	-I$(LAME_DIR)/include \
 	-I$(MJPEG_DIR)/usr/local/include \
 	-I$(MJPEG_DIR)/usr/local/include/mjpegtools \
 	-I../libzmpeg3 \
@@ -503,6 +510,13 @@ ifeq ($(STATIC_LIBRARIES), y)
 CFLAGS += \
 	-I$(GIF_DIR)/lib \
 	-I$(TIFF_DIR)/libtiff \
+
+else
+LIBS += \
+	-ljpeg \
+	-logg \
+	-lvorbis \
+	-lvorbisenc \
 
 endif
 
@@ -558,11 +572,14 @@ endif
 
 
 FFMPEG_CFLAGS := \
-	$(CFLAGS) \
-	-I$(FFMPEG_DIR)/libavcodec \
-	-I$(FFMPEG_DIR)/libavformat \
-	-I$(FFMPEG_DIR)/libavutil \
-	-I$(FFMPEG_DIR)
+	-include /usr/include/time.h \
+	-I$(FFMPEG_DIR) \
+
+#	-idirafter $(FFMPEG_DIR) \
+#	-idirafter $(FFMPEG_DIR)/libavcodec \
+	-idirafter $(FFMPEG_DIR)/libavformat \
+	-idirafter $(FFMPEG_DIR)/libavfilter \
+	-idirafter $(FFMPEG_DIR)/libavutil \
 
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)
@@ -729,6 +746,7 @@ $(OBJDIR)/edits.o: 				  edits.C
 $(OBJDIR)/edl.o: 				  edl.C
 $(OBJDIR)/edlsession.o: 			  edlsession.C
 $(OBJDIR)/fadeengine.o: 			  fadeengine.C
+$(OBJDIR)/ffmpeg.o:				  ffmpeg.C
 $(OBJDIR)/file.o: 				  file.C
 $(OBJDIR)/fileac3.o:                              fileac3.C
 $(OBJDIR)/fileavi.o: 				  fileavi.C
@@ -738,6 +756,7 @@ $(OBJDIR)/filebaseima4.o: 			  filebaseima4.C
 $(OBJDIR)/filebaseulaw.o: 			  filebaseulaw.C
 $(OBJDIR)/filebasevideo.o: 			  filebasevideo.C
 $(OBJDIR)/filecr2.o:                              filecr2.C
+$(OBJDIR)/fileffmpeg.o:				  fileffmpeg.C
 $(OBJDIR)/filefork.o:	 			  filefork.C
 $(OBJDIR)/filescene.o:	 			  filescene.C
 $(OBJDIR)/fileserver.o:                           fileserver.C
@@ -959,7 +978,6 @@ $(OBJDIR)/vtracking.o:  			  vtracking.C
 $(OBJDIR)/vwindow.o: 				  vwindow.C
 $(OBJDIR)/vwindowgui.o: 			  vwindowgui.C
 $(OBJDIR)/wavecache.o:                            wavecache.C
-$(OBJDIR)/yuvstream.o:				  yuvstream.C
 $(OBJDIR)/zoombar.o: 				  zoombar.C
 $(OBJDIR)/zoompanel.o:  			  zoompanel.C
 

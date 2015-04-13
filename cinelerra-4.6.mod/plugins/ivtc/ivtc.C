@@ -231,6 +231,8 @@ int IVTCMain::process_realtime(VFrame *input_ptr, VFrame *output_ptr)
 			unsigned char *src = ((i + config.first_field) & 1) ?
 					input_ptr->get_rows()[i] :
 					temp_frame[0]->get_rows()[i];
+			if( src != dst )
+				memcpy(dst, src, row_size);
 		}
 
 // Swap temp frames

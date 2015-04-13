@@ -18,7 +18,7 @@
  *
  */
 
-static void rgb8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w){
+static inline void rgb8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w){
   while(w--){
     *R++ = *row++*.0039215686f;
     *G++ = *row++*.0039215686f;
@@ -26,7 +26,7 @@ static void rgb8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w)
   }
 }
 
-static void rgba8_to_RGBA(unsigned char *row, float *R, float *G, float *B, float *A, int w){
+static inline void rgba8_to_RGBA(unsigned char *row, float *R, float *G, float *B, float *A, int w){
   while(w--){
     *R++ = *row++*.0039215686f;
     *G++ = *row++*.0039215686f;
@@ -35,7 +35,7 @@ static void rgba8_to_RGBA(unsigned char *row, float *R, float *G, float *B, floa
   }
 }
 
-static void rgbF_to_RGB(float *row, float *R, float *G, float *B, int w){
+static inline void rgbF_to_RGB(float *row, float *R, float *G, float *B, int w){
   while(w--){
     *R++ = *row++;
     *G++ = *row++;
@@ -43,7 +43,7 @@ static void rgbF_to_RGB(float *row, float *R, float *G, float *B, int w){
   }
 }
 
-static void rgbaF_to_RGBA(float *row, float *R, float *G, float *B, float *A, int w){
+static inline void rgbaF_to_RGBA(float *row, float *R, float *G, float *B, float *A, int w){
   while(w--){
     *R++ = *row++;
     *G++ = *row++;
@@ -98,7 +98,7 @@ static void rgbaF_to_RGBA(float *row, float *R, float *G, float *B, float *A, in
 #define Gv (2.f*(1.f-Kr)*Kr/Kg)
 #define Bu (2.f*(1.f-Kb))
 
-static void yuv8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w){
+static inline void yuv8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w){
   while(w--){
     float y = (*row++-Y_SHIFT) * (1.f/Y_SWING);
     float u = (*row++-C_SHIFT);
@@ -109,7 +109,7 @@ static void yuv8_to_RGB(unsigned char *row, float *R, float *G, float *B, int w)
   }
 }
 
-static void yuva8_to_RGBA(unsigned char *row, float *R, float *G, float *B, float *A, int w){
+static inline void yuva8_to_RGBA(unsigned char *row, float *R, float *G, float *B, float *A, int w){
   while(w--){
     float y = (*row++-Y_SHIFT) * (1.f/Y_SWING);
     float u = (*row++-C_SHIFT);
@@ -121,7 +121,7 @@ static void yuva8_to_RGBA(unsigned char *row, float *R, float *G, float *B, floa
   }
 }
 
-static void RGB_to_yuv8(float *R, float *G, float *B, float *S, float F, unsigned char *row, int w, int bpp){
+static inline void RGB_to_yuv8(float *R, float *G, float *B, float *S, float F, unsigned char *row, int w, int bpp){
   if(F>SELECT_THRESH){
     if(S){
       if(F<1.-SELECT_THRESH){
@@ -172,7 +172,7 @@ static void RGB_to_yuv8(float *R, float *G, float *B, float *S, float F, unsigne
   }
 }
 
-static void RGB_to_rgb8(float *R, float *G, float *B, float *S, float F, unsigned char *row, int w, int bpp){
+static inline void RGB_to_rgb8(float *R, float *G, float *B, float *S, float F, unsigned char *row, int w, int bpp){
   if(F>SELECT_THRESH){
     if(S){
       if(F<1.-SELECT_THRESH){
@@ -225,7 +225,7 @@ static void RGB_to_rgb8(float *R, float *G, float *B, float *S, float F, unsigne
   }
 }
 
-static void RGB_to_rgbF(float *R, float *G, float *B, float *S, float F, float *row, int w, int bpp){
+static inline void RGB_to_rgbF(float *R, float *G, float *B, float *S, float F, float *row, int w, int bpp){
   if(F>SELECT_THRESH){
     if(S){
       if(F<1.-SELECT_THRESH){
@@ -264,21 +264,21 @@ static void RGB_to_rgbF(float *R, float *G, float *B, float *S, float F, float *
   }
 }
 
-static void unmask_rgba8(unsigned char *row,int w){
+static inline void unmask_rgba8(unsigned char *row,int w){
   while(w--){
     row[3] = 255;
     row+=4;
   }
 }
 
-static void unmask_rgbaF(float *row, int w){
+static inline void unmask_rgbaF(float *row, int w){
   while(w--){
     row[3] = 1.f;
     row+=4;
   }
 }
 
-static void unmask_yuva8(unsigned char *row, int w){
+static inline void unmask_yuva8(unsigned char *row, int w){
   while(w--){
     row[3] = 255;
     row+=4;
@@ -298,7 +298,7 @@ static void unmask_yuva8(unsigned char *row, int w){
 // V is unbounded and may extend considerably below 0 and above 1 depending on foot and head room
 
 /* Simple mods of the original Cinelerra conversion routines */
-static void RGB_to_HSpV(float R, float G, float B, float &H, float &Sp, float &V){
+static inline void RGB_to_HSpV(float R, float G, float B, float &H, float &Sp, float &V){
   if(R<G){
     if(B<R){
       V = G;
@@ -334,7 +334,7 @@ static void RGB_to_HSpV(float R, float G, float B, float &H, float &Sp, float &V
   }
 }
 
-static void HSpV_to_RGB(float H, float Sp, float V, float &R, float &G, float &B){
+static inline void HSpV_to_RGB(float H, float Sp, float V, float &R, float &G, float &B){
   float vp = (fabs(V)+HSpV_SATURATION_BIAS)*Sp*HSpV_SATURATION_ISCALE;
   int i = (int)H;
   switch(i){
@@ -371,7 +371,7 @@ static void HSpV_to_RGB(float H, float Sp, float V, float &R, float &G, float &B
   }
 }
 
-static void HSpV_correct_RGB(float H, float Sp, float &V, float &R, float &G, float &B){
+static inline void HSpV_correct_RGB(float H, float Sp, float &V, float &R, float &G, float &B){
   float vp = Sp<0.f?0.f:(fabs(V)+HSpV_SATURATION_BIAS)*Sp*HSpV_SATURATION_ISCALE;
   int i = (int)H;
   switch(i){

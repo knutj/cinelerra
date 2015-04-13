@@ -369,7 +369,7 @@ void VFrame::create_row_pointers()
 	switch(color_model)
 	{
 		case BC_YUV420P:
-		case BC_YUV411P:
+//		case BC_YUV411P:
 			if(!this->v_offset)
 			{
 				this->y_offset = 0;
@@ -1065,6 +1065,29 @@ int VFrame::copy_from(VFrame *frame)
 
 	return 0;
 }
+
+int VFrame::transfer_from(VFrame *that, int bg_color)
+{
+	if( this->get_color_model() == that->get_color_model() &&
+	    this->get_w() == that->get_w() && this->get_h() == that->get_h() )
+		return this->copy_from(that);
+
+	timestamp = that->timestamp;
+	BC_CModels::transfer(
+		this->get_rows(), that->get_rows(),	     // Packed data out/in
+		this->get_y(), this->get_u(), this->get_v(), // Planar data out/in
+		that->get_y(), that->get_u(), that->get_v(),
+		0, 0, that->get_w(), that->get_h(),	     // Dimensions in/out
+		0, 0, this->get_w(), this->get_h(),
+		that->get_color_model(), this->get_color_model(), // Color models in/out
+		bg_color,				     // alpha blend bg_color
+		that->get_w(), this->get_w()); 		     // rowspans (of luma for YUV)
+	return 0;
+}
+
+
+
+
 
 
 #define OVERLAY(type, max, components) \

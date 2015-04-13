@@ -26,59 +26,124 @@ static void dump_context(void *ptr)
 	AVCodecContext *context = (AVCodecContext*)ptr;
 
 	printf("dump_context %d\n", __LINE__);
-	printf("    bit_rate=%d\n", context->bit_rate);
-	printf("    bit_rate_tolerance=%d\n", context->bit_rate_tolerance);
-	printf("    flags=%d\n", context->flags);
-	printf("    sub_id=%d\n", context->sub_id);
-	printf("    me_method=%d\n", context->me_method);
-	printf("    extradata_size=%d\n", context->extradata_size);
-	printf("    time_base.num=%d\n", context->time_base.num);
-	printf("    time_base.den=%d\n", context->time_base.den);
-	printf("    width=%d\n", context->width);
-	printf("    height=%d\n", context->height);
-	printf("    gop_size=%d\n", context->gop_size);
-	printf("    pix_fmt=%d\n", context->pix_fmt);
-	printf("    rate_emu=%d\n", context->rate_emu);
-	printf("    sample_rate=%d\n", context->sample_rate);
-	printf("    channels=%d\n", context->channels);
-	printf("    sample_fmt=%d\n", context->sample_fmt);
-	printf("    frame_size=%d\n", context->frame_size);
-	printf("    frame_number=%d\n", context->frame_number);
-	printf("    real_pict_num=%d\n", context->real_pict_num);
-	printf("    delay=%d\n", context->delay);
-	printf("    qcompress=%d\n", context->qcompress);
-	printf("    qblur=%d\n", context->qblur);
-	printf("    qmin=%d\n", context->qmin);
-	printf("    qmax=%d\n", context->qmax);
-	printf("    max_qdiff=%d\n", context->max_qdiff);
-	printf("    max_b_frames=%d\n", context->max_b_frames);
-	printf("    b_quant_factor=%d\n", context->b_quant_factor);
-	printf("    b_frame_strategy=%d\n", context->b_frame_strategy);
-	printf("    hurry_up=%d\n", context->hurry_up);
-	printf("    rtp_payload_size=%d\n", context->rtp_payload_size);
-	printf("    codec_id=%d\n", context->codec_id);
-	printf("    codec_tag=%d\n", context->codec_tag);
-	printf("    workaround_bugs=%d\n", context->workaround_bugs);
-//	printf("    error_resilience=%d\n", context->error_resilience);
-	printf("    has_b_frames=%d\n", context->has_b_frames);
-	printf("    block_align=%d\n", context->block_align);
-	printf("    parse_only=%d\n", context->parse_only);
-	printf("    idct_algo=%d\n", context->idct_algo);
-	printf("    slice_count=%d\n", context->slice_count);
-	printf("    slice_offset=%p\n", context->slice_offset);
-	printf("    error_concealment=%d\n", context->error_concealment);
-	printf("    dsp_mask=%p\n", context->dsp_mask);
-//	printf("    bits_per_sample=%d\n", context->bits_per_sample);
-	printf("    slice_flags=%d\n", context->slice_flags);
-	printf("    xvmc_acceleration=%d\n", context->xvmc_acceleration);
-	printf("    antialias_algo=%d\n", context->antialias_algo);
-	printf("    thread_count=%d\n", context->thread_count);
-	printf("    skip_top=%d\n", context->skip_top);
-	printf("    profile=%d\n", context->profile);
-	printf("    level=%d\n", context->level);
-	printf("    lowres=%d\n", context->lowres);
-	printf("    coded_width=%d\n", context->coded_width);
-	printf("    coded_height=%d\n", context->coded_height);
+	printf("    log_level_offset=%d\n",context->log_level_offset);
+	printf("    bit_rate=%d\n",context->bit_rate);
+	printf("    bit_rate_tolerance=%d\n",context->bit_rate_tolerance);
+	printf("    global_quality=%d\n",context->global_quality);
+	printf("    compression_level=%d\n",context->compression_level);
+	printf("    flags=%d\n",context->flags);
+	printf("    flags2=%d\n",context->flags2);
+	printf("    extradata_size=%d\n",context->extradata_size);
+	printf("    ticks_per_frame=%d\n",context->ticks_per_frame);
+	printf("    delay=%d\n",context->delay);
+	printf("    width=%d\n",context->width);
+	printf("    height=%d\n",context->height);
+	printf("    coded_width=%d\n",context->coded_width);
+	printf("    coded_height=%d\n",context->coded_height);
+	printf("    gop_size=%d\n",context->gop_size);
+	printf("    me_method=%d\n",context->me_method);
+	printf("    max_b_frames=%d\n",context->max_b_frames);
+	printf("    rc_strategy=%d\n",context->rc_strategy);
+	printf("    b_frame_strategy=%d\n",context->b_frame_strategy);
+	printf("    has_b_frames=%d\n",context->has_b_frames);
+	printf("    mpeg_quant=%d\n",context->mpeg_quant);
+	printf("    slice_count=%d\n",context->slice_count);
+	printf("    prediction_method=%d\n",context->prediction_method);
+	printf("    me_cmp=%d\n",context->me_cmp);
+	printf("    me_sub_cmp=%d\n",context->me_sub_cmp);
+	printf("    mb_cmp=%d\n",context->mb_cmp);
+	printf("    ildct_cmp=%d\n",context->ildct_cmp);
+	printf("    dia_size=%d\n",context->dia_size);
+	printf("    last_predictor_count=%d\n",context->last_predictor_count);
+	printf("    pre_me=%d\n",context->pre_me);
+	printf("    me_pre_cmp=%d\n",context->me_pre_cmp);
+	printf("    pre_dia_size=%d\n",context->pre_dia_size);
+	printf("    me_subpel_quality=%d\n",context->me_subpel_quality);
+	printf("    me_range=%d\n",context->me_range);
+	printf("    intra_quant_bias=%d\n",context->intra_quant_bias);
+	printf("    inter_quant_bias=%d\n",context->inter_quant_bias);
+	printf("    slice_flags=%d\n",context->slice_flags);
+	printf("    mb_decision=%d\n",context->mb_decision);
+	printf("    scenechange_threshold=%d\n",context->scenechange_threshold);
+	printf("    noise_reduction=%d\n",context->noise_reduction);
+	printf("    intra_dc_precision=%d\n",context->intra_dc_precision);
+	printf("    skip_top=%d\n",context->skip_top);
+	printf("    skip_bottom=%d\n",context->skip_bottom);
+	printf("    mb_lmin=%d\n",context->mb_lmin);
+	printf("    mb_lmax=%d\n",context->mb_lmax);
+	printf("    me_penalty_compensation=%d\n",context->me_penalty_compensation);
+	printf("    bidir_refine=%d\n",context->bidir_refine);
+	printf("    brd_scale=%d\n",context->brd_scale);
+	printf("    keyint_min=%d\n",context->keyint_min);
+	printf("    refs=%d\n",context->refs);
+	printf("    chromaoffset=%d\n",context->chromaoffset);
+	printf("    mv0_threshold=%d\n",context->mv0_threshold);
+	printf("    b_sensitivity=%d\n",context->b_sensitivity);
+	printf("    slices=%d\n",context->slices);
+	printf("    sample_rate=%d\n",context->sample_rate);
+	printf("    channels=%d\n",context->channels);
+	printf("    frame_size=%d\n",context->frame_size);
+	printf("    frame_number=%d\n",context->frame_number);
+	printf("    block_align=%d\n",context->block_align);
+	printf("    cutoff=%d\n",context->cutoff);
+	printf("    refcounted_frames=%d\n",context->refcounted_frames);
+	printf("    qmin=%d\n",context->qmin);
+	printf("    qmax=%d\n",context->qmax);
+	printf("    max_qdiff=%d\n",context->max_qdiff);
+	printf("    rc_buffer_size=%d\n",context->rc_buffer_size);
+	printf("    rc_override_count=%d\n",context->rc_override_count);
+	printf("    rc_max_rate=%d\n",context->rc_max_rate);
+	printf("    rc_min_rate=%d\n",context->rc_min_rate);
+	printf("    rc_initial_buffer_occupancy=%d\n",context->rc_initial_buffer_occupancy);
+	printf("    coder_type=%d\n",context->coder_type);
+	printf("    context_model=%d\n",context->context_model);
+	printf("    frame_skip_threshold=%d\n",context->frame_skip_threshold);
+	printf("    frame_skip_factor=%d\n",context->frame_skip_factor);
+	printf("    frame_skip_exp=%d\n",context->frame_skip_exp);
+	printf("    frame_skip_cmp=%d\n",context->frame_skip_cmp);
+	printf("    trellis=%d\n",context->trellis);
+	printf("    min_prediction_order=%d\n",context->min_prediction_order);
+	printf("    max_prediction_order=%d\n",context->max_prediction_order);
+	printf("    timecode_frame_start=%jd\n",context->timecode_frame_start);
+	printf("    rtp_payload_size=%d\n",context->rtp_payload_size);
+	printf("    mv_bits=%d\n",context->mv_bits);
+	printf("    header_bits=%d\n",context->header_bits);
+	printf("    i_tex_bits=%d\n",context->i_tex_bits);
+	printf("    p_tex_bits=%d\n",context->p_tex_bits);
+	printf("    i_count=%d\n",context->i_count);
+	printf("    p_count=%d\n",context->p_count);
+	printf("    skip_count=%d\n",context->skip_count);
+	printf("    misc_bits=%d\n",context->misc_bits);
+	printf("    frame_bits=%d\n",context->frame_bits);
+	printf("    workaround_bugs=%d\n",context->workaround_bugs);
+	printf("    strict_std_compliance=%d\n",context->strict_std_compliance);
+	printf("    error_concealment=%d\n",context->error_concealment);
+	printf("    debug=%d\n",context->debug);
+	printf("    debug_mv=%d\n",context->debug_mv);
+	printf("    err_recognition=%d\n",context->err_recognition);
+	printf("    reordered_opaque=%jd\n",context->reordered_opaque);
+	printf("    dct_algo=%d\n",context->dct_algo);
+	printf("    idct_algo=%d\n",context->idct_algo);
+	printf("    bits_per_coded_sample=%d\n",context->bits_per_coded_sample);
+	printf("    bits_per_raw_sample=%d\n",context->bits_per_raw_sample);
+	printf("    lowres=%d\n",context->lowres);
+	printf("    thread_count=%d\n",context->thread_count);
+	printf("    thread_type=%d\n",context->thread_type);
+	printf("    active_thread_type=%d\n",context->active_thread_type);
+	printf("    thread_safe_callbacks=%d\n",context->thread_safe_callbacks);
+	printf("    nsse_weight=%d\n",context->nsse_weight);
+	printf("    profile=%d\n",context->profile);
+	printf("    level=%d\n",context->level);
+	printf("    subtitle_header_size=%d\n",context->subtitle_header_size);
+	printf("    side_data_only_packets=%d\n",context->side_data_only_packets);
+	printf("    initial_padding=%d\n",context->initial_padding);
+	printf("    pts_correction_num_faulty_pts=%jd\n",context->pts_correction_num_faulty_pts);
+	printf("    pts_correction_num_faulty_dts=%jd\n",context->pts_correction_num_faulty_dts);
+	printf("    pts_correction_last_pts=%jd\n",context->pts_correction_last_pts);
+	printf("    pts_correction_last_dts=%jd\n",context->pts_correction_last_dts);
+	printf("    sub_charenc_mode=%d\n",context->sub_charenc_mode);
+	printf("    skip_alpha=%d\n",context->skip_alpha);
+	printf("    seek_preroll=%d\n",context->seek_preroll);
 }
 
 quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
@@ -115,8 +180,7 @@ quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 	if(!ffmpeg_initialized)
 	{
 		ffmpeg_initialized = 1;
-  		avcodec_init();
-		avcodec_register_all();
+		av_register_all();
 	}
 
 	for(i = 0; i < fields; i++)
@@ -129,7 +193,8 @@ quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 			return 0;
 		}
 
-		AVCodecContext *context = ptr->decoder_context[i] = avcodec_alloc_context();
+		AVCodecContext *context = avcodec_alloc_context3(ptr->decoder[i]);
+		ptr->decoder_context[i] = context;
 		static char fake_data[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 // 		static unsigned char extra_data[] =
 // 		{
@@ -155,21 +220,19 @@ quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 		}
 		if(cpus > 1)
 		{
-			avcodec_thread_init(context, cpus);
-// Not exactly user friendly.
-//			context->thread_count = cpus;
+//			avcodec_thread_init(context, cpus);
+			context->thread_count = cpus;
 		}
 
-		if(avcodec_open(context,
-			ptr->decoder[i]) < 0)
+		if(avcodec_open2(context, ptr->decoder[i], 0) < 0)
 		{
 			int error = 1;
 // Try again with 1 thread
 			if(cpus > 1)
 			{
-				avcodec_thread_init(context, 1);
-				if(avcodec_open(context,
-					ptr->decoder[i]) >= 0)
+//				avcodec_thread_init(context, 1);
+				context->thread_count = cpus;
+				if(avcodec_open2(context, ptr->decoder[i], 0) >= 0)
 				{
 					error = 0;
 				}
@@ -179,8 +242,8 @@ quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 			{
 				printf("quicktime_new_ffmpeg: avcodec_open failed.\n");
 				quicktime_delete_ffmpeg(ptr);
-			ptr = NULL;
-			break;
+				ptr = NULL;
+				break;
 			}
 		}
 
@@ -220,6 +283,15 @@ void quicktime_delete_ffmpeg(quicktime_ffmpeg_t *ptr)
 		free(ptr);
 	}
 }
+
+
+//avcodec_get_frame_defaults
+static void frame_defaults(AVFrame *frame)
+{
+	memset(frame, 0, sizeof(AVFrame));
+	av_frame_unref(frame);
+}
+
 
 
 static int decode_wrapper(quicktime_t *file,
@@ -283,7 +355,7 @@ static int decode_wrapper(quicktime_t *file,
 			ffmpeg->decoder_context[current_field]->skip_frame = AVDISCARD_NONREF /* AVDISCARD_BIDIR */;
 		else
 			ffmpeg->decoder_context[current_field]->skip_frame = AVDISCARD_DEFAULT;
-		avcodec_get_frame_defaults(&ffmpeg->picture[current_field]);
+		frame_defaults(&ffmpeg->picture[current_field]);
 
 /*
  * printf("decode_wrapper %d frame_number=%d decoder_context=%p picture=%p buffer=%p bytes=%d\n",
@@ -327,17 +399,15 @@ static int decode_wrapper(quicktime_t *file,
 			&ffmpeg->picture[current_field], &got_picture,
 			ffmpeg->work_buffer, bytes + header_bytes);
 #else
-{		AVPacket avpkt;   av_init_packet(&avpkt);
-		avpkt.data = buf; avpkt.size = buf_size;
+{		AVPacket avpkt;
+		av_init_packet(&avpkt);
+		avpkt.data = ffmpeg->work_buffer;
+		avpkt.size = bytes + header_bytes;
 		avpkt.flags = AV_PKT_FLAG_KEY;
 		result = avcodec_decode_video2(ffmpeg->decoder_context[current_field],
-			&ffmpeg->picture[current_field],
-			&got_picture, &avpkt); }
+			&ffmpeg->picture[current_field], &got_picture, &avpkt);
+}
 #endif
-int avcodec_decode_video2(AVCodecContext *avctx, AVFrame *picture,
-                         int *got_picture_ptr,
-                         AVPacket *avpkt);
-
 		if(ffmpeg->picture[current_field].data[0])
 		{
 			result = 0;
@@ -657,6 +727,38 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 }
 
 
+
+/* assumes 16-bit, interleaved data */
+/* always moves buffer */
+int quicktime_decode_audio3(
+		AVCodecContext *avctx, int16_t *samples,
+		int *frame_size_ptr, AVPacket *avpkt)
+{
+	int ret, got_frame = 0;
+	AVFrame *frame = av_frame_alloc();
+	if (!frame) return -1;
+
+	ret = avcodec_decode_audio4(avctx, frame, &got_frame, avpkt);
+
+	if( ret >= 0 && got_frame ) {
+		int ch, plane_size;
+		int planar = av_sample_fmt_is_planar(avctx->sample_fmt);
+		int data_size = av_samples_get_buffer_size(&plane_size, avctx->channels,
+					   frame->nb_samples, avctx->sample_fmt, 1);
+		if( *frame_size_ptr < data_size ) {
+			printf("quicktime_decode_audio3: output buffer size is too small for "
+				"the current frame (%d < %d)\n", *frame_size_ptr, data_size);
+			av_frame_free(&frame);
+			return -1;
+		}
+		memcpy(samples, frame->extended_data[0], plane_size);
+		*frame_size_ptr = data_size;
+	} else {
+		*frame_size_ptr = 0;
+	}
+	av_frame_free(&frame);
+	return ret;
+}
 
 
 

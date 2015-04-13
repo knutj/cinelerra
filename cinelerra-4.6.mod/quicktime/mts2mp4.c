@@ -6,7 +6,7 @@
 #include <string.h>
 
 
-#include "avcodec.h"
+#include "libavcodec/avcodec.h"
 #include "libzmpeg3.h"
 #include "quicktime.h"
 

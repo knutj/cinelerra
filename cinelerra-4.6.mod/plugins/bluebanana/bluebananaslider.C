@@ -47,7 +47,7 @@ static int scale_color(int color, float scale){
   if(b>255)b=255;
   return (r<<16)|(g<<8)|b;
 }
-
+#if 0
 static int mix_color(int c1, float s1, int c2, float s2){
   int r = ((c1 >> 16) & 0xff)*s1 + ((c2 >> 16) & 0xff)*s2;
   int g = ((c1 >> 8) & 0xff)*s1 + ((c2 >> 8) & 0xff)*s2;
@@ -58,7 +58,7 @@ static int mix_color(int c1, float s1, int c2, float s2){
   if(b>255)b=255;
   return (r<<16)|(g<<8)|b;
 }
-
+#endif
 BluebananaSlider::BluebananaSlider(BluebananaMain *plugin,
                                    BluebananaWindow *gui,
                                    int x,
@@ -167,11 +167,11 @@ float BluebananaSlider::pixel_to_value(int pixel){
   float fraction=((pixel-CW-ZL)/(float)(troughcols-1));
   return fraction*(maxval-minval)+minval;
 }
-
+#if 0
 static int inside_box(int cx, int cy, int x, int y, int w, int h){
   return (cx>=x && cx<x+w && cy>=y && cy<y+h);
 }
-
+#endif
 static int inside_vline(int cx, int cy, int x, int y0, int y1){
   if(cx==x){
     if(cy>=y0 && cy<=y1)return 1;
@@ -229,7 +229,7 @@ int BluebananaSlider::in_rightslider(int x, int cx, int cy){
 
 int BluebananaSlider::in_topslider(int x, int cx, int cy){
   int i;
-  int h = get_h();
+  //int h = get_h();
   if(inside_vline(cx,cy,x,Z1*2,1))return 1;
   for(i=1;i<Z1+1;i++){
     if(inside_vline(cx,cy,x+i,1,Z1*2-i*2+1))return 1;
@@ -240,10 +240,10 @@ int BluebananaSlider::in_topslider(int x, int cx, int cy){
 }
 
 int BluebananaSlider::in_overslider(int x,int cx, int cy){
-  int i;
-  int h = get_h();
-  int y0 = 0;
-  int y1 = Z1*2-1;
+  //int i;
+  //int h = get_h();
+  //int y0 = 0;
+  //int y1 = Z1*2-1;
   int w2 = CW;//Z1*2-1;
   if(cy<=Z1 && cx>=x-w2 && cx<=x+w2) return 1;
   return 0;
@@ -283,7 +283,7 @@ int BluebananaSlider::in_overslider2(int x,int cx, int cy){
 }
 
 void BluebananaSlider::draw_midslider(int x,int lit){
-  int i;
+  //int i;
   int h = get_h();
   int y0 = Z4-Z1+2;
   int y1 = h-2;
@@ -297,7 +297,7 @@ void BluebananaSlider::draw_midslider(int x,int lit){
 
 void BluebananaSlider::draw_leftslider(int x, int lit){
   int i;
-  int h = get_h();
+  //int h = get_h();
 
   set_color(lit?sliderlit:slidercolor);
   draw_line(x-1,Z4,x-Z1*2-1,Z4);
@@ -320,7 +320,7 @@ void BluebananaSlider::draw_leftslider(int x, int lit){
 
 void BluebananaSlider::draw_rightslider(int x, int lit){
   int i;
-  int h = get_h();
+  //int h = get_h();
 
   set_color(lit?sliderlit:slidercolor);
   draw_line(x+1,Z4,x+Z1*2+1,Z4);
@@ -343,7 +343,7 @@ void BluebananaSlider::draw_rightslider(int x, int lit){
 
 void BluebananaSlider::draw_topslider(int x, int lit){
   int i;
-  int h = get_h();
+  //int h = get_h();
 
   set_color(lit?sliderlit:slidercolor);
   draw_line(x,Z1*2,x,1);
@@ -382,10 +382,10 @@ void BluebananaSlider::draw_bottomslider(int x, int lit){
 }
 
 void BluebananaSlider::draw_overslider(int x, int lit){
-  int i;
-  int h = get_h();
-  int y0 = 0;
-  int y1 = Z1*2-1;
+  //int i;
+  //int h = get_h();
+  //int y0 = 0;
+  //int y1 = Z1*2-1;
   int w2 = CW+1;
 
   int bg_c = get_resources()->get_bg_color();
@@ -434,7 +434,7 @@ void BluebananaSlider::update(){
   int tb_b = (tb_c & 0xff);
 
   int ZH = Z4-Z1+1;
-  int ZHC = Z4-ZC+1;
+  //int ZHC = Z4-ZC+1;
 
   int i,j;
 
@@ -590,7 +590,7 @@ static void resample_histogram(float *raw, float *raw_red, float *raw_green, flo
     int e = raw_end;
     if(j<0)j=0;
     if(e>HISTSIZE)e=HISTSIZE;
-    int jj=j;
+    //int jj=j;
     float k = (j-raw_start)*icoverage-1.f;
     float a = 0;
 
@@ -619,7 +619,7 @@ static void resample_histogram(float *raw, float *raw_red, float *raw_green, flo
       int e = raw_end;
       if(j<0)j=0;
       if(e>HISTSIZE)e=HISTSIZE;
-      int jj=j;
+      //int jj=j;
       float k = (j-raw_start)*icoverage-1.f;
       float r=0.f, g=0.f, b=0.f, a=0.f;
       for(; j<=e; j++){
@@ -667,7 +667,7 @@ static void resample_histogram(float *raw, float *raw_red, float *raw_green, flo
 }
 
 void BluebananaSlider::update_histogram(float *raw, float *red, float *green, float *blue, int n){
-  int i,j;
+  int i;
   int h = troughlines;
   int w = troughcols;
   float il2n = 1./log2(n);
@@ -717,8 +717,8 @@ BluebananaSliderSingle::BluebananaSliderSingle(BluebananaMain *plugin,
 
 int BluebananaSliderSingle::button_press_event(){
   if(is_event_win() && cursor_inside()){
-    int min;
-    int max;
+    //int min;
+    //int max;
     int cx = get_cursor_x();
 
     gui->deactivate();
@@ -748,7 +748,7 @@ int BluebananaSliderSingle::button_press_event(){
 
 int BluebananaSliderSingle::cursor_motion_event(){
   int cx = get_cursor_x();
-  int cy = get_cursor_y();
+  //int cy = get_cursor_y();
 
   if(drag){
     switch(light){
@@ -822,8 +822,8 @@ BluebananaSliderBracket::BluebananaSliderBracket(BluebananaMain *plugin,
 
 int BluebananaSliderBracket::button_press_event(){
   if(is_event_win() && cursor_inside()){
-    int min;
-    int max;
+    //int min;
+    //int max;
     int cx = get_cursor_x();
 
     gui->deactivate();
@@ -985,7 +985,7 @@ void BluebananaSliderBracket::set_lo(float val){
 }
 
 void BluebananaSliderBracket::set_mid(float val){
-  float oldmid=midval;
+  //float oldmid=midval;
   if(val<minval)val=minval;
   if(val>maxval)val=maxval;
   midval=val;
@@ -1212,10 +1212,10 @@ BluebananaSliderChannel::~BluebananaSliderChannel(){}
 
 int BluebananaSliderChannel::button_press_event(){
   if(is_event_win() && cursor_inside()){
-    int min;
-    int max;
+    //int min;
+    //int max;
     int cx = get_cursor_x();
-    int cy = get_cursor_y();
+    //int cy = get_cursor_y();
 
     gui->deactivate();
 
@@ -1393,7 +1393,7 @@ void BluebananaSliderChannel::set_mid(float v){
 }
 
 void BluebananaSliderChannel::set_range(float v){
-  float mid = (hival+loval)*.5;
+  //float mid = (hival+loval)*.5;
   float range = hival-loval;
 
   if(v>200)v=200;
@@ -1438,7 +1438,7 @@ void BluebananaSliderChannel::update(){
   int tb_b = (tb_c & 0xff);
 
   int ZH = Z4-Z1+1;
-  int ZHC = Z4-ZC+1;
+  //int ZHC = Z4-ZC+1;
 
   int i,j;
 
@@ -1629,8 +1629,8 @@ void BluebananaSliderChannel::update(){
 }
 
 void BluebananaSliderChannel::update_histogram(float *raw, float *red, float *green, float *blue, int n){
-  int i,j;
-  int h = troughlines;
+  int i;
+  //int h = troughlines;
   int w = troughcols-6;
   float il2n = 1./log2(n);
   int w0 = t_w01-1;
@@ -1705,8 +1705,8 @@ BluebananaSliderFill::BluebananaSliderFill(BluebananaMain *plugin,
 
 int BluebananaSliderFill::button_press_event(){
   if(is_event_win() && cursor_inside()){
-    int min;
-    int max;
+    //int min;
+    //int max;
     int cx = get_cursor_x();
 
     gui->deactivate();
@@ -1900,16 +1900,16 @@ void BluebananaSliderFill::update(){
   int bg_g = ((bg_c >> 8) & 0xff);
   int bg_b = (bg_c & 0xff);
   int b_c = highlight ? active_bordercolor : inactive_bordercolor;
-  int b_r = ((b_c >> 16) & 0xff);
-  int b_g = ((b_c >> 8) & 0xff);
-  int b_b = (b_c & 0xff);
+  //int b_r = ((b_c >> 16) & 0xff);
+  //int b_g = ((b_c >> 8) & 0xff);
+  //int b_b = (b_c & 0xff);
   int tb_c = troughcolor;
   int tb_r = ((tb_c >> 16) & 0xff);
   int tb_g = ((tb_c >> 8) & 0xff);
   int tb_b = (tb_c & 0xff);
 
   int ZH = Z4-Z1+1;
-  int ZHC = Z4-ZC+1;
+  //int ZHC = Z4-ZC+1;
 
   int i,j;
 

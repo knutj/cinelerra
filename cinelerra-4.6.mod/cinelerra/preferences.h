@@ -98,6 +98,8 @@ public:
 	int real_processors;
 // enable/disable filefork
 	int file_forking;
+// ffmpeg probes early/late during File::open_file read
+	int ffmpeg_early_probe;
 
 // Default positions for channels
 	int channel_positions[MAXCHANNELS * MAXCHANNELS];

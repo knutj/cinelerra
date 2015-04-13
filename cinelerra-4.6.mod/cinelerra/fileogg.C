@@ -2408,6 +2408,7 @@ int PackagingEngineOGG::create_packages_single_farm(
 			local_current_package++;
 		}
 	}
+	return 0;
 }
 
 RenderPackage* PackagingEngineOGG::get_package_single_farm(double frames_per_second, 
@@ -2489,9 +2490,9 @@ int PackagingEngineOGG::packages_are_done()
 // First fix our asset... have to workaround the bug of corruption of local asset
 //	Render::check_asset(edl, *default_asset);
 
-	Asset *video_asset, *audio_asset;
-	File *audio_file_gen, *video_file_gen;
-	FileOGG *video_file, *audio_file;
+	Asset *video_asset = 0, *audio_asset = 0;
+	File *audio_file_gen = 0, *video_file_gen = 0;
+	FileOGG *video_file = 0, *audio_file = 0;
 	ogg_stream_state audio_in_stream, video_in_stream;
 	
 	int local_current_package = 0;
@@ -2524,7 +2525,7 @@ int PackagingEngineOGG::packages_are_done()
 	output_file_gen->open_file(preferences, default_asset, 0, 1);
 	FileOGG *output_file = (FileOGG*) output_file_gen->file;
 
-	ogg_page og;    /* one Ogg bitstream page.  Vorbis packets are inside */
+	//ogg_page og;    /* one Ogg bitstream page.  Vorbis packets are inside */
 	ogg_packet op;  /* one raw packet of data for decode */
 
 
@@ -2557,7 +2558,6 @@ int PackagingEngineOGG::packages_are_done()
 						video_file_gen->open_file(preferences, video_asset, 1, 0);
 						video_file = (FileOGG*) video_file_gen->file;
 						ogg_stream_init(&video_in_stream, video_file->tf->to.serialno);
-						int64_t fp   = 0;
 						video_file->ogg_seek_to_databegin(video_file->tf->videosync, video_file->tf->to.serialno);
 
 					} else

@@ -589,12 +589,10 @@ void ResourceThread::do_video(VResourceThreadItem *item)
 // Test for pixmap existence first
 	if(item->operation_count == operation_count)
 	{
-		int exists = 0;
 		ArrayList<ResourcePixmap*> &resource_pixmaps = gui->resource_pixmaps;
 		int i = resource_pixmaps.total;
 		while( --i >= 0 && resource_pixmaps[i] != item->pixmap );
-		if( i >= 0 )
-		{
+		if( i >= 0 ) {
 			item->pixmap->draw_vframe(temp_picon2,
 				item->picon_x,
 				item->picon_y,

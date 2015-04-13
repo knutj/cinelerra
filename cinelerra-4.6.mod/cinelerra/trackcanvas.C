@@ -884,7 +884,7 @@ void TrackCanvas::track_dimensions(Track *track, int64_t &x, int64_t &y, int64_t
 void TrackCanvas::draw_paste_destination()
 {
 	int cursor_x = get_relative_cursor_x();
-	int cursor_y = get_relative_cursor_y();
+	//int cursor_y = get_relative_cursor_y();
 	int current_atrack = 0;
 	int current_vtrack = 0;
 	int current_aedit = 0;

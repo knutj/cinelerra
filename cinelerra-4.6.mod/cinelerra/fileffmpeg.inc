@@ -23,5 +23,11 @@
 #define FILEFFMPEG_INC
 
 class FileFFMPEG;
+class FFMPEGConfigAudio;
+class FFMPEGConfigAudioPopup;
+class FFMPEGConfigAudioToggle;
+class FFMPEGConfigVideo;
+class FFMPEGConfigVideoPopup;
+class FFMPEGConfigVideoToggle;
 
 #endif

@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 		// Extract from locale language & region
 		char locbuf[32], *p;
 		locbuf[0] = 0;
-		if((p = strchr(loc, '.')) && p - loc < sizeof(locbuf)-1) {
+		if((p = strchr(loc, '.')) != 0 && (p - loc) < (int)sizeof(locbuf)-1) {
 			strncpy(locbuf, loc, p - loc);
 			locbuf[p - loc] = 0;
 		}

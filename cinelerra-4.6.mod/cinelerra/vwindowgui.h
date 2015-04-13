@@ -129,7 +129,7 @@ class VWindowEditing : public EditPanel
 {
 public:
 	VWindowEditing(MWindow *mwindow, VWindow *vwindow);
-	~VWindowEditing();
+	virtual ~VWindowEditing();
 	
 	void copy_selection();
 	void splice_selection();

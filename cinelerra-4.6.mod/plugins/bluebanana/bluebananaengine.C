@@ -50,7 +50,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
   int ant = plugin->ants_counter;
   int gui_open = plugin->gui_open();
   int show_ants = plugin->config.mark && gui_open;
-  int i,j;
+  int j;
 
   int active = plugin->config.active;
   int use_mask = plugin->config.use_mask;
@@ -514,7 +514,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
         if(active){
 
           /* red adjust */
-          if(Ral)
+          if(Ral) {
             if(have_selection){
               for(j = 0; j < todo; j++)
                 if(selection[j]>SELECT_THRESH) Rvec[j]=adj_lookup(Rvec[j],Ral,Ras);
@@ -522,6 +522,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
               for(j = 0; j < todo; j++)
                 Rvec[j] = adj_lookup(Rvec[j],Ral,Ras);
             }
+          }
           /* red histogram */
           if(gui_open){
             if(have_selection){
@@ -534,7 +535,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
           }
 
           /* green adjust */
-          if(Gal)
+          if(Gal) {
             if(have_selection){
               for(j = 0; j < todo; j++)
                 if(selection[j]>SELECT_THRESH) Gvec[j]=adj_lookup(Gvec[j],Gal,Gas);
@@ -542,6 +543,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
               for(j = 0; j < todo; j++)
                 Gvec[j] = adj_lookup(Gvec[j],Gal,Gas);
             }
+          }
           /* green histogram */
           if(gui_open){
             if(have_selection){
@@ -554,7 +556,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
           }
 
           /* blue adjust */
-          if(Bal)
+          if(Bal) {
             if(have_selection){
               for(j = 0; j < todo; j++)
                 if(selection[j]>SELECT_THRESH) Bvec[j]=adj_lookup(Bvec[j],Bal,Bas);
@@ -562,6 +564,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
               for(j = 0; j < todo; j++)
                 Bvec[j] = adj_lookup(Bvec[j],Bal,Bas);
             }
+          }
           /* blue histogram */
           if(gui_open){
             if(have_selection){
@@ -621,7 +624,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
             }
 
             /* S modification */
-            if(Sal)
+            if(Sal) {
               if(have_selection){
                 for(j = 0; j < todo; j++)
                   if(selection[j]>SELECT_THRESH) Svec[j] = adj_lookup(Svec[j],Sal,Sas);
@@ -629,6 +632,7 @@ void BluebananaUnit::process_package(LoadPackage *package){
                 for(j = 0; j < todo; j++)
                   Svec[j] = adj_lookup(Svec[j],Sal,Sas);
               }
+            }
 
             /* This is unrolled a few times below...
                Although we're using HSV, we don't want hue/saturation

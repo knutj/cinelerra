@@ -501,6 +501,7 @@ TimelinePane* MWindowGUI::get_focused_pane()
 	{
 		if(pane[i]) return pane[i];
 	}
+	return 0;
 }
 
 void MWindowGUI::activate_timeline()

@@ -372,7 +372,7 @@ void FormatTools::update_extension()
 		
 // test for equivalent extension
 		int need_extension = 1;
-		int extension_len = 0;
+		//int extension_len = 0;
 		for(int i = 0; i < extensions.size() && need_extension; i++)
 		{
 			char *ptr1 = ptr;

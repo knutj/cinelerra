@@ -30,6 +30,7 @@ class PrefsBRenderPreroll;
 class PrefsForceUniprocessor;
 class PrefsTrapSigSEGV;
 class PrefsTrapSigINTR;
+class PrefsFFMPEGEarlyProbe;
 class PrefsFileForking;
 class PrefsRenderFarm;
 class PrefsRenderFarmConsolidate;

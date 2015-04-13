@@ -2,73 +2,61 @@ OBJDIR := $(shell uname --machine)
 USE_MMX = 0
 CC = gcc
 
-
-
-
 ifeq ($(origin CFLAGS), environment)
 HAVE_CFLAGS := y
 else
 HAVE_CFLAGS := n
 endif
 
-
-ENCORE_DIR := thirdparty/encore50
+ENCORE_DIR := $(shell cd ../thirdparty/encore50; pwd)
 ENCORE_INCLUDE := $(ENCORE_DIR)/encore.h
-MPEG3_DIR := $(shell expr ../libzmpeg3* )
-MJPEG_DIR := $(shell expr ../thirdparty/mjpegtools-* )
+MPEG3_DIR := $(shell cd ../libzmpeg3*; pwd)
+MJPEG_DIR := $(shell cd ../thirdparty/mjpegtools-*; pwd)
 OBJS := 
 
-
-# bug fixes for ffmpeg are required
-# Add test to ffmpeg/libavcodec/svq3.c to make sure extradata is
-# nonzero before memcmping it.
-FFMPEG_DIR := $(shell expr thirdparty/ffmpeg*)
+FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
 FFMPEG_LIB := $(OBJDIR)/ffmpeg/
 FFMPEG_INCLUDE := -I$(FFMPEG_DIR) \
--I$(FFMPEG_DIR)/libavcodec \
--I$(FFMPEG_DIR)/libavformat \
--I$(FFMPEG_DIR)/libavutil
 
-FAAD_DIR := $(shell expr thirdparty/faad*)
+FAAD_DIR := $(shell cd ../thirdparty/faad*; pwd)
 FAAD_LIB := $(OBJDIR)/faad/
 FAAD_INCLUDE := $(FAAD_DIR)/include/
 
-FAAC_DIR := thirdparty/faac-1.24
+FAAC_DIR := $(shell cd ../thirdparty/faac*; pwd)
 FAAC_LIB := $(OBJDIR)/faac/
 FAAC_INCLUDE := $(FAAC_DIR)/include/
 
-X264_DIR := $(shell expr thirdparty/x264*)
+LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
+LAME_LIB := $(OBJDIR)/lame
+LAME_INCLUDE := $(LAME_DIR)
+
+X264_DIR := $(shell cd ../thirdparty/x264*; pwd)
 X264_LIB := $(OBJDIR)/x264
 X264_INCLUDE := $(X264_DIR)
 
-DV_DIR := thirdparty/libdv-0.104
+DV_DIR := $(shell cd ../thirdparty/libdv*; pwd)
 DV_LIB := $(OBJDIR)/libdv
 DV_INCLUDE := $(DV_DIR)/
 
-OGG_DIR := $(shell expr thirdparty/libogg* )
+OGG_DIR := $(shell cd ../thirdparty/libogg*; pwd)
 OGG_LIB := $(OBJDIR)/ogg
 
-VORBIS_DIR := $(shell expr thirdparty/libvorbis* )
+VORBIS_DIR := $(shell cd ../thirdparty/libvorbis*; pwd)
 VORBIS_LIB := $(OBJDIR)/vorbis
 
 ifeq ($(OBJDIR), i686)
-
-  JPEG_DIR := $(shell expr thirdparty/jpeg-mmx* )
+  JPEG_DIR := $(shell cd ../thirdparty/jpeg-mmx*; pwd)
   JPEG_LIB := $(OBJDIR)/$(JPEG_DIR)
   JPEG_LIB2 := $(JPEG_DIR)/libjpeg-mmx.a
   JPEG_INCLUDE := $(JPEG_DIR)
-
 else
-
-  JPEG_DIR := thirdparty/jpeg
+  JPEG_DIR := $(shell cd ../thirdparty/jpeg; pwd)
   JPEG_LIB := $(OBJDIR)/$(JPEG_DIR)
   JPEG_LIB2 := $(JPEG_DIR)/libjpeg.a
   JPEG_INCLUDE := $(JPEG_DIR)
-
 endif
 
 ifneq ($(HAVE_CFLAGS), y)
-
 
 ifeq ($(OBJDIR), alpha)
   CFLAGS := -O4 -arch ev67 -ieee -accept c99_keywords -gcc_messages
@@ -80,38 +68,23 @@ endif
 
 
 ifeq ($(OBJDIR), x86_64)
-  CFLAGS := -O -funroll-all-loops -fomit-frame-pointer  -I/usr/local/include
+  CFLAGS := -O2 -funroll-all-loops -fomit-frame-pointer -I/usr/local/include
 endif
-
-
-
 
 endif
 
 DIRS = $(OBJDIR)
 
 
-
-
 #include Makefile.jpeg
 #include Makefile.vorbis
-include Makefile.lame
+#include Makefile.lame
 #include Makefile.dv
 include Makefile.encore50
-
-
-
-
 
 CFLAGS += 
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -DHAVE_FIREWIRE
-
-
-
-
-
-
 
 
 OBJS += \
@@ -264,9 +237,9 @@ $(shell echo  $(LAME_CFLAGS) > $(OBJDIR)/lame_flags)
 $(shell echo  $(OBJS) $(FFMPEG_OBJS) $(JPEG_LIB)/*.o $(DV_LIB)/*.o $(FAAD_LIB)/*.o $(FAAC_LIB)/*.o $(X264_LIB)/*.o $(OGG_LIB)/*.o $(VORBIS_LIB)/*.o $(LAME_OBJS) > $(OBJDIR)/objs)
 $(shell echo  $(FFMPEG_CFLAGS) > $(OBJDIR)/ffmpeg_cflags)
 
-all: $(OBJDIR) $(OUTPUT)
+all: $(OBJDIR) $(THIRDPARTY) $(OUTPUT)
 
-$(OUTPUT): $(OBJS) $(FFMPEG_OBJS) $(ENCOREMMX_OBJS) $(JPEG_NASM) $(LAME_OBJS) $(FAAD_LIB) $(FAAC_LIB) $(FFMPEG_LIB) $(X264_LIB) $(DV_LIB) $(JPEG_LIB) $(OGG_LIB) $(VORBIS_LIB)
+$(OUTPUT): $(OBJS) $(FFMPEG_OBJS) $(ENCOREMMX_OBJS) $(JPEG_NASM) $(LAME_OBJS) $(FAAD_LIB) $(FAAC_LIB) $(FFMPEG_LIB) $(X264_LIB) $(DV_LIB) $(JPEG_LIB) $(OGG_LIB) $(VORBIS_LIB) $(LAME_LIB)
 	find $(FFMPEG_DIR)/libavcodec/ -name *.o >> $(OBJDIR)/objs
 	find $(FFMPEG_DIR)/libavformat/ -name *.o >> $(OBJDIR)/objs
 	find $(FFMPEG_DIR)/libavutil/ -name *.o >> $(OBJDIR)/objs
@@ -279,65 +252,69 @@ $(FFMPEG_LIB):
 		$(FFMPEG_LIB)/avformat \
 		$(FFMPEG_LIB)/avutil
 	cd $(FFMPEG_LIB)/avcodec && \
-	ar x ../../../$(FFMPEG_DIR)/libavcodec/libavcodec.a &&  \
+	ar x $(FFMPEG_DIR)/libavcodec/libavcodec.a &&  \
 	cd ../avformat && \
-	ar x ../../../$(FFMPEG_DIR)/libavformat/libavformat.a &&  \
+	ar x $(FFMPEG_DIR)/libavformat/libavformat.a &&  \
 	cd ../avutil && \
-	ar x ../../../$(FFMPEG_DIR)/libavutil/libavutil.a
+	ar x $(FFMPEG_DIR)/libavutil/libavutil.a
 #	cd ../avcore && \
-#	ar x ../../../$(FFMPEG_DIR)/libavcore/libavcore.a
+#	ar x $(FFMPEG_DIR)/libavcore/libavcore.a
 
 $(FAAD_LIB):
 	$(MAKE) -C $(FAAD_DIR) && \
 	mkdir -p $(FAAD_LIB) && \
 	cd $(FAAD_LIB) && \
-	ar x ../../$(FAAD_DIR)/libfaad/.libs/libfaad.a
+	ar x $(FAAD_DIR)/libfaad/.libs/libfaad.a
 
 $(FAAC_LIB):
 	$(MAKE) -C $(FAAC_DIR) && \
 	mkdir -p $(FAAC_LIB) && \
 	cd $(FAAC_LIB) && \
-	ar x ../../$(FAAC_DIR)/libfaac/.libs/libfaac.a
+	ar x $(FAAC_DIR)/libfaac/.libs/libfaac.a
 
 $(DV_LIB):
 	$(MAKE) -C $(DV_DIR) && \
 	mkdir -p $(DV_LIB) && \
 	cd $(DV_LIB) && \
-	ar x ../../$(DV_DIR)/libdv/.libs/libdv.a
+	ar x $(DV_DIR)/libdv/.libs/libdv.a
 
 $(JPEG_LIB):
 	$(MAKE) -C $(JPEG_DIR) && \
 	mkdir -p $(JPEG_LIB) && \
 	cd $(JPEG_LIB) && \
-	ar x ../../../$(JPEG_LIB2)
+	ar x $(JPEG_LIB2)
 
 # need some trickery to get the duplicated filenames out
 $(X264_LIB):
 	$(MAKE) -C $(X264_DIR) && \
 	mkdir -p $(X264_LIB) && \
 	cd $(X264_LIB) && \
-	ar x ../../$(X264_DIR)/libx264.a && \
+	ar x $(X264_DIR)/libx264.a && \
 	mv predict.o predict2.o && \
 	mv cabac.o cabac2.o && \
 	mv macroblock.o macroblock2.o && \
 	mv set.o set2.o && \
-	ar xN 1 ../../$(X264_DIR)/libx264.a predict.o cabac.o macroblock.o set.o
+	ar xN 1 $(X264_DIR)/libx264.a predict.o cabac.o macroblock.o set.o
 
 $(OGG_LIB):
 	$(MAKE) -C $(OGG_DIR) && \
 	mkdir -p $(OGG_LIB) && \
 	cd $(OGG_LIB) && \
-	ar x ../../$(OGG_DIR)/src/.libs/libogg.a
+	ar x $(OGG_DIR)/src/.libs/libogg.a
 
 $(VORBIS_LIB):
 	$(MAKE) -C $(VORBIS_DIR) && \
 	mkdir -p $(VORBIS_LIB) && \
 	cd $(VORBIS_LIB) && \
-	ar x ../../$(VORBIS_DIR)/lib/.libs/libvorbis.a && \
-	ar x ../../$(VORBIS_DIR)/lib/.libs/libvorbisenc.a && \
-	ar x ../../$(VORBIS_DIR)/lib/.libs/libvorbisfile.a
+	ar x $(VORBIS_DIR)/lib/.libs/libvorbis.a && \
+	ar x $(VORBIS_DIR)/lib/.libs/libvorbisenc.a && \
+	ar x $(VORBIS_DIR)/lib/.libs/libvorbisfile.a
 
-
+$(LAME_LIB):
+	$(MAKE) -C $(LAME_DIR)
+	mkdir -p $(LAME_LIB) && \
+	cd $(LAME_LIB) && \
+	ar x $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
 
 $(OBJDIR)/mts2mp4: $(OBJDIR)/mts2mp4.o $(OUTPUT)
 	$(CC) -o $(OBJDIR)/mts2mp4 $(OBJDIR)/mts2mp4.o $(LIBS)
@@ -589,7 +566,7 @@ $(OBJDIR)/yv12.o:			  yv12.c
 #include depend.vorbis
 #include depend.ffmpeg
 #include depend.jpeg
-include depend.lame
+#include depend.lame
 #include depend.dv
 include depend.encore50
 #include depend.faad

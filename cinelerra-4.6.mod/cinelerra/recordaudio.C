@@ -264,7 +264,7 @@ int RecordAudio::flush_buffer()
 	if( record->writing_file ) {
 		record->written_samples += fragment_position;
 		if( writing_file ) {
-			write_result = record->file->write_audio_buffer(fragment_position), 0; // HACK
+			write_result = (record->file->write_audio_buffer(fragment_position), 0); // HACK
 			// defeat audio errors if recording video
 			if( record->default_asset->video_data ) write_result = 0;
 		}

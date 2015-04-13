@@ -23,7 +23,7 @@
 
 extern "C"
 {
-#include "avcodec.h"
+#include "libavcodec/avcodec.h"
 }
 
 #include "clip.h"
@@ -90,13 +90,13 @@ int FileAC3::check_sig()
 int64_t FileAC3::get_channel_layout(int channels)
 {
 	switch( channels ) {
-	case 1: return CH_LAYOUT_MONO;
-	case 2: return CH_LAYOUT_STEREO;
-	case 3: return CH_LAYOUT_SURROUND;
-	case 4: return CH_LAYOUT_QUAD;
-	case 5: return CH_LAYOUT_5POINT0;
-	case 6: return CH_LAYOUT_5POINT1;
-	case 8: return CH_LAYOUT_7POINT1;
+	case 1: return AV_CH_LAYOUT_MONO;
+	case 2: return AV_CH_LAYOUT_STEREO;
+	case 3: return AV_CH_LAYOUT_SURROUND;
+	case 4: return AV_CH_LAYOUT_QUAD;
+	case 5: return AV_CH_LAYOUT_5POINT0;
+	case 6: return AV_CH_LAYOUT_5POINT1;
+	case 8: return AV_CH_LAYOUT_7POINT1;
 	}
 	return 0;
 }
@@ -114,7 +114,7 @@ int FileAC3::open_file(int rd, int wr)
 
 	if( !result && wr )
 	{
-  		avcodec_init();
+  		//avcodec_init();
 		avcodec_register_all();
 		codec = avcodec_find_encoder(CODEC_ID_AC3);
 		if(!codec)
@@ -128,13 +128,13 @@ int FileAC3::open_file(int rd, int wr)
 			result = 1;
 		}
 		if( !result ) {
-			codec_context = avcodec_alloc_context();
-			((AVCodecContext*)codec_context)->bit_rate = asset->ac3_bitrate * 1000;
-			((AVCodecContext*)codec_context)->sample_rate = asset->sample_rate;
-			((AVCodecContext*)codec_context)->channels = asset->channels;
-			((AVCodecContext*)codec_context)->channel_layout =
+			codec_context = avcodec_alloc_context3(codec);
+			codec_context->bit_rate = asset->ac3_bitrate * 1000;
+			codec_context->sample_rate = asset->sample_rate;
+			codec_context->channels = asset->channels;
+			codec_context->channel_layout =
 				get_channel_layout(asset->channels);
-			if(avcodec_open(((AVCodecContext*)codec_context), ((AVCodec*)codec)))
+			if(avcodec_open2(codec_context, codec, 0))
 			{
 				eprintf("FileAC3::open_file failed to open codec.\n");
 				result = 1;
@@ -154,7 +154,7 @@ int FileAC3::close_file()
 	}
 	if(codec_context)
 	{
-		avcodec_close(((AVCodecContext*)codec_context));
+		avcodec_close(codec_context);
 		free(codec_context);
 		codec_context = 0;
 		codec = 0;
@@ -242,27 +242,50 @@ int FileAC3::write_samples(double **buffer, int64_t len)
 		}
 	}
 	temp_raw_size += len;
-
-	int frame_size = ((AVCodecContext*)codec_context)->frame_size;
-	int output_size = 0;
-	int current_sample = 0;
-	for(current_sample = 0;
-		current_sample + frame_size <= temp_raw_size;
-		current_sample += frame_size)
+	
+	AVCodecContext *&avctx = codec_context;
+	int frame_size = avctx->frame_size;
+	int output_size = 0, cur_sample = 0, ret = 0;
+	for(cur_sample = 0; !ret &&
+		cur_sample + frame_size <= temp_raw_size;
+		cur_sample += frame_size)
 	{
-		int compressed_size = avcodec_encode_audio(
-			((AVCodecContext*)codec_context),
-			temp_compressed + output_size,
-			compressed_allocated - output_size,
-            temp_raw + current_sample * asset->channels);
-		output_size += compressed_size;
+		AVPacket avpkt;
+		av_init_packet(&avpkt);
+		avpkt.data = temp_compressed + output_size;
+		avpkt.size = compressed_allocated - output_size;
+		AVFrame *frame = av_frame_alloc();
+		frame->nb_samples = frame_size;
+		const uint8_t *samples = (uint8_t *)temp_raw +
+			cur_sample * sizeof(int16_t) * asset->channels;
+		int samples_sz = av_samples_get_buffer_size(NULL, avctx->channels,
+			frame_size, avctx->sample_fmt, 1);
+		int ret = avcodec_fill_audio_frame(frame, avctx->channels,
+			avctx->sample_fmt, samples, samples_sz, 1);
+		if( ret >= 0 ) {
+			frame->pts = avctx->sample_rate && avctx->time_base.num ?
+				file->get_audio_position() : AV_NOPTS_VALUE ;
+			int got_packet = 0;
+			ret = avcodec_encode_audio2(avctx, &avpkt, frame, &got_packet);
+			if( !ret ) {
+				if(got_packet && avctx->coded_frame) {
+					avctx->coded_frame->pts = avpkt.pts;
+					avctx->coded_frame->key_frame = !!(avpkt.flags & AV_PKT_FLAG_KEY);
+				}
+			}
+		}
+		av_packet_free_side_data(&avpkt);
+		output_size += avpkt.size;
+		if(frame->extended_data != frame->data)
+			av_freep(&frame->extended_data);
+		av_frame_free(&frame);
 	}
 
 // Shift buffer back
 	memcpy(temp_raw,
-		temp_raw + current_sample * asset->channels,
-		(temp_raw_size - current_sample) * sizeof(int16_t) * asset->channels);
-	temp_raw_size -= current_sample;
+		temp_raw + cur_sample * asset->channels,
+		(temp_raw_size - cur_sample) * sizeof(int16_t) * asset->channels);
+	temp_raw_size -= cur_sample;
 
 	int bytes_written = fwrite(temp_compressed, 1, output_size, fd);
 	if(bytes_written < output_size)

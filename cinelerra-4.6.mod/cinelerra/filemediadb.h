@@ -37,7 +37,6 @@ public:
 	char title[BCTEXTLEN];
 	double framerate, offset;
 
-        static char* get_format_string(Asset *asset);
         static int check_sig(Asset *asset);
 	int open_file(int rd, int wr);
 	int close_file();

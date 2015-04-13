@@ -2,7 +2,6 @@ include ../global_config
 CC = gcc
 CFLAGS += -I../libzmpeg3 -I../quicktime
 
-
 ifeq ($(OBJDIR), i686)
 CFLAGS += -DX86_CPU
 NASMOBJ = \
@@ -50,13 +49,30 @@ OBJ = \
 	$(OBJDIR)/stats.o \
 	$(OBJDIR)/writepic.o
 
+FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
+FF_LIBS := $(FFMPEG_DIR)/libswscale/libswscale.a
+FF_LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
+FF_LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
+FF_LIBS += $(FFMPEG_DIR)/libavformat/libavformat.a
+FF_LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
+FF_LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
+FF_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
+
+LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
+LAME_LIB := $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
+
 LIBS = \
 	../quicktime/$(OBJDIR)/libquicktime.a \
 	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
+	$(FF_LIBS) \
+	$(LAME_LIB) \
 	-lpthread \
 	-lpng \
+	-ljpeg \
 	-lX11 \
 	-lz \
+	-llzma \
+	-lbz2 \
 	-lm \
 	-ldl
 

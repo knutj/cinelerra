@@ -64,10 +64,11 @@ int FileGIF::check_sig(Asset *asset)
 	if(stream)
 	{
 		char test[8];
-		int temp = fread(test, 6, 1, stream);
+		int ret = fread(test, 1, 6, stream);
 		fclose(stream);
 
-		if(test[0] == 'G' && test[1] == 'I' && test[2] == 'F' &&
+		if( ret >= 6 &&
+			test[0] == 'G' && test[1] == 'I' && test[2] == 'F' &&
 			test[3] == '8' && test[4] == '7' && test[5] == 'A')
 		{
 			return 1;
@@ -100,9 +101,9 @@ int FileGIF::read_frame_header(char *path)
 	if(stream)
 	{
 		unsigned char test[16];
-		int temp = fread(test, 16, 1, stream);
+		int ret = fread(test, 16, 1, stream);
 		fclose(stream);
-
+		if( ret < 1 ) return 1;
 		asset->width = test[6] | (test[7] << 8);
 		asset->height = test[8] | (test[9] << 8);
 		asset->interlace_mode = BC_ILACE_MODE_NOTINTERLACED;
@@ -239,13 +240,14 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 
 				break;
 			}
-
+			default:
+				break;
 		}
 
 	} while(record_type != TERMINATE_RECORD_TYPE);
 
 
-	int background = gif_file->SBackGroundColor;
+	//int background = gif_file->SBackGroundColor;
 	ColorMapObject *color_map = (gif_file->Image.ColorMap
 		? gif_file->Image.ColorMap
 		: gif_file->SColorMap);

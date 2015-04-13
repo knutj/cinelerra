@@ -26,6 +26,7 @@
 #include "assets.inc"
 #include "colormodels.h"
 #include "edit.inc"
+#include "ffmpeg.inc"
 #include "guicast.h"
 #include "file.inc"
 #include "filelist.inc"
@@ -47,6 +48,7 @@ public:
 
 
 	friend class File;
+	friend class FFMPEG;
 	friend class FileList;
 	friend class FrameWriter;
 

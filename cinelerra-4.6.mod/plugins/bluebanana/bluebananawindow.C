@@ -777,7 +777,7 @@ public:
   void update(){
     // Significantly more complex than the other sliders due to the
     // circular scale.
-    float delta = (plugin->config.Hsel_hi - plugin->config.Hsel_lo);
+    //float delta = (plugin->config.Hsel_hi - plugin->config.Hsel_lo);
     loval = plugin->config.Hsel_lo;
     overval = plugin->config.Hsel_over;
     float newhival = plugin->config.Hsel_hi;
@@ -833,7 +833,7 @@ public:
     gui->commit_config_change();
   }
   void trough_color(float hdel, float vdel, float &r, float &g, float &b, float &a){
-    float val,sat,deg = hdel*360.f;
+    float deg = hdel*360.f;
     if(deg>=360)deg-=360.f;
 
     HSpV_to_RGB(deg/60.f,1.f,1.f,r,g,b);
@@ -1968,14 +1968,14 @@ void BluebananaWindow::create_objects()
   int row_h=0, row_adv=0;
   int label_x=0;
   int label_w=0;
-  int slider_left_x=0,slider_w=0;
+  int slider_w=0;
   int picker_w=0;
   int reset_w=0;
   int tumbler_w=0,tumbler_ww=0,tumbler_h=0;
   int tumbler_col1_x=0,tumbler_col2_x=0,tumbler_col2_w=0;
   int y = ymargin;
 
-  BluebananaHAReset *hareset=NULL;
+  //BluebananaHAReset *hareset=NULL;
 
   config_refcount=0;
   enter_config_change();
@@ -2348,6 +2348,7 @@ int BluebananaWindow::flush_config_change(){
     plugin->send_configure_change();
   }
   config_consume=config_produce;
+  return 0;
 }
 
 int BluebananaWindow::repeat_event(int64_t d){
@@ -2366,6 +2367,7 @@ int BluebananaWindow::repeat_event(int64_t d){
     /* push update request without an EDL update */
     plugin->server->mwindow->sync_parameters();
   }
+  return 0;
 }
 
 /* engine -> gui update; don't allow any EDL pushes */

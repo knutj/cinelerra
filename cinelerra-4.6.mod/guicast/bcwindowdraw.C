@@ -111,7 +111,7 @@ void BC_WindowBase::draw_text(int x, int y, const char *text, int length,
 	BC_Pixmap *pixmap)
 {
 	if( length < 0 ) length = strlen(text);
-	int boldface = top_level->current_font & BOLDFACE;
+	//int boldface = top_level->current_font & BOLDFACE;
 	int font = top_level->current_font & 0xff;
 
 	switch(top_level->current_font) {
@@ -328,8 +328,7 @@ void BC_WindowBase::draw_wtext(int x, int y,
 			if(altfont)
 				XftFontClose(top_level->display, altfont);
 
-			if(newpat = BC_Resources::find_similar_font(*up, basefont->pattern))
-			{
+			if( (newpat = BC_Resources::find_similar_font(*up, basefont->pattern)) != 0 ) {
 				double psize;
 
 				FcPatternGetDouble(basefont->pattern, FC_PIXEL_SIZE,

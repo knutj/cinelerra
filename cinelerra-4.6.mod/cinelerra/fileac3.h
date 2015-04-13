@@ -54,10 +54,8 @@ public:
 	int get_index(char *index_path);
 
 private:
-//	AVCodec *codec;
-//	AVCodecContext *codec_context;
-	void *codec;
-	void *codec_context;
+	AVCodec *codec;
+	AVCodecContext *codec_context;
 	FileMPEG *mpg_file;
 	FILE *fd;
 	int16_t *temp_raw;

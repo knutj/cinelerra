@@ -449,7 +449,7 @@ DenoiseMJPEG::~DenoiseMJPEG()
 int DenoiseMJPEG::process_realtime(VFrame *input, VFrame *output)
 {
 	load_configuration();
-
+	return 0;
 }
 
 const char* DenoiseMJPEG::plugin_title() { return N_("Denoise video2"); }
@@ -499,8 +499,6 @@ void DenoiseMJPEG::read_data(KeyFrame *keyframe)
 	FileXML input;
 
 	input.set_shared_input(keyframe->get_data(), strlen(keyframe->get_data()));
-
-	int result = 0;
 
 	while(!input.read_tag())
 	{

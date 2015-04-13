@@ -170,7 +170,7 @@ int cmodel_is_planar(int colormodel)
 		case BC_YUV420P:      return 1; break;
 		case BC_YUV422P:      return 1; break;
 		case BC_YUV444P:      return 1; break;
-		case BC_YUV411P:      return 1; break;
+//		case BC_YUV411P:      return 1; break;
 	}
 	return 0;
 }
@@ -231,7 +231,7 @@ int cmodel_calculate_pixelsize(int colormodel)
 		case BC_YUV422P:      return 1; break;
 		case BC_YUV444P:      return 1; break;
 		case BC_YUV422:       return 2; break;
-		case BC_YUV411P:      return 1; break;
+//		case BC_YUV411P:      return 1; break;
 		case BC_YUV9P:        return 1; break;
 	}
 	return 0;
@@ -266,7 +266,7 @@ int cmodel_calculate_datasize(int w, int h, int bytes_per_line, int color_model)
 	switch(color_model)
 	{
 		case BC_YUV420P:
-		case BC_YUV411P:
+//		case BC_YUV411P:
 			return w * h + w * h / 2 + 4;
 			break;
 
@@ -536,7 +536,7 @@ int cmodel_is_yuv(int colormodel)
 		case BC_YUV420P:
 		case BC_YUV422P:
 		case BC_YUV444P:
-		case BC_YUV411P:
+//		case BC_YUV411P:
 			return 1;
 			break;
 		

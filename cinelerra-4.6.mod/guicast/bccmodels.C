@@ -23,7 +23,6 @@
 #include <string.h>
 
 
-
 // Compression coefficients straight out of jpeglib
 #define R_TO_Y    0.29900
 #define G_TO_Y    0.58700
@@ -321,41 +320,23 @@ static void get_scale_tables(int **column_table,
 	}
 }
 
-void BC_CModels::transfer(unsigned char **output_rows, 
-	unsigned char **input_rows,
-	unsigned char *out_y_plane,
-	unsigned char *out_u_plane,
-	unsigned char *out_v_plane,
-	unsigned char *in_y_plane,
-	unsigned char *in_u_plane,
-	unsigned char *in_v_plane,
-	int in_x, 
-	int in_y, 
-	int in_w, 
-	int in_h,
-	int out_x, 
-	int out_y, 
-	int out_w, 
-	int out_h,
-	int in_colormodel, 
-	int out_colormodel,
-	int bg_color,
-	int in_rowspan,
-	int out_rowspan)
+
+void BC_CModels::transfer(unsigned char **output_rows, unsigned char **input_rows,
+	unsigned char *out_y_plane, unsigned char *out_u_plane, unsigned char *out_v_plane,
+	unsigned char *in_y_plane, unsigned char *in_u_plane, unsigned char *in_v_plane,
+	int in_x, int in_y, int in_w, int in_h, int out_x, int out_y, int out_w, int out_h,
+	int in_colormodel, int out_colormodel, int bg_color, int in_rowspan, int out_rowspan)
 {
-	int *column_table;
-	int *row_table;
-	int scale;
-	int bg_r, bg_g, bg_b;
 	int in_pixelsize = calculate_pixelsize(in_colormodel);
 	int out_pixelsize = calculate_pixelsize(out_colormodel);
 
-	bg_r = (bg_color & 0xff0000) >> 16;
-	bg_g = (bg_color & 0xff00) >> 8;
-	bg_b = (bg_color & 0xff);
+	int bg_r = (bg_color & 0xff0000) >> 16;
+	int bg_g = (bg_color & 0xff00) >> 8;
+	int bg_b = (bg_color & 0xff);
 
 // Get scaling
-	scale = (out_w != in_w) || (in_x != 0);
+	int scale = (out_w != in_w) || (in_x != 0);
+	int *column_table, *row_table;
 	get_scale_tables(&column_table, &row_table, 
 		in_x, in_y, in_x + in_w, in_y + in_h,
 		out_x, out_y, out_x + out_w, out_y + out_h);

@@ -323,7 +323,7 @@ int DeviceV4L2Base::v4l2_open(int color_model)
 	        switch(fmt.pixelformat)
 		{
 		case V4L2_PIX_FMT_YUYV:    cmodel = BC_YUV422;  merit = 4;  break;
-		case V4L2_PIX_FMT_Y41P:    cmodel = BC_YUV411P; merit = 1;  break;
+		//case V4L2_PIX_FMT_Y41P:    cmodel = BC_YUV411P; merit = 1;  break;
 		case V4L2_PIX_FMT_YVU420:  cmodel = BC_YUV420P; merit = 3;  break;
 		case V4L2_PIX_FMT_YUV422P: cmodel = BC_YUV422P; merit = 4;  break;
 		case V4L2_PIX_FMT_RGB24:   cmodel = BC_RGB888;  merit = 6;  break;
@@ -739,7 +739,7 @@ unsigned int DeviceV4L2Base::cmodel_to_device(int color_model)
 	{
 	case BC_COMPRESSED:	return V4L2_PIX_FMT_MJPEG;
 	case BC_YUV422:		return V4L2_PIX_FMT_YUYV;
-	case BC_YUV411P:	return V4L2_PIX_FMT_Y41P;
+	//case BC_YUV411P:	return V4L2_PIX_FMT_Y41P;
 	case BC_YUV420P:	return V4L2_PIX_FMT_YVU420;
 	case BC_YUV422P:	return V4L2_PIX_FMT_YUV422P;
 	case BC_RGB888:		return V4L2_PIX_FMT_RGB24;
@@ -804,7 +804,7 @@ int DeviceV4L2Base::start_dev()
 			v_offset = u_offset + u_offset / 2;
 			break;
 		case BC_YUV420P:
-		case BC_YUV411P:
+		//case BC_YUV411P:
 // In 2.6.7, the v and u are inverted for 420 but not 422
 			v_offset = iwidth * iheight;
 			u_offset = v_offset + v_offset / 4;

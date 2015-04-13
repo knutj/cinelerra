@@ -73,6 +73,9 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 	unsigned char **row_pointers,
 	int track);
 
+int quicktime_decode_audio3(
+		AVCodecContext *avctx, int16_t *samples,
+		int *frame_size_ptr, AVPacket *avpkt);
 
 
 #endif
