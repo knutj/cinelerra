@@ -42,6 +42,7 @@ OTHER_LIBS := \
 	$(TIFF_DIR)/$(OBJDIR)/libtiff.a \
 	$(FLAC_DIR)/src/libFLAC/.libs/libFLAC.a \
 	$(GIF_DIR)/$(OBJDIR)/libgif.a \
+	$(JPEG_DIR)/libjpeg-mmx.a
 
 SNDFILE_LIB := \
 	$(SNDFILE_DIR)/$(OBJDIR)/libsndfile.a \
