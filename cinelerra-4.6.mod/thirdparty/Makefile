@@ -185,6 +185,7 @@ $(FFMPEG_PATH)/.configure: \
 				-I$(LAME_PATH)/include \
 				-I$(VORBIS_PATH)/include \
 				-I$(X264_PATH)" \
+			--extra-cxxflags="-D__STDC_CONSTANT_MACROS" \
 			--extra-libs="\
 				-L$(FAAD_PATH)/libfaad/.libs/ \
 				-L$(FAAC_PATH)/libfaac/.libs/ \

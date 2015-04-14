@@ -19,13 +19,26 @@
  *
  */
 
-#include "asset.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <limits.h>
+// work around (centos) for __STDC_CONSTANT_MACROS
+#include <lzma.h>
+#ifndef INT64_MAX
+#   define INT64_MAX 9223372036854775807LL
+#endif
 
 extern "C"
 {
 #include "libavcodec/avcodec.h"
 }
 
+#include "asset.h"
 #include "clip.h"
 #include "fileac3.h"
 #include "file.h"

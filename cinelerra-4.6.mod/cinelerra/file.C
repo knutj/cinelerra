@@ -18,6 +18,20 @@
  * 
  */
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <limits.h>
+// work arounds (centos)
+#include <lzma.h>
+#ifndef INT64_MAX
+#define INT64_MAX 9223372036854775807LL
+#endif
+
 #include "asset.h"
 #include "bchash.h"
 #include "bcsignals.h"

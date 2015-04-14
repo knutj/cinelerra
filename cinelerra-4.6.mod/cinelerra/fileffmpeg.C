@@ -1,4 +1,12 @@
 
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+// work around for __STDC_CONSTANT_MACROS
+#include <lzma.h>
+
 #include "asset.h"
 #include "bcwindowbase.h"
 #include "bitspopup.h"
