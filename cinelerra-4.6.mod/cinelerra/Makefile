@@ -21,11 +21,26 @@ UUID_DIR := $(shell cd ../thirdparty/uuid*; pwd)
 VORBIS_DIR := $(shell cd ../thirdparty/libvorbis*; pwd)
 MJPEG_DIR := $(shell cd ../thirdparty/mjpegtools*; pwd)
 
+#builtin for now
+OGG_LIB := $(OGG_DIR)/src/.libs/libogg.a
+VORBIS_LIB := $(VORBIS_DIR)/lib/.libs/libvorbis.a
+THEORA_LIB := $(THEORA_DIR)/lib/.libs/libtheora.a
+LAME_LIB := $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
+X264_LIB := $(X264_DIR)/libx264.a
+MJPEG_LIB := $(MJPEG_DIR)/utils/.libs/libmjpegutils.a
+FFMPEG_LIBS := $(FFMPEG_DIR)/libswscale/libswscale.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libavformat/libavformat.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
+FFMPEG_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
+
 ifeq ($(STATIC_LIBRARIES), y)
 AVC_LIB := $(AVC_DIR)/libavc1394/.libs/libavc1394.a $(AVC_DIR)/librom1394/.libs/librom1394.a
 RAW_LIB := $(LIBRAW_DIR)/src/.libs/libraw1394.a
 IEC_LIB := $(LIBIEC_DIR)/src/.libs/libiec61883.a
-THEORA_LIB := $(THEORA_DIR)/lib/.libs/libtheora.a
+
 EXR_INCLUDES := \
 	-I$(ILMDIR)/Iex/ \
 	-I$(ILMDIR)/Half/ \
@@ -52,7 +67,6 @@ AVC_LIB := -lavc1394 -lrom1394
 RAW_LIB := -lraw1394
 IEC_LIB := -liec61883
 SNDFILE_LIB :=
-THEORA_LIB := -ltheora
 EXR_LIBS := -lIlmImf -lIlmThread -lImath -lHalf -lIex
 OTHER_LIBS := -ltiff -lFLAC -lsndfile -lgif
 ifeq ($(HAVE_ESOUND), y)
@@ -418,7 +432,7 @@ LIBRARIES = \
 	$(RAW_LIB) \
 	$(IEC_LIB) \
 	../quicktime/$(OBJDIR)/libquicktime.a \
-        $(ESOUNDLIBS) \
+	$(ESOUNDLIBS) \
 	$(EXR_LIBS) \
 	$(OTHER_LIBS) \
 	../guicast/$(OBJDIR)/libguicast.a \
@@ -429,7 +443,12 @@ LIBRARIES = \
 	$(TOOLAME_DIR)/$(OBJDIR)/toolame.a \
 	$(UUID_DIR)/$(OBJDIR)/libuuid.a \
 	$(THEME_DATA) \
-	$(THEORA_LIB)
+	$(FFMPEG_LIBS) \
+	$(OGG_LIB) \
+	$(VORBIS_LIB) \
+	$(THEORA_LIB) \
+	$(LAME_LIB) \
+	$(X264_LIB) \
 
 LIBS := \
 	-L./ \
@@ -450,18 +469,6 @@ ifeq ($(HAVE_ALSA), y)
 CFLAGS += -DHAVE_ALSA
 LIBS += -lasound
 endif
-
-LIBS += $(MJPEG_DIR)/utils/.libs/libmjpegutils.a
-LIBS += $(FFMPEG_DIR)/libswscale/libswscale.a
-LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
-LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
-LIBS += $(FFMPEG_DIR)/libavformat/libavformat.a
-LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
-LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
-LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
-
-LIBS += $(X264_DIR)/libx264.a
-LIBS += $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
 
 LIBS += \
 	-lX11 \
@@ -515,9 +522,6 @@ CFLAGS += \
 else
 LIBS += \
 	-ljpeg \
-	-logg \
-	-lvorbis \
-	-lvorbisenc \
 
 endif
 

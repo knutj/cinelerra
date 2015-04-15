@@ -4,10 +4,11 @@ TOPDIR := $(shell pwd)
 FAAC_PATH := $(shell cd faac*; pwd)
 FAAD_PATH := $(shell cd faad2*; pwd)
 LAME_PATH := $(shell cd lame*; pwd)
-VORBIS_PATH := $(shell cd libvorbis*; pwd)
 X264_PATH := $(shell cd x264*; pwd)
 DV_PATH := $(shell cd libdv*; pwd)
 OGG_PATH := $(shell cd libogg*; pwd)
+VORBIS_PATH := $(shell cd libvorbis*; pwd)
+THEORA_PATH := $(shell cd libtheora*; pwd)
 JPEG_MMX_PATH := $(shell cd jpeg-mmx*; pwd)
 FFMPEG_PATH := $(shell cd ffmpeg*; pwd)
 
@@ -77,10 +78,12 @@ $(LAME_PATH)/.built:	$(LAME_PATH)/.configure
 vorbis-configure: $(VORBIS_PATH)/.configure
 vorbis:	$(VORBIS_PATH)/.built
 
-$(VORBIS_PATH)/.configure:
+$(VORBIS_PATH)/.configure: \
+		$(OGG_PATH)/.built \
+
 	@echo "CONFIGURING VORBIS"
 	cd $(VORBIS_PATH) && \
-		CFLAGS="-I$(OGG_PATH)/include -L$(OGG_PATH)/src/" \
+		CFLAGS="-I$(OGG_PATH)/include -L$(OGG_PATH)/src/.libs/" \
 			./configure --disable-oggtest --enable-shared=no
 	touch $@
 
@@ -156,6 +159,26 @@ $(JPEG_MMX_PATH)/.built:	$(JPEG_MMX_PATH)/.configure
 	touch $@
 
 
+# theora
+.PHONY:	theora theora-configure
+vorbis-configure: $(THEORA_PATH)/.configure
+vorbis:	$(THEORA_PATH)/.built
+
+$(THEORA_PATH)/.configure: \
+		$(OGG_PATH)/.built \
+		$(VORBIS_PATH)/.built \
+
+	@echo "CONFIGURING THEORA"
+	cd $(THEORA_PATH) && \
+		CFLAGS="-I$(OGG_PATH)/include -L$(OGG_PATH)/src/.libs/\
+		-I$(VORBIS_PATH)/include -L$(VORBIS_PATH)/lib/.libs/" \
+			./configure --disable-examples --enable-shared=no
+	touch $@
+
+$(THEORA_PATH)/.built:	$(THEORA_PATH)/.configure
+	+make -C $(THEORA_PATH)
+	touch $@
+
 
 # ffmpeg
 .PHONY:	ffmpeg ffmpeg-configure
@@ -166,7 +189,7 @@ $(FFMPEG_PATH)/.configure: \
 		$(FAAD_PATH)/.built \
 		$(FAAC_PATH)/.built \
 		$(LAME_PATH)/.built \
-		$(VORBIS_PATH)/.built \
+		$(THEORA_PATH)/.built \
 		$(X264_PATH)/.built \
 
 	@echo "CONFIGURING FFMPEG"
@@ -177,6 +200,7 @@ $(FFMPEG_PATH)/.configure: \
 			--enable-libfaac \
 			--enable-libmp3lame \
 			--enable-libvorbis \
+			--enable-libtheora \
 			--enable-libx264 \
 			--enable-nonfree \
 			--extra-cflags="\
@@ -184,6 +208,7 @@ $(FFMPEG_PATH)/.configure: \
 				-I$(FAAC_PATH)/include \
 				-I$(LAME_PATH)/include \
 				-I$(VORBIS_PATH)/include \
+				-I$(THEORA_PATH)/include \
 				-I$(X264_PATH)" \
 			--extra-cxxflags="-D__STDC_CONSTANT_MACROS" \
 			--extra-libs="\
@@ -191,6 +216,7 @@ $(FFMPEG_PATH)/.configure: \
 				-L$(FAAC_PATH)/libfaac/.libs/ \
 				-L$(LAME_PATH)/libmp3lame/.libs/ \
 				-L$(VORBIS_PATH)/lib/.libs/ \
+				-L$(THEORA_PATH)/lib/.libs/ \
 				-L$(X264_PATH) -ldl" \
 			--extra-ldflags="-ldl"
 	touch $@

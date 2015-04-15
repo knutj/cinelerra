@@ -58,14 +58,24 @@ FF_LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
 FF_LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
 FF_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
 
-LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
-LAME_LIB := $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
+LAME_PATH := $(shell cd ../thirdparty/lame*; pwd)
+OGG_PATH := $(shell cd ../thirdparty/libogg*; pwd)
+VORBIS_PATH := $(shell cd ../thirdparty/libvorbis*; pwd)
+THEORA_PATH := $(shell cd ../thirdparty/libtheora*; pwd)
+
+LAME_LIB := $(LAME_PATH)/libmp3lame/.libs/libmp3lame.a
+OGG_LIB := $(OGG_PATH)/src/.libs/libogg.a
+VORBIS_LIB := $(VORBIS_PATH)/lib/.libs/libvorbis.a
+THEORA_LIB := $(THEORA_PATH)/lib/.libs/libtheora.a
 
 LIBS = \
 	../quicktime/$(OBJDIR)/libquicktime.a \
 	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
 	$(FF_LIBS) \
 	$(LAME_LIB) \
+	$(OGG_LIB) \
+	$(VORBIS_LIB) \
+	$(THEORA_LIB) \
 	-lpthread \
 	-lpng \
 	-ljpeg \

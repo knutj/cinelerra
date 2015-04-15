@@ -58,7 +58,6 @@ ifeq ($(HAVE_FIREWIRE), y)
 endif
 	$(MAKE) -C thirdparty/audiofile*
 	$(MAKE) -C thirdparty/flac*
-	$(MAKE) -C thirdparty/libtheora*
 #	$(MAKE) -C thirdparty/ilmbase*
 #	$(MAKE) -C thirdparty/ilmbase* install
 #	$(MAKE) -C thirdparty/openexr*
