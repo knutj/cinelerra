@@ -49,7 +49,7 @@ OBJ = \
 	$(OBJDIR)/stats.o \
 	$(OBJDIR)/writepic.o
 
-FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
+FFMPEG_DIR := $(shell echo ../thirdparty/ffmpeg*)
 FF_LIBS := $(FFMPEG_DIR)/libswscale/libswscale.a
 FF_LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
 FF_LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
@@ -58,24 +58,43 @@ FF_LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
 FF_LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
 FF_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
 
-LAME_PATH := $(shell cd ../thirdparty/lame*; pwd)
-OGG_PATH := $(shell cd ../thirdparty/libogg*; pwd)
-VORBIS_PATH := $(shell cd ../thirdparty/libvorbis*; pwd)
-THEORA_PATH := $(shell cd ../thirdparty/libtheora*; pwd)
+TWOLAME_PATH := $(shell echo ../thirdparty/twolame*)
+LAME_PATH := $(shell echo ../thirdparty/lame*)
+OGG_PATH := $(shell echo ../thirdparty/libogg*)
+VORBIS_PATH := $(shell echo ../thirdparty/libvorbis*)
+THEORA_PATH := $(shell echo ../thirdparty/libtheora*)
+THEORA_PATH := $(shell echo ../thirdparty/libtheora*)
+OPENJ2K_PATH := $(shell echo ../thirdparty/openjpeg*)
+VPX_PATH := $(shell echo ../thirdparty/libvpx*)
+X264_PATH := $(shell echo ../thirdparty/x264*)
 
+TWOLAME_LIB := $(TWOLAME_PATH)/libtwolame/.libs/libtwolame.a
 LAME_LIB := $(LAME_PATH)/libmp3lame/.libs/libmp3lame.a
 OGG_LIB := $(OGG_PATH)/src/.libs/libogg.a
 VORBIS_LIB := $(VORBIS_PATH)/lib/.libs/libvorbis.a
 THEORA_LIB := $(THEORA_PATH)/lib/.libs/libtheora.a
+VPX_LIB := $(VPX_PATH)/libvpx.a
+X264_LIB := $(X264_PATH)/libx264.a
 
-LIBS = \
-	../quicktime/$(OBJDIR)/libquicktime.a \
-	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
+#broken
+OPENJ2K_LIB := $(OPENJ2K_PATH)/bin/libopenjpip.a \
+	$(OPENJ2K_PATH)/bin/libopenjp3d.a \
+	$(OPENJ2K_PATH)/bin/libopenjp2.a \
+
+STATIC_LIBS := \
 	$(FF_LIBS) \
+	$(TWOLAME_LIB) \
 	$(LAME_LIB) \
 	$(OGG_LIB) \
 	$(VORBIS_LIB) \
 	$(THEORA_LIB) \
+	$(VPX_LIB) \
+	$(X264_LIB) \
+
+LIBS = \
+	../quicktime/$(OBJDIR)/libquicktime.a \
+	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
+	$(STATIC_LIBS) \
 	-lpthread \
 	-lpng \
 	-ljpeg \

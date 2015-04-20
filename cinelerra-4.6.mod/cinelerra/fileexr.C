@@ -25,6 +25,9 @@
 #include "fileexr.h"
 #include "filesystem.h"
 #include "interlacemodes.h"
+#include "mwindow.inc"
+#include "vframe.h"
+
 #include "ImathBox.h"
 #include "ImfChannelList.h"
 #include "ImfChromaticities.h"
@@ -36,9 +39,6 @@
 #include "ImfRgbaFile.h"
 #include "ImfRgbaYca.h"
 #include "ImfVersion.h"
-#include "mwindow.inc"
-#include "vframe.h"
-
 
 class EXRIStream : public Imf::IStream
 {

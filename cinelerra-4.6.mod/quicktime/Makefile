@@ -1,6 +1,7 @@
 OBJDIR := $(shell uname --machine)
 USE_MMX = 0
 CC = gcc
+OBJS := 
 
 ifeq ($(origin CFLAGS), environment)
 HAVE_CFLAGS := y
@@ -8,56 +9,51 @@ else
 HAVE_CFLAGS := n
 endif
 
-ENCORE_DIR := $(shell cd ../thirdparty/encore50; pwd)
-ENCORE_INCLUDE := $(ENCORE_DIR)/encore.h
-MPEG3_DIR := $(shell cd ../libzmpeg3*; pwd)
-MJPEG_DIR := $(shell cd ../thirdparty/mjpegtools-*; pwd)
-OBJS := 
+MJPEG_DIR = $(shell cd ../thirdparty/mjpegtools*; pwd)
 
-FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
-FFMPEG_LIB := $(OBJDIR)/ffmpeg/
-FFMPEG_INCLUDE := -I$(FFMPEG_DIR) \
+ENCORE_DIR = $(shell cd ../thirdparty/encore*; pwd)
+ENCORE_LIB = $(OBJDIR)/encore
+ENCORE_INCLUDE = $(ENCORE_DIR)/encore.h
 
-FAAD_DIR := $(shell cd ../thirdparty/faad*; pwd)
-FAAD_LIB := $(OBJDIR)/faad/
-FAAD_INCLUDE := $(FAAD_DIR)/include/
+MPEG3_DIR = $(shell cd ../libzmpeg3*; pwd)
 
-FAAC_DIR := $(shell cd ../thirdparty/faac*; pwd)
-FAAC_LIB := $(OBJDIR)/faac/
-FAAC_INCLUDE := $(FAAC_DIR)/include/
+FFMPEG_DIR = $(shell cd ../thirdparty/ffmpeg*; pwd)
+FFMPEG_LIB = $(OBJDIR)/ffmpeg/
+FFMPEG_INCLUDE = -I$(FFMPEG_DIR) \
 
-LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
-LAME_LIB := $(OBJDIR)/lame
-LAME_INCLUDE := $(LAME_DIR)
+FAAD_DIR = $(shell cd ../thirdparty/faad*; pwd)
+FAAD_LIB = $(OBJDIR)/faad/
+FAAD_INCLUDE = $(FAAD_DIR)/include/
 
-X264_DIR := $(shell cd ../thirdparty/x264*; pwd)
-X264_LIB := $(OBJDIR)/x264
-X264_INCLUDE := $(X264_DIR)
+FAAC_DIR = $(shell cd ../thirdparty/faac*; pwd)
+FAAC_LIB = $(OBJDIR)/faac/
+FAAC_INCLUDE = $(FAAC_DIR)/include/
 
-DV_DIR := $(shell cd ../thirdparty/libdv*; pwd)
-DV_LIB := $(OBJDIR)/libdv
-DV_INCLUDE := $(DV_DIR)/
+LAME_DIR = $(shell cd ../thirdparty/lame*; pwd)
+LAME_LIB = $(OBJDIR)/lame
 
-OGG_DIR := $(shell cd ../thirdparty/libogg*; pwd)
-OGG_LIB := $(OBJDIR)/ogg
+OPENJPEG_DIR = $(shell cd ../thirdparty/openjpeg*; pwd)
+OPENJPEG_LIB = $(OBJDIR)/openjpeg
 
-VORBIS_DIR := $(shell cd ../thirdparty/libvorbis*; pwd)
-VORBIS_LIB := $(OBJDIR)/vorbis
+X264_DIR = $(shell cd ../thirdparty/x264*; pwd)
+X264_LIB = $(OBJDIR)/x264
+X264_INCLUDE = $(X264_DIR)
 
-ifeq ($(OBJDIR), i686)
-  JPEG_DIR := $(shell cd ../thirdparty/jpeg-mmx*; pwd)
-  JPEG_LIB := $(OBJDIR)/$(JPEG_DIR)
-  JPEG_LIB2 := $(JPEG_DIR)/libjpeg-mmx.a
-  JPEG_INCLUDE := $(JPEG_DIR)
-else
-  JPEG_DIR := $(shell cd ../thirdparty/jpeg; pwd)
-  JPEG_LIB := $(OBJDIR)/$(JPEG_DIR)
-  JPEG_LIB2 := $(JPEG_DIR)/libjpeg.a
-  JPEG_INCLUDE := $(JPEG_DIR)
-endif
+DV_DIR = $(shell cd ../thirdparty/libdv*; pwd)
+DV_LIB = $(OBJDIR)/libdv
+DV_INCLUDE = $(DV_DIR)/
+
+OGG_DIR = $(shell cd ../thirdparty/libogg*; pwd)
+OGG_LIB = $(OBJDIR)/ogg
+
+VORBIS_DIR = $(shell cd ../thirdparty/libvorbis*; pwd)
+VORBIS_LIB = $(OBJDIR)/vorbis
+
+JPEG_DIR = $(shell cd ../thirdparty/libjpeg*; pwd)
+JPEG_LIB = $(OBJDIR)/libjpeg
+JPEG_INCLUDE = $(JPEG_DIR)
 
 ifneq ($(HAVE_CFLAGS), y)
-
 ifeq ($(OBJDIR), alpha)
   CFLAGS := -O4 -arch ev67 -ieee -accept c99_keywords -gcc_messages
 endif
@@ -70,22 +66,10 @@ endif
 ifeq ($(OBJDIR), x86_64)
   CFLAGS := -O2 -funroll-all-loops -fomit-frame-pointer -I/usr/local/include
 endif
-
 endif
 
-DIRS = $(OBJDIR)
-
-
-#include Makefile.jpeg
-#include Makefile.vorbis
-#include Makefile.lame
-#include Makefile.dv
-include Makefile.encore50
-
-CFLAGS += 
 CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 CFLAGS += -DHAVE_FIREWIRE
-
 
 OBJS += \
 	$(OBJDIR)/atom.o \
@@ -171,7 +155,6 @@ FFMPEG_OBJS := \
 	$(OBJDIR)/wma.o
 
 
-
 UTILS := \
 	$(OBJDIR)/qtdump \
 	$(OBJDIR)/make_streamable \
@@ -184,16 +167,12 @@ UTILS := \
 	$(OBJDIR)/mts2mp4
 
 
-
-
-
 OUTPUT = $(OBJDIR)/libquicktime.a
 SHAREDOUTPUT = $(OBJDIR)/libquicktime.so
 
 CFLAGS += \
 	-I. \
-	-I$(MJPEG_DIR)/usr/local/include \
-	-I$(MJPEG_DIR)/usr/local/include/mjpegtools \
+	-I$(MJPEG_DIR) -I$(MJPEG_DIR)/utils -I$(MJPEG_DIR)/lavtools \
 	-I$(ENCORE_DIR) \
 	-I$(FAAC_INCLUDE) \
 	-I$(FAAD_INCLUDE) \
@@ -211,35 +190,23 @@ CFLAGS += \
 FFMPEG_CFLAGS := $(CFLAGS) \
 	$(FFMPEG_INCLUDE) \
 
-#DIRS += \
-#	$(OBJDIR)/$(DECORE_DIR)/intel_mmx/postprocess
-
-DIRS += \
-	$(OBJDIR)/$(ENCORE_DIR) \
-	$(OBJDIR)/$(ENCORE_DIR)/att_mmx \
-	$(OBJDIR)/$(ENCORE_DIR)/colorspace \
-	$(OBJDIR)/$(ENCORE_DIR)/colorspace/intel_mmx \
-	$(OBJDIR)/$(ENCORE_DIR)/intel_mmx \
-	$(OBJDIR)/$(ENCORE_DIR)/mbcoding \
-	$(OBJDIR)/$(ENCORE_DIR)/mbmotionestcomp \
-	$(OBJDIR)/$(ENCORE_DIR)/mbmotionestcomp/intel_mmx \
-	$(OBJDIR)/$(ENCORE_DIR)/mbprediction \
-	$(OBJDIR)/$(ENCORE_DIR)/mbtransquant \
-	$(OBJDIR)/$(ENCORE_DIR)/mbtransquant/intel_mmx
-
-
 LIBS := $(OUTPUT) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a -lpng -lz -lpthread -ldl -lm
 
 
-$(shell mkdir -p $(DIRS) )
+$(shell mkdir -p $(OBJDIR) )
 $(shell echo  $(CFLAGS) > $(OBJDIR)/c_flags)
 $(shell echo  $(LAME_CFLAGS) > $(OBJDIR)/lame_flags)
-$(shell echo  $(OBJS) $(FFMPEG_OBJS) $(JPEG_LIB)/*.o $(DV_LIB)/*.o $(FAAD_LIB)/*.o $(FAAC_LIB)/*.o $(X264_LIB)/*.o $(OGG_LIB)/*.o $(VORBIS_LIB)/*.o $(LAME_OBJS) > $(OBJDIR)/objs)
+$(shell echo  $(OBJS) $(FFMPEG_OBJS) $(JPEG_LIB)/*.o $(DV_LIB)/*.o \
+		 $(FAAD_LIB)/*.o $(FAAC_LIB)/*.o $(X264_LIB)/*.o \
+		 $(OGG_LIB)/*.o $(VORBIS_LIB)/*.o $(LAME_LIB)/*.o \
+		 $(ENCORE_LIB)/*.o > $(OBJDIR)/objs)
 $(shell echo  $(FFMPEG_CFLAGS) > $(OBJDIR)/ffmpeg_cflags)
 
 all: $(OBJDIR) $(THIRDPARTY) $(OUTPUT)
 
-$(OUTPUT): $(OBJS) $(FFMPEG_OBJS) $(ENCOREMMX_OBJS) $(JPEG_NASM) $(LAME_OBJS) $(FAAD_LIB) $(FAAC_LIB) $(FFMPEG_LIB) $(X264_LIB) $(DV_LIB) $(JPEG_LIB) $(OGG_LIB) $(VORBIS_LIB) $(LAME_LIB)
+$(OUTPUT): $(OBJS) $(FFMPEG_OBJS) \
+		$(FAAD_LIB) $(FAAC_LIB) $(FFMPEG_LIB) $(X264_LIB) $(DV_LIB) \
+		$(JPEG_LIB) $(OGG_LIB) $(VORBIS_LIB) $(LAME_LIB) $(ENCORE_LIB)
 	find $(FFMPEG_DIR)/libavcodec/ -name *.o >> $(OBJDIR)/objs
 	find $(FFMPEG_DIR)/libavformat/ -name *.o >> $(OBJDIR)/objs
 	find $(FFMPEG_DIR)/libavutil/ -name *.o >> $(OBJDIR)/objs
@@ -247,48 +214,40 @@ $(OUTPUT): $(OBJS) $(FFMPEG_OBJS) $(ENCOREMMX_OBJS) $(JPEG_NASM) $(LAME_OBJS) $(
 
 # this is the only way we figured out to merge .a files
 $(FFMPEG_LIB):
-	$(MAKE) -C $(FFMPEG_DIR)
 	mkdir -p $(FFMPEG_LIB)/avcodec \
 		$(FFMPEG_LIB)/avformat \
 		$(FFMPEG_LIB)/avutil
-	cd $(FFMPEG_LIB)/avcodec && \
+	[ -d $(FFMPEG_DIR) ] && cd $(FFMPEG_LIB)/avcodec && \
 	ar x $(FFMPEG_DIR)/libavcodec/libavcodec.a &&  \
 	cd ../avformat && \
 	ar x $(FFMPEG_DIR)/libavformat/libavformat.a &&  \
 	cd ../avutil && \
 	ar x $(FFMPEG_DIR)/libavutil/libavutil.a
-#	cd ../avcore && \
-#	ar x $(FFMPEG_DIR)/libavcore/libavcore.a
 
 $(FAAD_LIB):
-	$(MAKE) -C $(FAAD_DIR) && \
 	mkdir -p $(FAAD_LIB) && \
-	cd $(FAAD_LIB) && \
+	[ -d $(FAAD_DIR) ] && cd $(FAAD_LIB) && \
 	ar x $(FAAD_DIR)/libfaad/.libs/libfaad.a
 
 $(FAAC_LIB):
-	$(MAKE) -C $(FAAC_DIR) && \
 	mkdir -p $(FAAC_LIB) && \
-	cd $(FAAC_LIB) && \
+	[ -d $(FAAC_DIR) ] && cd $(FAAC_LIB) && \
 	ar x $(FAAC_DIR)/libfaac/.libs/libfaac.a
 
 $(DV_LIB):
-	$(MAKE) -C $(DV_DIR) && \
 	mkdir -p $(DV_LIB) && \
-	cd $(DV_LIB) && \
+	[ -d $(DV_DIR) ] && cd $(DV_LIB) && \
 	ar x $(DV_DIR)/libdv/.libs/libdv.a
 
 $(JPEG_LIB):
-	$(MAKE) -C $(JPEG_DIR) && \
 	mkdir -p $(JPEG_LIB) && \
-	cd $(JPEG_LIB) && \
-	ar x $(JPEG_LIB2)
+	[ -d $(JPEB_DIR) ] && cd $(JPEG_LIB) && \
+	ar x $(JPEG_DIR)/.libs/libjpeg.a
 
 # need some trickery to get the duplicated filenames out
 $(X264_LIB):
-	$(MAKE) -C $(X264_DIR) && \
 	mkdir -p $(X264_LIB) && \
-	cd $(X264_LIB) && \
+	[ -d $(X264_DIR) ] && cd $(X264_LIB) && \
 	ar x $(X264_DIR)/libx264.a && \
 	mv predict.o predict2.o && \
 	mv cabac.o cabac2.o && \
@@ -297,24 +256,34 @@ $(X264_LIB):
 	ar xN 1 $(X264_DIR)/libx264.a predict.o cabac.o macroblock.o set.o
 
 $(OGG_LIB):
-	$(MAKE) -C $(OGG_DIR) && \
 	mkdir -p $(OGG_LIB) && \
 	cd $(OGG_LIB) && \
 	ar x $(OGG_DIR)/src/.libs/libogg.a
 
 $(VORBIS_LIB):
-	$(MAKE) -C $(VORBIS_DIR) && \
 	mkdir -p $(VORBIS_LIB) && \
-	cd $(VORBIS_LIB) && \
+	[ -d $(VORBIS_DIR) ] && cd $(VORBIS_LIB) && \
 	ar x $(VORBIS_DIR)/lib/.libs/libvorbis.a && \
 	ar x $(VORBIS_DIR)/lib/.libs/libvorbisenc.a && \
 	ar x $(VORBIS_DIR)/lib/.libs/libvorbisfile.a
 
 $(LAME_LIB):
-	$(MAKE) -C $(LAME_DIR)
 	mkdir -p $(LAME_LIB) && \
-	cd $(LAME_LIB) && \
+	[ -d $(LAME_DIR) ] && cd $(LAME_LIB) && \
 	ar x $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
+
+$(ENCORE_LIB):
+	mkdir -p $(ENCORE_LIB) && \
+	[ -d $(ENCORE_DIR) ] && cd $(ENCORE_LIB) && \
+	ar x $(ENCORE_DIR)/$(OBJDIR)/libencore.a
+
+# broken
+$(OPENJPEG_LIB):
+	mkdir -p $(OPENJPEG_LIB) && \
+	[ -d $(OPENJPEG_DIR) ] && cd $(OPENJPEG_LIB) && \
+	ar x $(OPENJPEG_DIR)/bin/libopenjpip.a && \
+	ar x $(OPENJPEG_DIR)/bin/libopenjp3d.a && \
+	ar x $(OPENJPEG_DIR)/bin/libopenjp2.a
 
 $(OBJDIR)/mts2mp4: $(OBJDIR)/mts2mp4.o $(OUTPUT)
 	$(CC) -o $(OBJDIR)/mts2mp4 $(OBJDIR)/mts2mp4.o $(LIBS)
@@ -344,29 +313,14 @@ $(OBJDIR)/qtinfo: $(OBJDIR)/qtinfo.o
 	$(CC) -o $(OBJDIR)/qtinfo $(OBJDIR)/qtinfo.o $(LIBS)
 
 util:  $(UTILS)
-	
+
 
 clean:
-	make -i -C $(FFMPEG_DIR) clean
-	make -i -C $(FAAD_DIR) clean
-	make -i -C $(FAAC_DIR) clean
-	make -i -C $(FAAD_DIR) clean
-	make -i -C $(X264_DIR) clean
-	make -i -C $(DV_DIR) clean
-	make -i -C $(OGG_DIR) clean
-	make -i -C $(VORBIS_DIR) clean
-	make -i -C $(JPEG_DIR) clean
-	find \( -name 'core*' \
-		-o -name '*.lo' \
-		-o -name '*.o' \
-		-o -name '*.la' \
-		-o -name '*.a' \
-		-o -name '*.plugin' \
+	rm -rf $(OBJDIR)
+	find \( -name 'core*' -o -name '*.plugin' \
+		-o -name '*.lo' -o -name '*.o' \
+		-o -name '*.la' -o -name '*.a' \
 		-o -name '*.so' \) -exec rm -f {} \; -prune
-	find \( -name $(OBJDIR) \) -exec rm -rf {} \; -prune
-
-wc:
-	cat *.c *.h | wc
 
 backup: clean
 	cd .. && \
@@ -375,199 +329,12 @@ backup: clean
 install:
 	cp $(UTILS) /usr/bin
 
-$(OBJDIR)/dump.o \
-$(OBJDIR)/make_streamable.o \
-$(OBJDIR)/dechunk.o \
-$(OBJDIR)/recover.o \
-$(OBJDIR)/yuv4toyuv.o \
-$(OBJDIR)/yuv2mov.o \
-$(OBJDIR)/qtinfo.o \
-$(OBJDIR)/rechunk.o \
-$(OBJS):
-	$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.c) -o $*.o
+$(OBJDIR)/%.o:		  %.c
+	$(CC) -c `cat $(OBJDIR)/c_flags` $^ -o $@
 
 $(OBJDIR)/mts2mp4.o:
 	$(CC) -c `cat $(OBJDIR)/c_flags` $(FFMPEG_INCLUDE) $(subst $(OBJDIR)/,, $*.c) -o $*.o
 
-$(JPEG_FAIL):
-	$(CC) -c -O3 -march=i686 -fmessage-length=0 $(subst $(OBJDIR)/,, $*.c) -o $*.o
-
-$(DV_OBJS):
-	$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.c) -o $*.o
-
-#$(FAAD_OBJS):
-#	$(CC) -c `cat $(OBJDIR)/faad_flags` $(subst $(OBJDIR)/,, $*.c) -o $*.o
-
-#$(FAAC_OBJS):
-#	$(CC) -c `cat $(OBJDIR)/faac_flags` $(subst $(OBJDIR)/,, $*.c) -o $*.o
-
-$(DVMMXOBJS):
-	$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.S) -o $*.o
-
-$(DVMMXOBJ): $(DV_DIR)/libdv/gasmoff.c
-	$(CC) `cat $(OBJDIR)/c_flags` $(DV_DIR)/libdv/gasmoff.c -o $(OBJDIR)/$(DV_DIR)/libdv/gasmoff -lm
-	$(OBJDIR)/$(DV_DIR)/libdv/gasmoff > $(DVMMXOBJ)
-
-$(JPEG_NASM):
-	nasm -f elf $(subst $(OBJDIR)/,, $*.s) -o $*.o
-
-$(ENCOREMMX_OBJS):
-	nasm -f elf $(subst $(OBJDIR)/,, $*.asm) -o $*.o
-
-#$(DECOREMMX_OBJS):
-#	$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.S) -o $*.o
-
-
 $(FFMPEG_OBJS):
 	$(CC) `cat $(OBJDIR)/ffmpeg_cflags` -c $(subst $(OBJDIR)/,, $*.c) -o $*.o
 
-$(LAME_OBJS):
-	$(CC) `cat $(OBJDIR)/lame_flags` -c $(subst $(OBJDIR)/,, $*.c) -o $*.o
-
-#$(FFMPEGIA32_OBJS):
-#	nasm -f elf $(subst $(OBJDIR)/,, $*.s) -o $*.o
-
-
-
-
-#$(OBJDIR)/div3.o:                         div3.c
-#$(OBJDIR)/divx.o:			  divx.c
-
-
-$(OBJDIR)/atom.o:			  atom.c
-$(OBJDIR)/avcc.o:                         avcc.c
-$(OBJDIR)/avi_hdrl.o:                     avi_hdrl.c
-$(OBJDIR)/avi_ix.o:                       avi_ix.c
-$(OBJDIR)/avi_idx1.o:                     avi_idx1.c
-$(OBJDIR)/avi_indx.o:                     avi_indx.c
-$(OBJDIR)/avi_movi.o:                     avi_movi.c
-$(OBJDIR)/avi_odml.o:                     avi_odml.c
-$(OBJDIR)/avi_riff.o:                     avi_riff.c
-$(OBJDIR)/avi_strl.o:                     avi_strl.c
-$(OBJDIR)/cmodel_default.o:		  cmodel_default.c cmodel_permutation.h
-$(OBJDIR)/cmodel_float.o:		  cmodel_float.c cmodel_permutation.h
-$(OBJDIR)/cmodel_yuv420p.o:		  cmodel_yuv420p.c cmodel_permutation.h
-$(OBJDIR)/cmodel_yuv422.o:		  cmodel_yuv422.c cmodel_permutation.h
-$(OBJDIR)/codecs.o:			  codecs.c
-$(OBJDIR)/colormodels.o:		  colormodels.c
-$(OBJDIR)/ctab.o:			  ctab.c
-$(OBJDIR)/dechunk.o:			  dechunk.c
-$(OBJDIR)/dinf.o:			  dinf.c
-$(OBJDIR)/dref.o:			  dref.c
-$(OBJDIR)/dump.o:			  dump.c
-$(OBJDIR)/edts.o:			  edts.c
-$(OBJDIR)/elst.o:			  elst.c
-$(OBJDIR)/esds.o:                         esds.c
-$(OBJDIR)/frma.o:                         frma.c
-$(OBJDIR)/graphics.o:			  graphics.c
-$(OBJDIR)/hdlr.o:			  hdlr.c
-$(OBJDIR)/ima4.o:			  ima4.c
-$(OBJDIR)/jpeg.o:			  jpeg.c
-$(OBJDIR)/libdv.o:			  libdv.c
-$(OBJDIR)/libmjpeg.o:			  libmjpeg.c
-$(OBJDIR)/make_streamable.o:		  make_streamable.c
-$(OBJDIR)/matrix.o:			  matrix.c
-$(OBJDIR)/mdat.o:			  mdat.c
-$(OBJDIR)/mdhd.o:			  mdhd.c
-$(OBJDIR)/mdia.o:			  mdia.c
-$(OBJDIR)/minf.o:			  minf.c
-$(OBJDIR)/moov.o:			  moov.c
-$(OBJDIR)/mpeg4.o:			  mpeg4.c
-$(OBJDIR)/mp4a.o:                         mp4a.c
-$(OBJDIR)/mvhd.o:			  mvhd.c
-$(OBJDIR)/plugin.o:			  plugin.c
-$(OBJDIR)/qdm2.o:                         qdm2.c
-$(OBJDIR)/qtasf.o:                        qtasf.c
-$(OBJDIR)/qtcache.o:                      qtcache.c
-$(OBJDIR)/qtdv.o:			  qtdv.c
-$(OBJDIR)/qtffmpeg.o:                     qtffmpeg.c
-$(OBJDIR)/qth264.o:                       qth264.c
-$(OBJDIR)/qtinfo.o:			  qtinfo.c
-$(OBJDIR)/qtmp3.o:                        qtmp3.c
-$(OBJDIR)/qtpng.o:			  qtpng.c
-$(OBJDIR)/quicktime.o: 		  	  quicktime.c
-$(OBJDIR)/raw.o:			  raw.c
-$(OBJDIR)/rawaudio.o:			  rawaudio.c
-$(OBJDIR)/rechunk.o:			  rechunk.c
-$(OBJDIR)/mts2mp4.o:			  mts2mp4.c
-$(OBJDIR)/recover.o:			  recover.c
-$(OBJDIR)/rle.o:                          rle.c
-$(OBJDIR)/smhd.o:			  smhd.c
-$(OBJDIR)/stbl.o:			  stbl.c
-$(OBJDIR)/stco.o:			  stco.c
-$(OBJDIR)/strl.o:			  strl.c
-$(OBJDIR)/stsc.o:			  stsc.c
-$(OBJDIR)/stsd.o:			  stsd.c
-$(OBJDIR)/stsdtable.o: 		  	  stsdtable.c
-$(OBJDIR)/stss.o:			  stss.c
-$(OBJDIR)/stsz.o:			  stsz.c
-$(OBJDIR)/stts.o:			  stts.c
-$(OBJDIR)/tkhd.o:			  tkhd.c
-$(OBJDIR)/trak.o:			  trak.c
-$(OBJDIR)/twos.o:			  twos.c
-$(OBJDIR)/udta.o:			  udta.c
-$(OBJDIR)/ulaw.o:			  ulaw.c
-$(OBJDIR)/util.o:			  util.c
-$(OBJDIR)/v308.o:                         v308.c
-$(OBJDIR)/v408.o:                         v408.c
-$(OBJDIR)/v410.o:                         v410.c
-$(OBJDIR)/vbraudio.o:                     vbraudio.c
-$(OBJDIR)/vmhd.o:			  vmhd.c
-$(OBJDIR)/vorbis.o:                       vorbis.c
-$(OBJDIR)/wma.o:		          wma.c
-$(OBJDIR)/wmx2.o:		          wmx2.c
-$(OBJDIR)/workarounds.o:		  workarounds.c
-$(OBJDIR)/yuv2.o:			  yuv2.c
-$(OBJDIR)/yuv2mov.o:                      yuv2mov.c
-$(OBJDIR)/yuv4.o:			  yuv4.c
-$(OBJDIR)/yuv4toyuv.o:			  yuv4toyuv.c
-$(OBJDIR)/yv12.o:			  yv12.c
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#include depend.vorbis
-#include depend.ffmpeg
-#include depend.jpeg
-#include depend.lame
-#include depend.dv
-include depend.encore50
-#include depend.faad
-#include depend.faac

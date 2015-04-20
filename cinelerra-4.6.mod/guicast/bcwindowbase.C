@@ -615,9 +615,6 @@ int BC_WindowBase::create_window(BC_WindowBase *parent_window,
 			parent_window->win, this->x, this->y, this->w, this->h, 0,
 			top_level->default_depth, InputOutput, top_level->vis, mask,
 			&attr);
-//for some bizzare reason this is needed
-//  or X denys the window exists in some places
-		XSync(top_level->display, 0);
 		init_window_shape();
 		if(!hidden) XMapWindow(top_level->display, win);
 	}

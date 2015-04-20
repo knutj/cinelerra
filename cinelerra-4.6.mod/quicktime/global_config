@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 OBJDIR := $(shell uname --machine)
 HAVE_CFLAGS := $(shell if [ -n "$CFLAGS" ]; then echo y; fi )
 USE_MMX = 0

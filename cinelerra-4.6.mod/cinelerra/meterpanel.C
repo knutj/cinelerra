@@ -206,26 +206,17 @@ int MeterPanel::get_meters_width(Theme *theme, int meter_count, int visible)
 int MeterPanel::get_meter_w(int number)
 {
 	int border = mwindow->theme->widget_border;
-	if(w > 0)
-	{
-		int meter_w = (w - BC_Meter::get_title_w() - 
-				(meter_count - 1) * border) / 
-			meter_count;
-		if(number == 0)
-		{
-			return BC_Meter::get_title_w() + meter_w;
-		}
-		else
-		{
-			return meter_w;
-		}
+	int meter_w;
+	if( w > 0 ) {
+		meter_w = (w - BC_Meter::get_title_w() - 
+				(meter_count - 1) * border) / meter_count;
+		if( meter_w < 3 ) meter_w = 3;
 	}
 	else
-	{
-		return (number == 0) ? 
-			BC_Meter::get_title_w() + BC_Meter::get_meter_w() : 
-			BC_Meter::get_meter_w();
-	}
+		meter_w = BC_Meter::get_meter_w();
+	if( !number )
+		meter_w += BC_Meter::get_title_w();
+	return meter_w;
 }
 
 int MeterPanel::get_meter_h()

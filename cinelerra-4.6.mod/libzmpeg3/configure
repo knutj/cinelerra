@@ -21,12 +21,7 @@ then
 
 fi
 
-
-
-# success
-if [ $ERROR = 0 ];
-then echo "Configured successfully.  Type 'make' to build it.";
+if [ $ERROR -ne 0 ]; then
+  exit 1
 fi
-
-
 

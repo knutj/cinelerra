@@ -1,79 +1,5 @@
 include ../global_config
-
-AVC_DIR := $(shell cd ../thirdparty/libavc1394*; pwd)
-DV_DIR := $(shell cd ../thirdparty/libdv*; pwd)
-EXRDIR := $(shell cd ../thirdparty/openexr*; pwd)
-ILMDIR := $(shell cd ../thirdparty/ilmbase*; pwd)
-FLAC_DIR := $(shell cd ../thirdparty/flac*; pwd)
-FFMPEG_DIR := $(shell cd ../thirdparty/ffmpeg*; pwd)
-JPEG_DIR := $(shell cd ../thirdparty/jpeg-mmx*; pwd)
-LAME_DIR := $(shell cd ../thirdparty/lame*; pwd)
-X264_DIR := $(shell cd ../thirdparty/x264*; pwd)
-LIBIEC_DIR := $(shell cd ../thirdparty/libiec61883*; pwd)
-LIBRAW_DIR := $(shell cd ../thirdparty/libraw1394*; pwd)
-OGG_DIR := $(shell cd ../thirdparty/libogg*; pwd)
-SNDFILE_DIR := $(shell cd ../thirdparty/libsndfile*; pwd)
-THEORA_DIR := $(shell cd ../thirdparty/libtheora*; pwd)
-GIF_DIR := $(shell cd ../thirdparty/giflib*; pwd)
-TIFF_DIR := $(shell cd ../thirdparty/tiff*; pwd)
-TOOLAME_DIR := $(shell cd ../thirdparty/toolame*; pwd)
-UUID_DIR := $(shell cd ../thirdparty/uuid*; pwd)
-VORBIS_DIR := $(shell cd ../thirdparty/libvorbis*; pwd)
-MJPEG_DIR := $(shell cd ../thirdparty/mjpegtools*; pwd)
-
-#builtin for now
-OGG_LIB := $(OGG_DIR)/src/.libs/libogg.a
-VORBIS_LIB := $(VORBIS_DIR)/lib/.libs/libvorbis.a
-THEORA_LIB := $(THEORA_DIR)/lib/.libs/libtheora.a
-LAME_LIB := $(LAME_DIR)/libmp3lame/.libs/libmp3lame.a
-X264_LIB := $(X264_DIR)/libx264.a
-MJPEG_LIB := $(MJPEG_DIR)/utils/.libs/libmjpegutils.a
-FFMPEG_LIBS := $(FFMPEG_DIR)/libswscale/libswscale.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libavcodec/libavcodec.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libavfilter/libavfilter.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libavformat/libavformat.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libavutil/libavutil.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libpostproc/libpostproc.a
-FFMPEG_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
-
-ifeq ($(STATIC_LIBRARIES), y)
-AVC_LIB := $(AVC_DIR)/libavc1394/.libs/libavc1394.a $(AVC_DIR)/librom1394/.libs/librom1394.a
-RAW_LIB := $(LIBRAW_DIR)/src/.libs/libraw1394.a
-IEC_LIB := $(LIBIEC_DIR)/src/.libs/libiec61883.a
-
-EXR_INCLUDES := \
-	-I$(ILMDIR)/Iex/ \
-	-I$(ILMDIR)/Half/ \
-	-I$(ILMDIR)/Imath/ \
-	-I$(ILMDIR)/Imath/ \
-	-I$(ILMDIR)/config/ \
-	-I$(ILMDIR)/IlmThread \
-	-I$(EXRDIR)/IlmImf/ \
-	-I$(EXRDIR)/config/
-
-EXR_LIBS := $(EXRDIR)/$(OBJDIR)/libexr.a \
-
-OTHER_LIBS := \
-	$(TIFF_DIR)/$(OBJDIR)/libtiff.a \
-	$(FLAC_DIR)/src/libFLAC/.libs/libFLAC.a \
-	$(GIF_DIR)/$(OBJDIR)/libgif.a \
-	$(JPEG_DIR)/libjpeg-mmx.a
-
-SNDFILE_LIB := \
-	$(SNDFILE_DIR)/$(OBJDIR)/libsndfile.a \
-
-else
-AVC_LIB := -lavc1394 -lrom1394
-RAW_LIB := -lraw1394
-IEC_LIB := -liec61883
-SNDFILE_LIB :=
-EXR_LIBS := -lIlmImf -lIlmThread -lImath -lHalf -lIex
-OTHER_LIBS := -ltiff -lFLAC -lsndfile -lgif
-ifeq ($(HAVE_ESOUND), y)
-ESOUNDLIBS := -lesd
-endif
-EXR_INCLUDES := -I/usr/include/OpenEXR
-endif
+include ../thirdparty/config.mak
 
 OBJS = \
 	$(OBJDIR)/aattachmentpoint.o \
@@ -159,13 +85,19 @@ OBJS = \
 	$(OBJDIR)/edl.o \
 	$(OBJDIR)/edlsession.o \
 	$(OBJDIR)/fadeengine.o \
+	$(OBJDIR)/ffmpeg.o \
+	$(OBJDIR)/file.o \
+	$(OBJDIR)/fileac3.o \
 	$(OBJDIR)/fileavi.o \
 	$(OBJDIR)/filebase.o \
 	$(OBJDIR)/filebaseaudio.o \
 	$(OBJDIR)/filebaseima4.o \
 	$(OBJDIR)/filebaseulaw.o \
 	$(OBJDIR)/filecr2.o \
+	$(OBJDIR)/fileffmpeg.o \
 	$(OBJDIR)/filedv.o \
+	$(OBJDIR)/fileexr.o \
+	$(OBJDIR)/fileflac.o \
 	$(OBJDIR)/filefork.o \
 	$(OBJDIR)/fileformat.o \
 	$(OBJDIR)/filegif.o \
@@ -396,19 +328,8 @@ OBJS = \
 #	$(OBJDIR)/renderfarmfsclient.o \
 #	$(OBJDIR)/renderfarmfsserver.o \
 
-# some files need different compilation options
-FILEEXR := $(OBJDIR)/fileexr.o
-FILEFLAC := $(OBJDIR)/fileflac.o
-
-FFMPEG_OBJS := $(OBJDIR)/fileffmpeg.o \
-	$(OBJDIR)/ffmpeg.o \
-	$(OBJDIR)/fileac3.o \
-	$(OBJDIR)/file.o
-
 DCRAW := $(OBJDIR)/dcraw.o
-
 THEME_DATA := $(OBJDIR)/theme_data.o
-
 
 OUTPUT = ../bin/cinelerra
 
@@ -427,48 +348,13 @@ endif
 
 
 
-LIBRARIES = \
-	$(AVC_LIB) \
-	$(RAW_LIB) \
-	$(IEC_LIB) \
+LIBS := \
 	../quicktime/$(OBJDIR)/libquicktime.a \
-	$(ESOUNDLIBS) \
-	$(EXR_LIBS) \
-	$(OTHER_LIBS) \
 	../guicast/$(OBJDIR)/libguicast.a \
 	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
-	../db/$(OBJDIR)/db.a \
-	$(SNDFILE_LIB) \
 	../mpeg2enc/$(OBJDIR)/hveg2enc.a \
-	$(TOOLAME_DIR)/$(OBJDIR)/toolame.a \
-	$(UUID_DIR)/$(OBJDIR)/libuuid.a \
+	../db/$(OBJDIR)/db.a \
 	$(THEME_DATA) \
-	$(FFMPEG_LIBS) \
-	$(OGG_LIB) \
-	$(VORBIS_LIB) \
-	$(THEORA_LIB) \
-	$(LAME_LIB) \
-	$(X264_LIB) \
-
-LIBS := \
-	-L./ \
-	-L../guicast
-
-
-ifeq ($(OBJDIR), x86_64)
-LIBS += -L/usr/lib64
-else
-LIBS += -L/usr/lib
-endif
-
-ifeq ($(HAVE_GL), y)
-LIBS += -lGL -lGLU
-endif
-
-ifeq ($(HAVE_ALSA), y)
-CFLAGS += -DHAVE_ALSA
-LIBS += -lasound
-endif
 
 LIBS += \
 	-lX11 \
@@ -483,9 +369,16 @@ LIBS += \
 	-lbz2 \
 	-llzma \
 	-lfontconfig \
-	-lfreetype
+	-lfreetype \
 
-#	-lXxf86vm \
+ifeq ($(HAVE_GL), y)
+LIBS += -lGL -lGLU
+endif
+
+ifeq ($(HAVE_ALSA), y)
+CFLAGS += -DHAVE_ALSA
+LIBS += -lasound
+endif
 
 ifeq ($(HAVE_XFT), y)
 LIBS += -lXft
@@ -497,38 +390,16 @@ CFLAGS += \
 	-g \
 	-I../guicast \
 	-I../quicktime \
-	-I$(JPEG_DIR) \
-	-I$(DV_DIR) \
-	-I$(OGG_DIR)/include \
-	-I$(VORBIS_DIR)/include \
-	-I$(LIBRAW_DIR)/ \
-	-I$(AVC_DIR) \
-	-I$(LIBIEC_DIR)/src/ \
-	-I$(TOOLAME_DIR) \
-	-I$(LAME_DIR)/include \
-	-I$(MJPEG_DIR)/usr/local/include \
-	-I$(MJPEG_DIR)/usr/local/include/mjpegtools \
 	-I../libzmpeg3 \
-	-I$(SNDFILE_DIR)/src \
-	-I$(UUID_DIR) \
-	$(ESOUNDCFLAGS) \
-	-I$(THEORA_DIR)/include
+	$(static_includes) \
 
-ifeq ($(STATIC_LIBRARIES), y)
+ifeq ($(call lib_typ,$(ilmbase)),shared)
 CFLAGS += \
-	-I$(GIF_DIR)/lib \
-	-I$(TIFF_DIR)/libtiff \
-
-else
-LIBS += \
-	-ljpeg \
-
+	-I/usr/include/OpenEXR
 endif
 
 # Speed up linking with this linking sequence
 ifeq ($(OBJDIR), alpha)
-
-
 
 LDFLAGS1 = \
 	--demangle=compaq -export-dynamic -L./ \
@@ -549,20 +420,13 @@ LDFLAGS2 = -lcpml -lcxxstdma_rh60 -lcxxma_rh60 -lc -lots \
 LINKER = ld -o $(OUTPUT)
 CFLAGS += -DUSE_ALPHA
 
-
-
 else
-
-
 
 LDFLAGS1 = -export-dynamic
 LDFLAGS2 =
 LINKER = g++ -o $(OUTPUT)
 
-
 endif
-
-
 
 
 # Enable AVIFile support
@@ -578,27 +442,18 @@ endif
 
 FFMPEG_CFLAGS := \
 	-include /usr/include/time.h \
-	-I$(FFMPEG_DIR) \
-
-#	-idirafter $(FFMPEG_DIR) \
-#	-idirafter $(FFMPEG_DIR)/libavcodec \
-	-idirafter $(FFMPEG_DIR)/libavformat \
-	-idirafter $(FFMPEG_DIR)/libavfilter \
-	-idirafter $(FFMPEG_DIR)/libavutil \
-
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)
 $(shell echo $(CFLAGS) $(FFMPEG_CFLAGS) > $(OBJDIR)/ffmpeg_cflags)
-$(shell echo $(LDFLAGS1) $(OBJS) $(DCRAW) $(FILEEXR) $(FILEFLAC) $(FFMPEG_OBJS) $(AVIOBJS) $(CXXREPOSITORY) $(LIBRARIES) $(LIBS) $(LDFLAGS2) > $(OBJDIR)/objs)
-
-
+$(shell echo $(LDFLAGS1) $(OBJS) $(DCRAW) $(FILEEXR) $(FILEFLAC) $(FFMPEG_OBJS) $(AVIOBJS) \
+ $(thirdparty_libraries) $(thirdparty_libraries) $(LIBS) $(LDFLAGS2) > $(OBJDIR)/objs)
 
 all:	$(OUTPUT) $(CUTADS)
 
 # Static linking is not possible because the plugins depend on symbols
 # in the main executable.
 # Also VFS only overrides the C library when dynamic linking is used.
-$(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(THEME_DATA) $(SNDFILE_LIB) $(LIBRARIES)
+$(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(THEME_DATA)
 	$(LINKER) `cat $(OBJDIR)/objs`
 	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT))
 
@@ -615,42 +470,18 @@ $(OBJDIR)/test:
 		$(OBJDIR)/test.so \
 		$(LIBS)
 
-#ifeq ($(STATIC_LIBRARIES), y)
-#$(SNDFILE_LIB):
-#	mkdir -p $(SNDFILE_LIB) && \
-#	cd $(SNDFILE_LIB) && \
-#	ar x ../../$(SNDFILE_DIR)/src/.libs/libsndfile.a
-#endif
-
 clean:
 	rm -rf $(OBJDIR)
 	find \( -name core \
-		-o -name '*.o' \
-		-o -name '*.a' \
+		-o -name '*.o' -o -name '*.a' \
 		-o -name '*.so' \) -exec rm -f {} \; -prune
-
-wc:
-	cat *.C *.h | wc
 
 tags:
 	ctags -R -h default --langmap=c:+.inc . ../guicast/ ../libzmpeg3 ../quicktime ../plugins
 
-#install:
-#	rm -f /usr/bin/cinelerra
-#	cp $(OUTPUT) ../bin
 
-
-$(LIBOBJS) $(OBJS) $(CUTOBJ):
-	$(CC) `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
-
-$(FILEEXR): fileexr.C
-	$(CC) `cat $(OBJDIR)/c_flags` $(EXR_INCLUDES) $(subst $(OBJDIR)/,, $*.C) -o $*.o
-
-$(FILEFLAC): fileflac.C
-	$(CC) `cat $(OBJDIR)/c_flags` -I$(FLAC_DIR)/include $(subst $(OBJDIR)/,, $*.C) -o $*.o
-
-$(FFMPEG_OBJS):
-	$(CC) `cat $(OBJDIR)/ffmpeg_cflags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
+$(OBJDIR)/%.o:		%.C
+	$(CXX) `cat $(OBJDIR)/c_flags` $^ -o $@
 
 $(DCRAW): dcraw.c
 	$(GCC) `cat $(OBJDIR)/c_flags` dcraw.c -o $*.o
@@ -659,349 +490,6 @@ $(THEME_DATA):
 	cd $(OBJDIR) && \
 	../../guicast/$(OBJDIR)/bootstrap theme_data.o ../data/mode_*.png
 
-$(OBJDIR)/aattachmentpoint.o: 			  aattachmentpoint.C
-$(OBJDIR)/aautomation.o: 			  aautomation.C
-$(OBJDIR)/aboutprefs.o:                           aboutprefs.C
-$(OBJDIR)/adeviceprefs.o: 			  adeviceprefs.C
-$(OBJDIR)/aedit.o: 				  aedit.C
-$(OBJDIR)/aedits.o: 				  aedits.C
-$(OBJDIR)/affine.o: 				  affine.C
-$(OBJDIR)/amodule.o: 				  amodule.C
-$(OBJDIR)/androidcontrol.o:			  androidcontrol.C
-$(OBJDIR)/apanel.o: 				  apanel.C
-$(OBJDIR)/apatchgui.o:  			  apatchgui.C
-$(OBJDIR)/aplugin.o: 				  aplugin.C
-$(OBJDIR)/apluginarray.o: 			  apluginarray.C
-$(OBJDIR)/apluginset.o: 			  apluginset.C
-$(OBJDIR)/arender.o: 				  arender.C
-$(OBJDIR)/asset.o:                                asset.C
-$(OBJDIR)/assetedit.o:  			  assetedit.C
-$(OBJDIR)/assetmanager.o: 			  assetmanager.C
-$(OBJDIR)/assetpopup.o: 			  assetpopup.C
-$(OBJDIR)/assetremove.o: 			  assetremove.C
-$(OBJDIR)/assets.o: 				  assets.C
-$(OBJDIR)/atrack.o: 				  atrack.C
-$(OBJDIR)/attachmentpoint.o: 			  attachmentpoint.C
-$(OBJDIR)/audio1394.o:  			  audio1394.C
-$(OBJDIR)/audioalsa.o:  			  audioalsa.C
-$(OBJDIR)/audioconfig.o: 			  audioconfig.C
-$(OBJDIR)/audiodevice.o: 			  audiodevice.C
-$(OBJDIR)/audiodvb.o: 			    	  audiodvb.C
-$(OBJDIR)/audioesound.o: 			  audioesound.C
-$(OBJDIR)/audioidevice.o: 			  audioidevice.C
-$(OBJDIR)/audioinprefs.o: 			  audioinprefs.C
-$(OBJDIR)/audioodevice.o: 			  audioodevice.C
-$(OBJDIR)/audiooss.o: 				  audiooss.C
-$(OBJDIR)/audiooutprefs.o: 			  audiooutprefs.C
-$(OBJDIR)/auto.o: 				  auto.C
-$(OBJDIR)/autos.o: 				  autos.C
-$(OBJDIR)/autoconf.o: 				  autoconf.C
-$(OBJDIR)/automation.o: 			  automation.C
-$(OBJDIR)/avc1394control.o:		          avc1394control.C
-$(OBJDIR)/avc1394transport.o:                     avc1394transport.C
-$(OBJDIR)/awindow.o: 				  awindow.C
-$(OBJDIR)/awindowgui.o: 			  awindowgui.C
-$(OBJDIR)/awindowmenu.o: 			  awindowmenu.C
-$(OBJDIR)/batch.o: 				  batch.C
-$(OBJDIR)/batchrender.o:			  batchrender.C
-$(OBJDIR)/bitspopup.o:  			  bitspopup.C
-$(OBJDIR)/brender.o:                              brender.C
-$(OBJDIR)/browsebutton.o: 			  browsebutton.C
-$(OBJDIR)/byteorderpopup.o: 			  byteorderpopup.C
-$(OBJDIR)/cache.o: 				  cache.C
-$(OBJDIR)/cachebase.o:                            cachebase.C
-$(OBJDIR)/canvas.o: 				  canvas.C
-$(OBJDIR)/canvastools.o: 			  canvastools.C
-$(OBJDIR)/channel.o: 				  channel.C
-$(OBJDIR)/channeldb.o: 				  channeldb.C
-$(OBJDIR)/channeledit.o: 			  channeledit.C
-$(OBJDIR)/channelpicker.o: 			  channelpicker.C
-$(OBJDIR)/chantables.o: 			  chantables.C
-$(OBJDIR)/clipedit.o: 			  	  clipedit.C
-$(OBJDIR)/cicolors.o:                             cicolors.C
-$(OBJDIR)/colorpicker.o:                          colorpicker.C
-$(OBJDIR)/commonrender.o: 			  commonrender.C
-$(OBJDIR)/confirmsave.o: 			  confirmsave.C
-$(OBJDIR)/confirmquit.o: 			  confirmquit.C
-$(OBJDIR)/console.o: 				  console.C
-$(OBJDIR)/consolescroll.o: 			  consolescroll.C
-$(OBJDIR)/cpanel.o: 				  cpanel.C
-$(OBJDIR)/cplayback.o:  			  cplayback.C
-$(OBJDIR)/cropvideo.o:  			  cropvideo.C
-$(OBJDIR)/ctimebar.o:                             ctimebar.C
-$(OBJDIR)/ctracking.o:  			  ctracking.C
-$(OBJDIR)/cursor.o: 				  cursor.C
-$(OBJDIR)/cwindow.o: 				  cwindow.C
-$(OBJDIR)/cwindowgui.o: 			  cwindowgui.C
-$(OBJDIR)/cwindowtool.o: 			  cwindowtool.C
-$(OBJDIR)/dcoffset.o: 				  dcoffset.C
-$(OBJDIR)/dcraw.o:                                dcraw.c
-$(OBJDIR)/deleteallindexes.o: 			  deleteallindexes.C
-$(OBJDIR)/device1394input.o:                      device1394input.C
-$(OBJDIR)/devicedvbinput.o:                       devicedvbinput.C
-$(OBJDIR)/device1394output.o:                     device1394output.C
-$(OBJDIR)/drivesync.o:  			  drivesync.C
-$(OBJDIR)/dvbtune.o:  			  	  dvbtune.C
-$(OBJDIR)/edit.o: 				  edit.C
-$(OBJDIR)/edithandles.o: 			  edithandles.C
-$(OBJDIR)/editlength.o:                           editlength.C
-$(OBJDIR)/editpanel.o:  			  editpanel.C
-$(OBJDIR)/editpopup.o:  			  editpopup.C
-$(OBJDIR)/edits.o: 				  edits.C
-$(OBJDIR)/edl.o: 				  edl.C
-$(OBJDIR)/edlsession.o: 			  edlsession.C
-$(OBJDIR)/fadeengine.o: 			  fadeengine.C
-$(OBJDIR)/ffmpeg.o:				  ffmpeg.C
-$(OBJDIR)/file.o: 				  file.C
-$(OBJDIR)/fileac3.o:                              fileac3.C
-$(OBJDIR)/fileavi.o: 				  fileavi.C
-$(OBJDIR)/filebase.o: 				  filebase.C
-$(OBJDIR)/filebaseaudio.o: 			  filebaseaudio.C
-$(OBJDIR)/filebaseima4.o: 			  filebaseima4.C
-$(OBJDIR)/filebaseulaw.o: 			  filebaseulaw.C
-$(OBJDIR)/filebasevideo.o: 			  filebasevideo.C
-$(OBJDIR)/filecr2.o:                              filecr2.C
-$(OBJDIR)/fileffmpeg.o:				  fileffmpeg.C
-$(OBJDIR)/filefork.o:	 			  filefork.C
-$(OBJDIR)/filescene.o:	 			  filescene.C
-$(OBJDIR)/fileserver.o:                           fileserver.C
-$(OBJDIR)/fileformat.o: 			  fileformat.C
-$(OBJDIR)/filegif.o: 				  filegif.C
-$(OBJDIR)/filejpeg.o: 				  filejpeg.C
-$(OBJDIR)/filelist.o: 				  filelist.C
-$(OBJDIR)/filemov.o: 				  filemov.C
-$(OBJDIR)/filempeg.o:                             filempeg.C
-$(OBJDIR)/fileogg.o:                              fileogg.C
-$(OBJDIR)/filepng.o: 				  filepng.C
-$(OBJDIR)/filesndfile.o: 			  filesndfile.C
-$(OBJDIR)/filetga.o: 			  	  filetga.C
-$(OBJDIR)/filethread.o: 			  filethread.C
-$(OBJDIR)/filetiff.o: 				  filetiff.C
-$(OBJDIR)/filevorbis.o:                           filevorbis.C
-$(OBJDIR)/filexml.o: 				  filexml.C
-$(OBJDIR)/floatauto.o:  			  floatauto.C
-$(OBJDIR)/floatautos.o: 			  floatautos.C
-$(OBJDIR)/forkwrapper.o:                          forkwrapper.C
-$(OBJDIR)/formatcheck.o: 			  formatcheck.C
-$(OBJDIR)/formatpopup.o: 			  formatpopup.C
-$(OBJDIR)/formatpresets.o:                        formatpresets.C
-$(OBJDIR)/formattools.o: 			  formattools.C
-$(OBJDIR)/fourier.o:                              fourier.C
-$(OBJDIR)/framecache.o:                           framecache.C
-$(OBJDIR)/garbage.o:                              garbage.C
-$(OBJDIR)/gwindow.o:                              gwindow.C
-$(OBJDIR)/gwindowgui.o:                           gwindowgui.C
-$(OBJDIR)/iec61883input.o:                        iec61883input.C
-$(OBJDIR)/iec61883output.o:                       iec61883output.C
-$(OBJDIR)/indexfile.o:  			  indexfile.C
-$(OBJDIR)/indexable.o:                            indexable.C
-$(OBJDIR)/indexstate.o:                           indexstate.C
-$(OBJDIR)/indexthread.o: 			  indexthread.C
-$(OBJDIR)/intauto.o:                              intauto.C
-$(OBJDIR)/intautos.o:                             intautos.C
-$(OBJDIR)/interfaceprefs.o: 			  interfaceprefs.C
-$(OBJDIR)/keyframe.o: 				  keyframe.C
-$(OBJDIR)/keyframegui.o: 			  keyframegui.C
-$(OBJDIR)/keyframepopup.o:                        keyframepopup.C
-$(OBJDIR)/keyframes.o:  			  keyframes.C
-$(OBJDIR)/keyframehandles.o: 			  keyframehandles.C
-$(OBJDIR)/labelnavigate.o: 			  labelnavigate.C
-$(OBJDIR)/labels.o: 				  labels.C
-$(OBJDIR)/levelwindow.o: 			  levelwindow.C
-$(OBJDIR)/levelwindowgui.o: 			  levelwindowgui.C
-$(OBJDIR)/loadbalance.o: 			  loadbalance.C
-$(OBJDIR)/loadfile.o: 				  loadfile.C
-$(OBJDIR)/loadmode.o: 				  loadmode.C
-$(OBJDIR)/localsession.o: 			  localsession.C
-$(OBJDIR)/main.o:	  			  main.C
-$(OBJDIR)/mainclock.o:  			  mainclock.C
-$(OBJDIR)/maincursor.o: 			  maincursor.C
-$(OBJDIR)/mainerror.o:                            mainerror.C
-$(OBJDIR)/mainindexes.o: 			  mainindexes.C
-$(OBJDIR)/mainmenu.o: 				  mainmenu.C
-$(OBJDIR)/mainprogress.o: 			  mainprogress.C
-$(OBJDIR)/mainsession.o: 			  mainsession.C
-$(OBJDIR)/mainundo.o: 				  mainundo.C
-$(OBJDIR)/maskauto.o:                             maskauto.C
-$(OBJDIR)/maskautos.o:                            maskautos.C
-$(OBJDIR)/maskengine.o:                           maskengine.C
-$(OBJDIR)/mbuttons.o: 				  mbuttons.C
-$(OBJDIR)/menuattacheffect.o:                     menuattacheffect.C
-$(OBJDIR)/menuattachtransition.o:                 menuattachtransition.C
-$(OBJDIR)/menuaeffects.o: 			  menuaeffects.C
-$(OBJDIR)/menueditlength.o:                       menueditlength.C
-$(OBJDIR)/menueffects.o: 			  menueffects.C
-$(OBJDIR)/menutransitionlength.o:                 menutransitionlength.C
-$(OBJDIR)/menuveffects.o: 			  menuveffects.C
-$(OBJDIR)/messages.o: 				  messages.C
-$(OBJDIR)/meterpanel.o: 			  meterpanel.C
-$(OBJDIR)/module.o: 				  module.C
-$(OBJDIR)/mtimebar.o:                             mtimebar.C
-$(OBJDIR)/mwindow.o: 				  mwindow.C
-$(OBJDIR)/mwindowedit.o: 			  mwindowedit.C
-$(OBJDIR)/mwindowgui.o: 			  mwindowgui.C
-$(OBJDIR)/mwindowmove.o: 			  mwindowmove.C
-$(OBJDIR)/nestededls.o: 			  nestededls.C
-$(OBJDIR)/new.o: 				  new.C
-$(OBJDIR)/newfolder.o:  			  newfolder.C
-$(OBJDIR)/overlayframe.o: 			  overlayframe.C
-$(OBJDIR)/packagedispatcher.o:                    packagedispatcher.C
-$(OBJDIR)/packagerenderer.o: 			  packagerenderer.C
-$(OBJDIR)/packagingengine.o:			  packagingengine.C
-$(OBJDIR)/panauto.o: 			          panauto.C
-$(OBJDIR)/panautos.o: 			          panautos.C
-$(OBJDIR)/panedividers.o: 			  panedividers.C
-$(OBJDIR)/patch.o: 				  patch.C
-$(OBJDIR)/patchbay.o: 				  patchbay.C
-$(OBJDIR)/patchgui.o: 				  patchgui.C
-$(OBJDIR)/performanceprefs.o: 			  performanceprefs.C
-$(OBJDIR)/picture.o:                              picture.C
-$(OBJDIR)/pipe.o:				  pipe.C
-$(OBJDIR)/playabletracks.o: 			  playabletracks.C
-$(OBJDIR)/playback3d.o:                           playback3d.C
-$(OBJDIR)/playbackconfig.o: 			  playbackconfig.C
-$(OBJDIR)/playbackengine.o: 			  playbackengine.C
-$(OBJDIR)/playbackprefs.o:                        playbackprefs.C
-$(OBJDIR)/playtransport.o: 			  playtransport.C
-$(OBJDIR)/plugin.o: 				  plugin.C
-$(OBJDIR)/pluginaclient.o: 			  pluginaclient.C
-$(OBJDIR)/pluginaclientlad.o: 			  pluginaclientlad.C
-$(OBJDIR)/pluginarray.o: 			  pluginarray.C
-$(OBJDIR)/pluginclient.o: 			  pluginclient.C
-$(OBJDIR)/plugindialog.o: 			  plugindialog.C
-$(OBJDIR)/pluginpopup.o: 			  pluginpopup.C
-$(OBJDIR)/pluginprefs.o: 			  pluginprefs.C
-$(OBJDIR)/pluginset.o:  			  pluginset.C
-$(OBJDIR)/pluginserver.o: 			  pluginserver.C
-$(OBJDIR)/plugintclient.o: 			  plugintclient.C
-$(OBJDIR)/plugintoggles.o:                        plugintoggles.C
-$(OBJDIR)/pluginvclient.o: 			  pluginvclient.C
-$(OBJDIR)/preferences.o: 			  preferences.C
-$(OBJDIR)/preferencesthread.o:  		  preferencesthread.C
-$(OBJDIR)/presets.o:                              presets.C
-$(OBJDIR)/presetsgui.o:                           presetsgui.C
-$(OBJDIR)/previewaudio.o: 			  previewaudio.C
-$(OBJDIR)/previewvideo.o: 			  previewvideo.C
-$(OBJDIR)/question.o: 				  question.C
-$(OBJDIR)/quit.o: 				  quit.C
-$(OBJDIR)/recconfirmdelete.o: 			  recconfirmdelete.C
-$(OBJDIR)/record.o: 				  record.C
-$(OBJDIR)/recordableatracks.o:  		  recordableatracks.C
-$(OBJDIR)/recordablevtracks.o:  		  recordablevtracks.C
-$(OBJDIR)/recordaudio.o: 			  recordaudio.C
-$(OBJDIR)/recordconfig.o: 			  recordconfig.C
-$(OBJDIR)/recordgui.o:  			  recordgui.C
-$(OBJDIR)/recordlabel.o: 			  recordlabel.C
-$(OBJDIR)/recordmonitor.o: 			  recordmonitor.C
-$(OBJDIR)/recordprefs.o:                          recordprefs.C
-$(OBJDIR)/recordscopes.o: 			  recordscopes.C
-$(OBJDIR)/recordthread.o: 			  recordthread.C
-$(OBJDIR)/recordtransport.o: 			  recordtransport.C
-$(OBJDIR)/recordvideo.o: 			  recordvideo.C
-$(OBJDIR)/removefile.o:				  removefile.C
-$(OBJDIR)/render.o: 				  render.C
-$(OBJDIR)/renderengine.o: 			  renderengine.C
-$(OBJDIR)/renderfarm.o: 			  renderfarm.C
-$(OBJDIR)/renderfarmclient.o: 			  renderfarmclient.C
-$(OBJDIR)/renderfarmfsclient.o: 		  renderfarmfsclient.C
-$(OBJDIR)/renderfarmfsserver.o: 		  renderfarmfsserver.C
-$(OBJDIR)/resample.o: 				  resample.C
-$(OBJDIR)/resizetrackthread.o:                    resizetrackthread.C
-$(OBJDIR)/resourcepixmap.o: 			  resourcepixmap.C
-$(OBJDIR)/resourcethread.o:                       resourcethread.C
-$(OBJDIR)/samples.o: 			          samples.C
-$(OBJDIR)/samplescroll.o: 			  samplescroll.C
-$(OBJDIR)/savefile.o: 				  savefile.C
-$(OBJDIR)/scopewindow.o:                          scopewindow.C
-$(OBJDIR)/scenegraph.o:                           scenegraph.C
-$(OBJDIR)/setformat.o:                            setformat.C
-$(OBJDIR)/sha1.o: 				  sha1.C
-$(OBJDIR)/sharedlocation.o: 			  sharedlocation.C
-$(OBJDIR)/shmemory.o: 				  shmemory.C
-$(OBJDIR)/sighandler.o:                           sighandler.C
-$(OBJDIR)/splashgui.o: 				  splashgui.C
-$(OBJDIR)/statusbar.o:  			  statusbar.C
-$(OBJDIR)/theme.o: 				  theme.C
-$(OBJDIR)/threadexec.o:                           threadexec.C
-$(OBJDIR)/threadfork.o:                           threadfork.C
-$(OBJDIR)/threadloader.o: 			  threadloader.C
-$(OBJDIR)/timebar.o: 				  timebar.C
-$(OBJDIR)/timebomb.o: 				  timebomb.C
-$(OBJDIR)/timeentry.o:  			  timeentry.C
-$(OBJDIR)/timelinepane.o:  			  timelinepane.C
-$(OBJDIR)/tipwindow.o:                            tipwindow.C
-$(OBJDIR)/toggleauto.o: 			  toggleauto.C
-$(OBJDIR)/toggleautos.o: 			  toggleautos.C
-$(OBJDIR)/track.o: 				  track.C
-$(OBJDIR)/trackcanvas.o: 			  trackcanvas.C
-$(OBJDIR)/tracking.o: 				  tracking.C
-$(OBJDIR)/tracks.o: 				  tracks.C
-$(OBJDIR)/trackscroll.o: 			  trackscroll.C
-$(OBJDIR)/tracksedit.o: 			  tracksedit.C
-$(OBJDIR)/transition.o: 			  transition.C
-$(OBJDIR)/transitionhandles.o:  		  transitionhandles.C
-$(OBJDIR)/transitionpopup.o: 			  transitionpopup.C
-$(OBJDIR)/transportque.o: 			  transportque.C
-$(OBJDIR)/tunerserver.o: 			  tunerserver.C
-$(OBJDIR)/undostack.o:  			  undostack.C
-$(OBJDIR)/vattachmentpoint.o: 			  vattachmentpoint.C
-$(OBJDIR)/vautomation.o: 			  vautomation.C
-$(OBJDIR)/vdevice1394.o: 			  vdevice1394.C
-$(OBJDIR)/vdevicebase.o: 			  vdevicebase.C
-$(OBJDIR)/vdevicebuz.o: 			  vdevicebuz.C
-$(OBJDIR)/vdevicedvb.o:                           vdevicedvb.C
-$(OBJDIR)/vdeviceprefs.o: 			  vdeviceprefs.C
-$(OBJDIR)/vdevicev4l.o: 			  vdevicev4l.C
-$(OBJDIR)/vdevicev4l2.o:                          vdevicev4l2.C
-$(OBJDIR)/vdevicev4l2jpeg.o:                      vdevicev4l2jpeg.C
-$(OBJDIR)/vdevicex11.o: 			  vdevicex11.C
-$(OBJDIR)/vedit.o: 				  vedit.C
-$(OBJDIR)/vedits.o: 				  vedits.C
-$(OBJDIR)/videoconfig.o: 			  videoconfig.C
-$(OBJDIR)/videodevice.o: 			  videodevice.C
-$(OBJDIR)/videoinprefs.o: 			  videoinprefs.C
-$(OBJDIR)/videooutprefs.o: 			  videooutprefs.C
-$(OBJDIR)/videowindow.o: 			  videowindow.C
-$(OBJDIR)/videowindowgui.o: 			  videowindowgui.C
-$(OBJDIR)/viewmenu.o: 				  viewmenu.C
-$(OBJDIR)/virtualnode.o: 			  virtualnode.C
-$(OBJDIR)/virtualaconsole.o: 			  virtualaconsole.C
-$(OBJDIR)/virtualanode.o: 			  virtualanode.C
-$(OBJDIR)/virtualconsole.o: 			  virtualconsole.C
-$(OBJDIR)/virtualvconsole.o: 			  virtualvconsole.C
-$(OBJDIR)/virtualvnode.o: 			  virtualvnode.C
-$(OBJDIR)/vmodule.o: 				  vmodule.C
-$(OBJDIR)/vpatchgui.o:  			  vpatchgui.C
-$(OBJDIR)/vplayback.o:  			  vplayback.C
-$(OBJDIR)/vplugin.o: 				  vplugin.C
-$(OBJDIR)/vpluginarray.o: 			  vpluginarray.C
-$(OBJDIR)/vpluginset.o: 			  vpluginset.C
-$(OBJDIR)/vtimebar.o:                             vtimebar.C
-$(OBJDIR)/vrender.o: 				  vrender.C
-$(OBJDIR)/vtrack.o: 				  vtrack.C
-$(OBJDIR)/vtracking.o:  			  vtracking.C
-$(OBJDIR)/vwindow.o: 				  vwindow.C
-$(OBJDIR)/vwindowgui.o: 			  vwindowgui.C
-$(OBJDIR)/wavecache.o:                            wavecache.C
-$(OBJDIR)/zoombar.o: 				  zoombar.C
-$(OBJDIR)/zoompanel.o:  			  zoompanel.C
-
-$(OBJDIR)/devicempeginput.o:  			  devicempeginput.C
-$(OBJDIR)/devicev4l2base.o:  			  devicev4l2base.C
-$(OBJDIR)/devicev4l2input.o:  			  devicev4l2input.C
-$(OBJDIR)/vdevicempeg.o:  			  vdevicempeg.C
-$(OBJDIR)/audiompeg.o:  			  audiompeg.C
-$(OBJDIR)/audiov4l2mpeg.o:			  audiov4l2mpeg.C
-$(OBJDIR)/vdevicev4l2mpeg.o:			  vdevicev4l2mpeg.C
-$(OBJDIR)/channelinfo.o:  			  channelinfo.C
-$(OBJDIR)/recordbatches.o:  			  recordbatches.C
-$(OBJDIR)/remotecontrol.o:  			  remotecontrol.C
-$(OBJDIR)/mediadb.o:                              mediadb.C
-$(OBJDIR)/commercials.o:  			  commercials.C
-$(OBJDIR)/dbwindow.o:	  			  dbwindow.C
-$(OBJDIR)/filedb.o:                               filedb.C
-$(OBJDIR)/cutads.o:                               cutads.C
-$(OBJDIR)/signalstatus.o:                         signalstatus.C
-$(OBJDIR)/strack.o:                               strack.C
-$(OBJDIR)/swindow.o:                              swindow.C
+val-%:
+	@echo $($(subst val-,,$@))
 

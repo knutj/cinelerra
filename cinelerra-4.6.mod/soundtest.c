@@ -18,7 +18,8 @@
 #include <sys/ioctl.h>
 #include <math.h>
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[])
+{
 	int dsp;
 	int duplexenable = 1;
 	audio_buf_info playinfo, recinfo;
@@ -161,6 +162,7 @@ int main(int argc, char *argv[]){
 	
   ioctl(dsp, SNDCTL_DSP_RESET);
   close(dsp);
+  return 0;
 }
 
 

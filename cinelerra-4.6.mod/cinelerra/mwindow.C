@@ -3468,7 +3468,7 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 	if( !result && asset->channels > 0 ) {
 		session->sample_rate = asset->get_sample_rate();
 		result = file->get_audio_for_video(vstream, channels, astream);
-		if( result ) channels = (1<<asset->channels)-1;
+		if( result || !channels ) channels = (1<<asset->channels)-1;
 		result = 0;
 		for( int64_t mask=channels; mask!=0; mask>>=1 ) result += mask & 1;
 		if( result > 6 ) result = 6;

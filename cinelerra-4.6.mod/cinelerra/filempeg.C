@@ -94,7 +94,6 @@ FileMPEG::FileMPEG(Asset *asset, File *file)
 	asset->byte_order = 0;
 	next_frame_lock = new Condition(0, "FileMPEG::next_frame_lock");
 	next_frame_done = new Condition(0, "FileMPEG::next_frame_done");
-	acommand_line.set_array_delete();
 	vcommand_line.set_array_delete();
 }
 
@@ -103,7 +102,6 @@ FileMPEG::~FileMPEG()
 	close_file();
 	delete next_frame_lock;
 	delete next_frame_done;
-	acommand_line.remove_all_objects();
 	vcommand_line.remove_all_objects();
 }
 
@@ -354,12 +352,14 @@ int FileMPEG::reset_parameters_derived()
         recd_fd = -1;
 	fd = 0;
 	video_out = 0;
-	audio_out = 0;
 	prev_track = 0;
 	temp_frame = 0;
-	toolame_temp = 0;
-	toolame_allocation = 0;
-	toolame_result = 0;
+	twolame_temp = 0;
+	twolame_out = 0;
+	twolame_allocation = 0;
+	twolame_result = 0;
+	twofp = 0;
+	twopts = 0;
 	lame_temp[0] = 0;
 	lame_temp[1] = 0;
 	lame_allocation = 0;
@@ -670,22 +670,16 @@ int FileMPEG::open_file(int rd, int wr)
 
 		if(asset->ampeg_derivative == 2)
 		{
-			char string[BCTEXTLEN];  string[0] = 0;
-			append_acommand_line("toolame");
-			append_acommand_line("-m");
-			append_acommand_line((asset->channels >= 2) ? "j" : "m");
-			sprintf(string, "%f", (float)asset->sample_rate / 1000);
-//			sprintf(string, "%f", (float)asset->sample_rate);
-			append_acommand_line("-s");
-			append_acommand_line(string);
-			sprintf(string, "%d", asset->ampeg_bitrate);
-			append_acommand_line("-b");
-			append_acommand_line(string);
-			append_acommand_line("-");
-			append_acommand_line(asset->path);
-
-			audio_out = new FileMPEGAudio(this);
-			audio_out->start();
+			twofp = fopen(asset->path, "w" );
+			if( !twofp ) return 1;
+			twopts = twolame_init();
+			int channels = asset->channels >= 2 ? 2 : 1;
+			twolame_set_num_channels(twopts, channels);
+			twolame_set_in_samplerate(twopts, asset->sample_rate);
+			twolame_set_mode(twopts, channels >= 2 ?
+				TWOLAME_JOINT_STEREO : TWOLAME_MONO);
+			twolame_set_bitrate(twopts, asset->ampeg_bitrate);
+			twolame_init_params(twopts);
 		}
 		else
 		if(asset->ampeg_derivative == 3)
@@ -915,16 +909,6 @@ void FileMPEG::append_vcommand_line(const char *string)
 	}
 }
 
-void FileMPEG::append_acommand_line(const char *string)
-{
-	if(string[0])
-	{
-		char *argv = cstrdup(string);
-		acommand_line.append(argv);
-	}
-}
-
-
 int FileMPEG::close_file()
 {
 	mjpeg_eof = 1;
@@ -947,20 +931,23 @@ int FileMPEG::close_file()
 	}
 
 	vcommand_line.remove_all_objects();
-	acommand_line.remove_all_objects();
 
-	if(audio_out)
-	{
-		toolame_send_buffer(0, 0);
-		delete audio_out;
-		audio_out = 0;
+	if(twofp) {
+		unsigned char opkt[1152*2]; 
+		int ret = twolame_encode_flush(twopts, opkt, sizeof(opkt));
+		if( ret > 0 )
+			fwrite(opkt, 1, ret, twofp);
+		else if( ret < 0 )
+			fprintf(stderr, "twolame error encoding audio: %d\n", ret);
+		fclose(twofp);  twofp = 0;
 	}
+	if( twopts ) { twolame_close(&twopts); twopts = 0; }
 
 	if(lame_global)
 		lame_close(lame_global);
 
 	if(temp_frame) delete temp_frame;
-	if(toolame_temp) delete [] toolame_temp;
+	if(twolame_temp) delete [] twolame_temp;
 
 	if(lame_temp[0]) delete [] lame_temp[0];
 	if(lame_temp[1]) delete [] lame_temp[1];
@@ -1196,31 +1183,35 @@ int FileMPEG::write_samples(double **buffer, int64_t len)
 	int result = 0;
 
 //printf("FileMPEG::write_samples 1\n");
-	if(asset->ampeg_derivative == 2)
-	{
+	if(asset->ampeg_derivative == 2) {
 // Convert to int16
 		int channels = MIN(asset->channels, 2);
 		int64_t audio_size = len * channels * 2;
-		if(toolame_allocation < audio_size)
-		{
-			if(toolame_temp) delete [] toolame_temp;
-			toolame_temp = new unsigned char[audio_size];
-			toolame_allocation = audio_size;
+		if(twolame_allocation < audio_size) {
+			if(twolame_temp) delete [] twolame_temp;
+			twolame_temp = new unsigned char[audio_size];
+			twolame_allocation = audio_size;
+			if(twolame_out) delete [] twolame_out;
+			twolame_out = new unsigned char[audio_size + 1152];
 		}
 
-		for(int i = 0; i < channels; i++)
-		{
-			int16_t *output = ((int16_t*)toolame_temp) + i;
+		for(int i = 0; i < channels; i++) {
+			int16_t *output = ((int16_t*)twolame_temp) + i;
 			double *input = buffer[i];
-			for(int j = 0; j < len; j++)
-			{
+			for(int j = 0; j < len; j++) {
 				int sample = (int)(*input * 0x7fff);
 				*output = (int16_t)(CLIP(sample, -0x8000, 0x7fff));
 				output += channels;
 				input++;
 			}
 		}
-		result = toolame_send_buffer((char*)toolame_temp, audio_size);
+		int ret = twolame_encode_buffer_interleaved(twopts,
+				(int16_t*)twolame_temp, len,
+				twolame_out, twolame_allocation+1152);
+		if( ret > 0 )
+			fwrite(twolame_out, 1, ret, twofp);
+		else if( ret < 0 )
+			fprintf(stderr, "twolame error encoding audio: %d\n", ret);
 	}
 	else
 	if(asset->ampeg_derivative == 3)
@@ -1783,38 +1774,6 @@ void FileMPEGVideo::run()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-FileMPEGAudio::FileMPEGAudio(FileMPEG *file)
- : Thread(1, 0, 0)
-{
-	this->file = file;
-	toolame_init_buffers();
-}
-
-FileMPEGAudio::~FileMPEGAudio()
-{
-	Thread::join();
-}
-
-void FileMPEGAudio::run()
-{
-	file->toolame_result = toolame(file->acommand_line.total, file->acommand_line.values);
-}
 
 
 

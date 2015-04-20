@@ -8,17 +8,12 @@ ifeq ($(HAVE_XFT), y)
 CFLAGS += -DHAVE_XFT
 endif
 
-DEST := /usr/bin
-
-#CFLAGS += -g
-
 ifeq ($(OBJDIR), i686)
 BOOTSTRAPFLAGS := -DBOOTSTRAP="\"objcopy -B i386 -I binary -O elf32-i386\""
 endif
 
 ifeq ($(OBJDIR), x86_64)
 BOOTSTRAPFLAGS := -DBOOTSTRAP="\"objcopy -B i386 -I binary -O elf64-x86-64\""
-LFLAGS += -L/usr/X11R6/lib64
 endif
 
 
@@ -97,13 +92,12 @@ OBJS = \
 	$(OBJDIR)/vframe3d.o \
 	$(OBJDIR)/workarounds.o
 
-OUTPUT = $(OBJDIR)/libguicast.so
-STATICOUTPUT = $(OBJDIR)/libguicast.a
+OUTPUT = $(OBJDIR)/libguicast.a
 
 TESTLIBS := \
-		$(STATICOUTPUT) \
+		$(OUTPUT) \
 		../quicktime/$(OBJDIR)/libquicktime.a \
-		$(LFLAGS) \
+		$(LDFLAGS) \
 		$(GLLIBS) \
 		-lX11 \
 		-lXext \
@@ -112,28 +106,24 @@ TESTLIBS := \
 		-lm \
 		-lpng
 
-#		-lXxf86vm \
-
 ifeq ($(HAVE_XFT), y)
 TESTLIBS += -lXft
 endif	
 
 ifeq ($(HAVE_GL), y)
-TESTLIBS += -lGL
+TESTLIBS += -lGL -lGLU
 endif
 
 UTILS = $(OBJDIR)/bootstrap $(OBJDIR)/pngtoh $(OBJDIR)/pngtoraw
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)
-$(shell echo $(OBJS) $(CXXREPOSITORY) > $(OBJDIR)/objs)
+$(shell echo $(OBJS) > $(OBJDIR)/objs)
+
+all: $(OUTPUT) $(UTILS)
 
 
-# PTHREAD DOESN'T WORK WHEN LINKED HERE
-all: $(STATICOUTPUT) $(UTILS)
-
-
-$(STATICOUTPUT): $(OBJS)
-	ar rcs $(STATICOUTPUT) `cat $(OBJDIR)/objs`
+$(OUTPUT): $(OBJS)
+	ar rcs $(OUTPUT) `cat $(OBJDIR)/objs`
 
 $(OBJDIR)/bootstrap:
 	gcc -O2 $(BOOTSTRAPFLAGS) bootstrap.c -o $(OBJDIR)/bootstrap
@@ -144,12 +134,10 @@ $(OBJDIR)/pngtoh: pngtoh.c
 $(OBJDIR)/pngtoraw: pngtoraw.c
 	gcc -O2 pngtoraw.c -o $(OBJDIR)/pngtoraw -lpng -lz
 
-replace:  replace.o $(STATICOUTPUT)
-	$(CC) -o replace replace.o $(STATICOUTPUT) \
+replace:  replace.o $(OUTPUT)
+	$(CC) -o replace replace.o $(OUTPUT) \
 	../quicktime/i686/libquicktime.a \
-	$(LFLAGS) \
-	$(XLIBS) \
-	-lpng
+	$(LDFLAGS) $(XLIBS) -lpng
 
 #	$(XXF86VM) \
 
@@ -173,106 +161,19 @@ test3:	$(OBJDIR)/test3.o $(STATICOUTPUT)
 clean:
 	rm -rf $(OBJDIR)
 	find \( -name core \
-		-o -name '*.o' \
-		-o -name '*.a' \
+		-o -name '*.o' -o -name '*.a' \
 		-o -name '*.so' \) -exec rm -f {} \;
 
-wc:
-	cat *.C *.h | wc
+$(LIBOBJS) $(OBJS) $(CUTOBJ):
 
-backup: clean
-	cd .. && \
-	tar Icvf ~/guicast.tar.bz2 guicast
-
-install:
-	cp $(OBJDIR)/pngtoh $(OBJDIR)/bootstrap $(DEST)
-
+$(OBJDIR)/%.o:          %.C
 $(OBJS) $(OBJDIR)/test.o $(OBJDIR)/test2.o $(OBJDIR)/test3.o $(OBJDIR)/replace.o:
-	@echo $(CC) -c \`cat $(OBJDIR)/c_flags\` $(subst $(OBJDIR)/,, $*.C) -o $*.o
-	@$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
+	$(CXX) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
 
 $(OBJDIR)/bootstrap: bootstrap.c
 $(OBJDIR)/pngtoh: pngtoh.c
+$(OBJDIR)/bccmodel_default.o:	      bccmodel_permutation.h
 
-$(OBJDIR)/bcbar.o:                                            bcbar.C
-$(OBJDIR)/bcbitmap.o: 	   				      bcbitmap.C
-$(OBJDIR)/bcbutton.o: 	   				      bcbutton.C
-$(OBJDIR)/bccapture.o:     				      bccapture.C
-$(OBJDIR)/bccmodel_default.o:				      bccmodel_default.C bccmodel_permutation.h
-$(OBJDIR)/bccmodel_float.o:				      bccmodel_float.C
-$(OBJDIR)/bccmodels.o:					      bccmodels.C
-$(OBJDIR)/bccmodel_yuv420p.o:				      bccmodel_yuv420p.C
-$(OBJDIR)/bccmodel_yuv422.o:				      bccmodel_yuv422.C
-$(OBJDIR)/bccounter.o:                                        bccounter.C
-$(OBJDIR)/bcclipboard.o:   				      bcclipboard.C
-$(OBJDIR)/bcdelete.o:                                         bcdelete.C
-$(OBJDIR)/bcdialog.o:                                         bcdialog.C
-$(OBJDIR)/bcdisplay.o: 				      	      bcdisplay.C
-$(OBJDIR)/bcdisplayinfo.o: 				      bcdisplayinfo.C
-$(OBJDIR)/bcdragwindow.o:  				      bcdragwindow.C
-$(OBJDIR)/bcfilebox.o:     				      bcfilebox.C
-$(OBJDIR)/bcfontentry.o:				      bcfontentry.C
-$(OBJDIR)/bcwidgetgrid.o:				      bcwidgetgrid.C
-$(OBJDIR)/bchash.o:                                           bchash.C
-$(OBJDIR)/bcipc.o: 	   				      bcipc.C
-$(OBJDIR)/bclistbox.o:     				      bclistbox.C
-$(OBJDIR)/bclistboxitem.o:     				      bclistboxitem.C
-$(OBJDIR)/bcmenu.o:                                           bcmenu.C
-$(OBJDIR)/bcmenubar.o:                                        bcmenubar.C
-$(OBJDIR)/bcmenuitem.o:                                       bcmenuitem.C
-$(OBJDIR)/bcmenupopup.o:                                      bcmenupopup.C
-$(OBJDIR)/bcmeter.o: 	   				      bcmeter.C
-$(OBJDIR)/bcnewfolder.o:                                      bcnewfolder.C
-$(OBJDIR)/bcpan.o: 	   				      bcpan.C
-$(OBJDIR)/bcpbuffer.o:                                        bcpbuffer.C
-$(OBJDIR)/bcpixmap.o: 	   				      bcpixmap.C
-$(OBJDIR)/bcpopup.o: 	   				      bcpopup.C
-$(OBJDIR)/bcpopupmenu.o:   				      bcpopupmenu.C
-$(OBJDIR)/bcpot.o: 	   				      bcpot.C
-$(OBJDIR)/bcprogress.o:    				      bcprogress.C
-$(OBJDIR)/bcprogressbox.o: 				      bcprogressbox.C
-$(OBJDIR)/bcrename.o:    				      bcrename.C
-$(OBJDIR)/bcrepeater.o:    				      bcrepeater.C
-$(OBJDIR)/bcresources.o:   				      bcresources.C
-$(OBJDIR)/bcrecentlist.o:				      bcrecentlist.C
-$(OBJDIR)/bcrelocatablewidget.o:			      bcrelocatablewidget.C
-$(OBJDIR)/bcscrollbar.o:   				      bcscrollbar.C
-$(OBJDIR)/bcsignals.o:     				      bcsignals.C
-$(OBJDIR)/bcslider.o: 	   				      bcslider.C
-$(OBJDIR)/bcsubwindow.o:   				      bcsubwindow.C
-$(OBJDIR)/bcsynchronous.o:                                    bcsynchronous.C
-$(OBJDIR)/bctextbox.o:     				      bctextbox.C
-$(OBJDIR)/bctexture.o:                                        bctexture.C
-$(OBJDIR)/bctitle.o: 	   				      bctitle.C
-$(OBJDIR)/bctheme.o: 	   				      bctheme.C
-$(OBJDIR)/bctoggle.o: 	   				      bctoggle.C
-$(OBJDIR)/bctumble.o: 	   				      bctumble.C
-$(OBJDIR)/bcwindow3d.o:                                       bcwindow3d.C
-$(OBJDIR)/bcwindow.o: 	   				      bcwindow.C
-$(OBJDIR)/bcwindowbase.o:  				      bcwindowbase.C
-$(OBJDIR)/bcwindowdraw.o:  				      bcwindowdraw.C
-$(OBJDIR)/bcwindowevents.o:  				      bcwindowevents.C
-$(OBJDIR)/condition.o:  				      condition.C
-$(OBJDIR)/errorbox.o: 	   				      errorbox.C
-$(OBJDIR)/defaults.o: 	   				      defaults.C
-$(OBJDIR)/filesystem.o:    				      filesystem.C
-$(OBJDIR)/mutex.o: 	   				      mutex.C
-$(OBJDIR)/rotateframe.o:                                      rotateframe.C
-$(OBJDIR)/sema.o: 	   				      sema.C
-$(OBJDIR)/stringfile.o:    				      stringfile.C
-$(OBJDIR)/test.o: 	   				      test.C
-$(OBJDIR)/test2.o: 	   				      test2.C
-$(OBJDIR)/test3.o: 	   				      test3.C
-$(OBJDIR)/testobject.o:                                       testobject.C
-$(OBJDIR)/thread.o: 	   				      thread.C
-$(OBJDIR)/bctimer.o: 	   				      bctimer.C
-$(OBJDIR)/units.o: 	   				      units.C
-$(OBJDIR)/vframe.o: 	   				      vframe.C
-$(OBJDIR)/vframe3d.o: 	   				      vframe3d.C
-$(OBJDIR)/workarounds.o:   				      workarounds.C
-
-
-
-
-
+val-%:
+	@echo $($(subst val-,,$@))
 

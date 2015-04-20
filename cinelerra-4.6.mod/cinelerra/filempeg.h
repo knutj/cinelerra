@@ -26,7 +26,8 @@
 #include "condition.inc"
 #include "file.inc"
 #include "filebase.h"
-#include "lame.h"
+#include "twolame.h"
+#include "lame/lame.h"
 #include "libzmpeg3.h"
 #include "thread.h"
 
@@ -45,16 +46,11 @@ void mpeg2enc_set_input_buffers(int eof, char *y, char *u, char *v);
 
 
 
-// Toolame prototypes
-void toolame_init_buffers();
-int toolame(int argc, char **argv);
-int toolame_send_buffer(char *data, int bytes);
 
 
 }
 
 class FileMPEGVideo;
-class FileMPEGAudio;
 
 class FileMPEG : public FileBase
 {
@@ -63,7 +59,6 @@ public:
 	~FileMPEG();
 
 	friend class FileMPEGVideo;
-	friend class FileMPEGAudio;
 
 	static void get_parameters(BC_WindowBase *parent_window, 
 		Asset *asset, 
@@ -152,21 +147,14 @@ private:
 // toc scan commercial detection
 	static int toc_nail(void *vp, int track);
 
-
-// Thread for audio encoder
-	FileMPEGAudio *audio_out;
-// Command line for audio encoder
-	ArrayList<char*> acommand_line;
-	void append_acommand_line(const char *string);
-
-
 // Temporary for color conversion
 	VFrame *temp_frame;
 
-	unsigned char *toolame_temp;
-	int toolame_allocation;
-	int toolame_result;
-
+	unsigned char *twolame_temp, *twolame_out;
+	int twolame_allocation;
+	int twolame_result;
+	FILE *twofp;
+	twolame_options *twopts;
 
 	float *lame_temp[2];
 	int lame_allocation;
@@ -191,18 +179,6 @@ public:
 
 	FileMPEG *file;
 };
-
-class FileMPEGAudio : public Thread
-{
-public:
-	FileMPEGAudio(FileMPEG *file);
-	~FileMPEGAudio();
-
-	void run();
-
-	FileMPEG *file;
-};
-
 
 class MPEGConfigAudioPopup;
 class MPEGABitrate;

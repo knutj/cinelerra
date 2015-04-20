@@ -30,23 +30,17 @@
 #include <string.h>
 
 
-#ifndef GIFUBAR
-#define GIF_ERR
-#else
 static int gif_err = 0;
 #define GIF_ERR ,&gif_err
 #define GifErrorString(s) Gif##ErrorString(gif_err)
-#endif
+#define GifLastError(s) gif_err
 
-#ifndef GIFLIB_MAJOR
 const char *gifErrorString()
 {
 	static char msg[32];
 	snprintf(msg, sizeof(msg), "Gif Error %d", GifLastError());
 	return msg;
 }
-#define GifErrorString gifErrorString
-#endif
 
 FileGIF::FileGIF(Asset *asset, File *file)
  : FileList(asset, file, "GIFLIST", ".gif", FILE_GIF, FILE_GIF_LIST)
@@ -185,7 +179,7 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 				if(gif_file->Image.Left + gif_file->Image.Width > gif_file->SWidth ||
 		 		  gif_file->Image.Top + gif_file->Image.Height > gif_file->SHeight)
 				{
-					DGifCloseFile(gif_file);
+					DGifCloseFile(gif_file GIF_ERR);
 					for(int k = 0; k < gif_file->SHeight; k++)
 					{
 						free(gif_buffer[k]);
@@ -209,7 +203,7 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 								&gif_buffer[j][col],
 								width) == GIF_ERROR)
 							{
-								DGifCloseFile(gif_file);
+								DGifCloseFile(gif_file GIF_ERR);
 								for(int k = 0; k < gif_file->SHeight; k++)
 								{
 									free(gif_buffer[k]);
@@ -227,7 +221,7 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 						if (DGifGetLine(gif_file, &gif_buffer[row++][col],
 							width) == GIF_ERROR)
 						{
-							DGifCloseFile(gif_file);
+							DGifCloseFile(gif_file GIF_ERR);
 							for(int k = 0; k < gif_file->SHeight; k++)
 							{
 								free(gif_buffer[k]);
@@ -253,7 +247,7 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 		: gif_file->SColorMap);
 	if(!color_map)
 	{
-		DGifCloseFile(gif_file);
+		DGifCloseFile(gif_file GIF_ERR);
 		for(int k = 0; k < gif_file->SHeight; k++)
 		{
 			free(gif_buffer[k]);
@@ -283,7 +277,7 @@ int FileGIF::read_frame(VFrame *output, VFrame *input)
 		free(gif_buffer[k]);
 	}
 	free(gif_buffer);
-	DGifCloseFile(gif_file);
+	DGifCloseFile(gif_file GIF_ERR);
 	return 0;
 }
 
