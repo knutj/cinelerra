@@ -34,7 +34,7 @@ public:
 	int lock(const char *location = 0);
 	int unlock();
 // Calls pthread_mutex_trylock, whose effect depends on library version.
-	int trylock();
+	int trylock(const char *location = 0);
 	int reset();
 // Returns 1 if count is > 0
 	int is_locked();

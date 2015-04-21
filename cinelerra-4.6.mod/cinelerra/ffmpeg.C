@@ -1134,6 +1134,7 @@ int FFMPEG::open_decoder()
 			aud->length = secs * aud->sample_rate;
 			if( avctx->sample_fmt != AV_SAMPLE_FMT_FLT ) {
 				uint64_t layout = av_get_default_channel_layout(avctx->channels);
+				if( !layout ) layout = ((uint64_t)1<<aud->channels) - 1;
 				aud->resample_context = swr_alloc_set_opts(NULL,
 					layout, AV_SAMPLE_FMT_FLT, avctx->sample_rate,
 					layout, avctx->sample_fmt, avctx->sample_rate,

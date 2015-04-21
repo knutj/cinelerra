@@ -108,7 +108,6 @@ void BC_SynchGarbage::handle_garbage()
 		garbage.remove_number(0);
 		garbage_lock->unlock();
 
-		synchronous->sync_lock("BC_Synchronous::handle_garbage");
 		switch(command->command) {
 		case BC_SynchronousCommand::QUIT:
 			done = 1;
@@ -126,7 +125,6 @@ void BC_SynchGarbage::handle_garbage()
 			synchronous->delete_display_sync(command);
 			break;
 		}
-		synchronous->sync_unlock();
 
 		delete command;
 		garbage_lock->lock("BC_SynchGarbage::handle_garbage 1");
@@ -226,6 +224,17 @@ BC_Synchronous::~BC_Synchronous()
 void BC_Synchronous::sync_lock(const char *cp)
 {
 	lock_sync->lock(cp);
+}
+
+void BC_Synchronous::sync_lock(Display *display, const char *cp)
+{
+	// get both display lock and sync_lock
+	XLockDisplay(display);
+	while( lock_sync->trylock(cp) ) {
+		XUnlockDisplay(display);
+		usleep(100000);
+		XLockDisplay(display);
+	}
 }
 
 void BC_Synchronous::sync_unlock()
@@ -467,6 +476,7 @@ void BC_Synchronous::delete_window_sync(BC_SynchronousCommand *command)
 	Window win = command->win;
 	GLXWindow glx_win = command->glx_win;
 	GLXContext glx_context = command->glx_context;
+	sync_lock(display, "BC_Synchronous::delete_window_sync");
 //int debug = 0;
 
 // texture ID's are unique to different contexts
@@ -518,6 +528,8 @@ void BC_Synchronous::delete_window_sync(BC_SynchronousCommand *command)
 	if( glx_context )
 		glXDestroyContext(display, glx_context);
 	command->command_done->unlock();
+	XUnlockDisplay(display);
+	sync_unlock();
 #endif
 }
 
@@ -536,7 +548,10 @@ void BC_Synchronous::delete_display_sync(BC_SynchronousCommand *command)
 {
 #ifdef HAVE_GL
 	Display *display = command->display;
+	sync_lock(display, "BC_Synchronous::delete_display_sync");
+	XUnlockDisplay(display);
 	XCloseDisplay(display);
+	sync_unlock();
 #endif
 }
 
@@ -618,9 +633,12 @@ void BC_Synchronous::delete_pixmap_sync(BC_SynchronousCommand *command)
 #ifdef HAVE_GL
 	Display *display = command->display;
 	GLXWindow glx_win = command->glx_win;
+	sync_lock(display, "BC_Synchronous::delete_pixmap_sync");
 	glXMakeContextCurrent(display, glx_win, glx_win, command->glx_context);
 	glXDestroyContext(display, command->glx_context);
 	glXDestroyGLXPixmap(display, command->glx_pixmap);
+	XUnlockDisplay(display);
+	sync_unlock();
 #endif
 }
 

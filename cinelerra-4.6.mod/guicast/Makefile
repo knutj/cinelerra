@@ -167,12 +167,11 @@ clean:
 $(LIBOBJS) $(OBJS) $(CUTOBJ):
 
 $(OBJDIR)/%.o:          %.C
-$(OBJS) $(OBJDIR)/test.o $(OBJDIR)/test2.o $(OBJDIR)/test3.o $(OBJDIR)/replace.o:
-	$(CXX) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
+	$(CXX) `cat $(OBJDIR)/c_flags` -c $< -o $@
 
 $(OBJDIR)/bootstrap: bootstrap.c
 $(OBJDIR)/pngtoh: pngtoh.c
-$(OBJDIR)/bccmodel_default.o:	      bccmodel_permutation.h
+$(OBJDIR)/bccmodel_default.o:	      bccmodel_default.C  bccmodel_permutation.h
 
 val-%:
 	@echo $($(subst val-,,$@))

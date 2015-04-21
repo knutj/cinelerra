@@ -17,7 +17,7 @@
 #     fix forced_libs list: for lib in $forced_libs; do
 #     add dependencies (order matters): for dep in <pairs>; do
 #   vi Makefile
-#     add pkg.<data>
+#     add pkg.<data> (pkg.x = .flags, .vars, .params)
 #     add $(call rules,$(call std-build,<name>,<dep>...))
 #
 TOPDIR := $(shell pwd)
@@ -86,6 +86,8 @@ $(BLD):
 
 # vars first
 encore.cfg_vars= true ||
+esound.cfg_vars:= AUDIOFILE_CFLAGS="$(call inc_path,audiofile,libaudiofile) -laudiofile"
+esound.cfg_vars+= AUDIOFILE_LIBS="$(call ld_path,audiofile,libaudiofile/.libs)"
 esound.cfg_params= --enable-shared=no
 esound.ldflags=-lm
 faac.cfg_params= --enable-shared=no
@@ -177,7 +179,7 @@ endif
 
 $(call rules,$(call std-build,audiofile))
 $(call rules,$(call std-build,encore))
-$(call rules,$(call std-build,esound))
+$(call rules,$(call std-build,esound,audiofile))
 $(call rules,$(call std-build,faac))
 $(call rules,$(call std-build,faad2))
 $(call rules,$(call std-build,ffmpeg, faad2 faac twolame lame libtheora x264 libvpx))

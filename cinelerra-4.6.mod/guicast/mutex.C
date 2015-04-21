@@ -120,9 +120,27 @@ int Mutex::unlock()
 	return 0;
 }
 
-int Mutex::trylock()
+int Mutex::trylock(const char *location)
 {
-	return pthread_mutex_trylock(&mutex);
+	int ret = pthread_mutex_trylock(&mutex);
+	if( ret ) return ret;
+
+// Update recursive status for the first lock
+	if(recursive) {
+		pthread_mutex_lock(&recursive_lock);
+		count = 1;
+		thread_id = pthread_self();
+		thread_id_valid = 1;
+		pthread_mutex_unlock(&recursive_lock);
+	}
+	else
+		count = 1;
+
+#ifndef NO_GUICAST
+	SET_LOCK(this, title, location);
+	SET_LOCK2
+#endif
+	return 0;
 }
 
 int Mutex::is_locked()

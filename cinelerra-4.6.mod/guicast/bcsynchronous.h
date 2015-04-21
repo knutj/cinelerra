@@ -266,6 +266,7 @@ private:
 
 	Mutex *lock_sync;
 	void sync_lock(const char *cp=0);
+	void sync_lock(Display *display, const char *cp);
 	void sync_unlock();
 
 	void get_display_sync(Display *display, const char *cp);

@@ -481,7 +481,7 @@ tags:
 
 
 $(OBJDIR)/%.o:		%.C
-	$(CXX) `cat $(OBJDIR)/c_flags` $^ -o $@
+	$(CXX) `cat $(OBJDIR)/c_flags` -c $< -o $@
 
 $(DCRAW): dcraw.c
 	$(GCC) `cat $(OBJDIR)/c_flags` dcraw.c -o $*.o

@@ -1,8 +1,19 @@
 #!/bin/sh
 
+if [ $# -gt 0 ]; then
+  if [ "$1" = "static" ]; then
+    STATIC_LIBRARIES=1
+  elif [ "$1" = "shared" ]; then
+    STATIC_LIBRARIES=0
+  else
+    echo usage: "./configure <shared | static>"
+    exit 1
+  fi
+fi
+
 ERROR=0
 if [ -z "$STATIC_LIBRARIES" ]; then
-STATIC_LIBRARIES=1
+STATIC_LIBRARIES=0
 fi
 
 # test for nasm
