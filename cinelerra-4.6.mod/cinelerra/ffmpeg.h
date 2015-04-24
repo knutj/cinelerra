@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "arraylist.h"
+#include "linklist.h"
 #include "asset.inc"
 #include "bccmodels.h"
 #include "ffmpeg.inc"
@@ -29,15 +30,29 @@ extern "C" {
 class FFPacket  {
 	AVPacket pkt;
 public:
-	FFPacket() {
-		av_init_packet(&pkt);
-		pkt.data = 0; pkt.size = 0;
-	}
-	~FFPacket() {
-		av_free_packet(&pkt);
-	}
+	FFPacket();
+	~FFPacket();
 	operator AVPacket*() { return &pkt; }
+	operator AVPacket&() { return pkt; }
 	AVPacket *operator ->() { return &pkt; }
+};
+
+class FFrame : public ListItem<FFrame> {
+	AVFrame *frm;
+	int init;
+public:
+	int64_t position;
+	FFStream *fst;
+
+	FFrame(FFStream *fst);
+	~FFrame();
+
+	operator AVFrame*() { return frm; }
+	operator AVFrame&() { return *frm; }
+	AVFrame *operator ->() { return frm; }
+	int initted() { return init; }
+	void queue(int64_t pos);
+	void dequeue();
 };
 
 class FFAudioHistory {
@@ -55,6 +70,7 @@ public:
 	void reset();
 	int iseek(int64_t ofs);
 	float *rseek(int len);
+	int64_t wseek(int len);
 	int write(const float *fp, long len);
 	int copy(float *fp, long len);
 	int read(double *dp, long len, int ch);
@@ -73,11 +89,18 @@ public:
 	virtual int decode_activate();
 	int decode_frame(AVFrame *frame);
 	virtual int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) = 0;
+	virtual int init_frame(AVFrame *frame) = 0;
 
 	FFMPEG *ffmpeg;
 	AVStream *st;
 	AVFormatContext *fmt_ctx;
 	AVDictionary *opts;
+
+	List<FFrame> frms;
+	Mutex *frm_lock;
+	void queue(FFrame *frm);
+	void dequeue(FFrame *frm);
+
 	int64_t nudge;
 	int idx;
 	int eof, reading, writing;
@@ -93,7 +116,7 @@ public:
 		return avcodec_decode_audio4(ctx, frame, done, pkt);
 	}
 	int encode_activate();
-        int nb_samples() {
+	int nb_samples() {
 		AVCodecContext *ctx = st->codec;
 		return ctx->codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
 	                10000 : ctx->frame_size;
@@ -102,11 +125,11 @@ public:
 	void reserve_history(int len);
 	void demand_history(int len);
 	void append_history(const float *fp, int len);
-	void load_history(double ** const sp, int len);
-	float *read_history(int len);
+	int64_t load_history(double ** const sp, int len);
+	float *seek_history(int len);
 	int in_history(int64_t pos);
 
-	int init_frame(AVCodecContext *ctx, AVFrame *frame);
+	int init_frame(AVFrame *frame);
 	int read_samples();
 	int load(double *samples, int64_t pos, int len);
 	int audio_seek(int64_t pos);
@@ -133,6 +156,7 @@ public:
 		return avcodec_decode_video2(ctx, frame, done, pkt);
 	}
 
+	int init_frame(AVFrame *picture);
 	int write_frame(AVFrame *picture);
 	int load(VFrame *vframe, int64_t pos);
 	int video_seek(int64_t pos);
@@ -162,7 +186,7 @@ public:
 		 AVPicture *op, PixelFormat ofmt, int ow, int oh);
 };
 
-class FFMPEG {
+class FFMPEG : public Thread {
 public:
 	static Mutex fflock;
 	static void ff_lock(const char *cp=0) { fflock.lock(cp); }
@@ -226,9 +250,19 @@ public:
 
 	ArrayList<ffidx> astrm_index;
 	ArrayList<ffidx> vstrm_index;
+	int mux_audio(FFrame *frm);
+	int mux_video(FFrame *frm);
+
+	Condition *mux_lock;
+	int done;
+
+	void start_muxer();
+	void stop_muxer();
+	void mux();
+	void run();
 
 	int decoding, encoding;
-	int is_audio, is_video;
+	int has_audio, has_video;
 
 	FFMPEG(FileBase *file_base=0);
 	~FFMPEG();

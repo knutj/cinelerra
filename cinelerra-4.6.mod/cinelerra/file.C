@@ -657,12 +657,6 @@ int File::open_file(Preferences *preferences,
 				file = new FileVorbis(this->asset, this);
 				break;
 			}
-			if(FileOGG::check_sig(this->asset)) {
-// OGG file.  Doesn't always work with pure audio files.
-				fclose(stream);
-				file = new FileOGG(this->asset, this);
-				break;
-			}
 			if(FileMPEG::check_sig(this->asset)) {
 // MPEG file
 				fclose(stream);

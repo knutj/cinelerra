@@ -814,6 +814,8 @@ int BC_Signals::unset_buffer(void *ptr)
 static void handle_dump(int n, siginfo_t * info, void *sc)
 {
 	uncatch_segv();  uncatch_intr();
+	signal(SIGSEGV, SIG_DFL);
+	signal(SIGINT, SIG_DFL);
 	ucontext_t *uc = (ucontext_t *)sc;
 	struct sigcontext *c = (struct sigcontext *)&uc->uc_mcontext;
 	int pid = getpid(), tid = gettid();

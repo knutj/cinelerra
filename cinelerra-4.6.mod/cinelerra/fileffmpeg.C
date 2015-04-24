@@ -140,10 +140,11 @@ int FileFFMPEG::open_file(int rd, int wr)
 	}
 	else if( wr ) {
 		result = ff->init_encoder(asset->path);
-		if( !result && asset->video_data )
-			result = ff->open_encoder("audio", asset->acodec);
+		// must be in this order or dvdauthor will fail
 		if( !result && asset->audio_data )
 			result = ff->open_encoder("video", asset->vcodec);
+		if( !result && asset->video_data )
+			result = ff->open_encoder("audio", asset->acodec);
 	}
 	return result;
 }

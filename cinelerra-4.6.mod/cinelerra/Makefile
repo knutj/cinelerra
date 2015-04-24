@@ -348,13 +348,15 @@ endif
 
 
 
-LIBS := \
+LIBRARIES := \
 	../quicktime/$(OBJDIR)/libquicktime.a \
 	../guicast/$(OBJDIR)/libguicast.a \
 	../libzmpeg3/$(OBJDIR)/libzmpeg3.a \
 	../mpeg2enc/$(OBJDIR)/hveg2enc.a \
 	../db/$(OBJDIR)/db.a \
 	$(THEME_DATA) \
+
+LIBS := $(LIBRARIES)
 
 LIBS += \
 	-lX11 \
@@ -453,7 +455,7 @@ all:	$(OUTPUT) $(CUTADS)
 # Static linking is not possible because the plugins depend on symbols
 # in the main executable.
 # Also VFS only overrides the C library when dynamic linking is used.
-$(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(THEME_DATA)
+$(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(LIBRARIES)
 	$(LINKER) `cat $(OBJDIR)/objs`
 	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT))
 
