@@ -29,8 +29,7 @@ Mutex FFMPEG::fflock("FFMPEG::fflock");
 
 FFPacket::FFPacket()
 {
-	av_init_packet(&pkt);
-	pkt.data = 0; pkt.size = 0;
+	init();
 }
 
 FFPacket::~FFPacket()
@@ -38,6 +37,11 @@ FFPacket::~FFPacket()
 	av_free_packet(&pkt);
 }
 
+void FFPacket::init()
+{
+	av_init_packet(&pkt);
+	pkt.data = 0; pkt.size = 0;
+}
 
 FFrame::FFrame(FFStream *fst)
 {
@@ -124,11 +128,10 @@ void FFAudioHistory::reset() // clear bfr
 	inp = outp = bfr;
 }
 
-int FFAudioHistory::iseek(int64_t ofs)
+void FFAudioHistory::iseek(int64_t ofs)
 {
 	outp = inp - ofs*nch;
 	if( outp < bfr ) outp += bsz;
-	return 0;
 }
 
 float *FFAudioHistory::rseek(int ofs)
@@ -170,14 +173,26 @@ int FFAudioHistory::copy(float *fp, long len)
 	return len;
 }
 
+int FFAudioHistory::zero(long len)
+{
+	long n = len * nch;
+	while( n > 0 ) {
+		int k = lmt - inp;
+		if( k > n ) k = n;
+		n -= k;
+		while( --k >= 0 ) *inp++ = 0;
+		if( inp >= lmt ) inp -= bsz;
+	}
+	return len;
+}
+
 int FFAudioHistory::read(double *dp, long len, int ch)
 {
-	long isz = used();
-	if( !isz ) return 0;
-	if( len > isz ) len = isz;
+	long sz = used();
+	if( !sz ) return 0;
+	if( len > sz ) len = sz;
 	long n = len;
 	float *op = outp + ch;
-	if( op >= lmt ) op -= bsz;
 	while( n > 0 ) {
 		int k = (lmt - outp) / nch;
 		if( k > n ) k = n;
@@ -212,6 +227,8 @@ FFStream::FFStream(FFMPEG *ffmpeg, AVStream *st, int idx)
 	opts = 0;
 	eof = 0;
 	reading = writing = 0;
+	need_packet = 1;
+	flushed = 0;
 }
 
 FFStream::~FFStream()
@@ -286,42 +303,48 @@ int FFStream::decode_activate()
 	return reading;
 }
 
-int FFStream::decode_frame(AVFrame *frame)
+int FFStream::read_packet()
+{
+	av_packet_unref(ipkt);
+	int ret = av_read_frame(fmt_ctx, ipkt);
+	if( ret >= 0 ) return 1;
+	st_eof(1);
+	if( ret == AVERROR_EOF ) return 0;
+	fprintf(stderr, "FFStream::read_packet: av_read_frame failed\n");
+	flushed = 1;
+	return -1;
+}
+
+int FFStream::decode(AVFrame *frame)
 {
 	int ret = 0;
-	int got_frame = 0;
 	int retries = 100;
+	int got_frame = 0;
 
-	while( !st_eof() && ret >= 0 && --retries >= 0 && !got_frame ) {
-		FFPacket ipkt;
-		ret = av_read_frame(fmt_ctx, ipkt);
-		if( ret < 0 ) {
-			if( ret == AVERROR_EOF ) { st_eof(1);  ret = 0; }
-			break;
+	while( !flushed && --retries >= 0 && !got_frame ) {
+		if( need_packet ) {
+			need_packet = 0;
+			int ret = read_packet();
+			if( ret < 0 ) break;
+			if( !ret ) ipkt->stream_index = st->index;
 		}
 		if( ipkt->stream_index == st->index ) {
-			while( ipkt->size > 0 ) {
-				ret = decoder(st->codec, frame, &got_frame, ipkt);
-				if( ret < 0 ) {
-					fprintf(stderr, "FFStream::decode_frame: decode failed\n");
-					break;
-				}
+			while( ipkt->size > 0 && !got_frame ) {
+				ret = decode_frame(frame, got_frame);
+				if( ret < 0 ) break;
 				ipkt->data += ret;
 				ipkt->size -= ret;
 			}
 			retries = 100;
 		}
+		if( !got_frame ) {
+			need_packet = 1;
+			flushed = st_eof();
+		}
 	}
 
 	if( retries < 0 )
-		fprintf(stderr, "FFStream::decode_frame: Retry limit\n");
-
-	if( st_eof() ) {
-		FFPacket ipkt;
-		int cached = 1;
-		for( int i=16; --i >= 0 && !ret && cached; )
-			ret = decoder(st->codec, frame, &cached, ipkt);
-	}
+		fprintf(stderr, "FFStream::decode: Retry limit\n");
 
 	return got_frame;
 }
@@ -347,6 +370,45 @@ FFAudioStream::~FFAudioStream()
 	delete [] aud_bfr;
 }
 
+int FFAudioStream::load_history(float *&bfr, int len)
+{
+	if( resample_context ) {
+		if( len > aud_bfr_sz ) {	
+			delete aud_bfr;
+			aud_bfr = 0;
+		}
+		if( !aud_bfr ) {
+			aud_bfr_sz = len;
+			aud_bfr = new float[aud_bfr_sz*channels];
+		}
+		int ret = swr_convert(resample_context,
+			(uint8_t**)&aud_bfr, aud_bfr_sz,
+			(const uint8_t**)&bfr, len);
+		if( ret < 0 ) {
+			fprintf(stderr, "FFAudioStream::load_history: swr_convert failed\n");
+			return -1;
+		}
+		bfr = aud_bfr;
+		len = ret;
+	}
+	append_history(bfr, len);
+	return len;
+}
+
+int FFAudioStream::decode_frame(AVFrame *frame, int &got_frame)
+{
+	int ret = avcodec_decode_audio4(st->codec, frame, &got_frame, ipkt);
+	if( ret < 0 ) {
+		fprintf(stderr, "FFAudioStream::decode_frame: Could not read audio frame\n");
+		return -1;
+	}
+	if( got_frame ) {
+		load_history((float *&)frame->extended_data[0], frame->nb_samples);
+		curr_pos += frame->nb_samples;
+	}
+	return ret;
+}
+
 int FFAudioStream::encode_activate()
 {
 	if( writing >= 0 ) return writing;
@@ -354,6 +416,13 @@ int FFAudioStream::encode_activate()
 	frame_sz = ctx->codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
 		10000 : ctx->frame_size;
 	return FFStream::encode_activate();
+}
+
+int FFAudioStream::nb_samples()
+{
+	AVCodecContext *ctx = st->codec;
+	return ctx->codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
+                10000 : ctx->frame_size;
 }
 
 void FFAudioStream::alloc_history(int len)
@@ -366,28 +435,26 @@ void FFAudioStream::reserve_history(int len)
 	history.reserve(len+1, st->codec->channels);
 }
 
-void FFAudioStream::demand_history(int len)
-{
-	if( mbsz < len ) mbsz = len;
-	alloc_history(mbsz);
-}
-
 void FFAudioStream::append_history(const float *fp, int len)
 {
 	// biggest user bfr since seek + length this frame
 	int hsz = mbsz + len;
 	alloc_history(hsz);
 	history.write(fp, len);
-	curr_pos += len;
 }
 
-int64_t FFAudioStream::load_history(double ** const sp, int len)
+int64_t FFAudioStream::load_buffer(double ** const sp, int len)
 {
 	reserve_history(len);
 	int nch = st->codec->channels;
 	for( int ch=0; ch<nch; ++ch )
 		history.write(sp[ch], len, ch);
 	return history.wseek(len);
+}
+
+void FFAudioStream::zero_history(int len)
+{
+	history.zero(len);
 }
 
 float* FFAudioStream::seek_history(int len)
@@ -418,55 +485,23 @@ int FFAudioStream::init_frame(AVFrame *frame)
 	return ret;
 }
 
-int FFAudioStream::read_samples()
-{
-	AVFrame *frame = av_frame_alloc();
-	if( !frame ) {
-		fprintf(stderr, "FFAudioStream::read_samples: Could not create audio frame\n");
-		return 1;
-	}
-	int ret = decode_frame(frame);
-	if( ret > 0 ) {
-		int len = frame->nb_samples;
-		float *bfr = (float *)frame->extended_data[0];
-		if( resample_context ) {
-			if( len > aud_bfr_sz ) {	
-				delete aud_bfr;
-				aud_bfr = 0;
-			}
-			if( !aud_bfr ) {
-				aud_bfr_sz = len;
-				aud_bfr = new float[aud_bfr_sz*channels];
-			}
-			ret = swr_convert(resample_context,
-				(uint8_t**)&aud_bfr, aud_bfr_sz,
-				(const uint8_t**)frame->extended_data, len);
-			bfr = aud_bfr;
-			len = ret;
-		}
-		append_history(bfr, len);
-		ret = len;
-	}
-	if( ret < 0 )
-		fprintf(stderr, "FFAudioStream::read_samples: Could not read audio frame\n");
-	av_frame_free(&frame);
-	return ret;
-}
-
-int FFAudioStream::load(double *samples, int64_t pos, int len)
+int FFAudioStream::load(int64_t pos, int len)
 {
 	if( audio_seek(pos) < 0 ) return -1;
-	demand_history(len);
+	if( mbsz < len ) mbsz = len;
 	int ret = 0;
-	int count = curr_pos - pos;
-	if( count < 0 ) count = 0;
-	for( int retries=100; --retries >= 0 && !st_eof() && count < len; ) {
-		if( (ret=read_samples()) < 0 ) break;
-		if( !ret ) continue;
-		count += ret;  retries = 100;
+	int64_t end_pos = pos + len;
+	AVFrame *frame = av_frame_alloc();
+	for( int i=0; ret>=0 && !flushed && curr_pos<end_pos && i<1000; ++i ) {
+		av_frame_unref(frame);
+		ret = decode(frame);
 	}
-	ret = ret >= 0 ? count : -1;
-	return ret;
+	if( flushed && end_pos > curr_pos ) {
+		zero_history(end_pos - curr_pos);
+		curr_pos = end_pos;
+	}
+	av_frame_free(&frame);
+	return curr_pos - pos;
 }
 
 int FFAudioStream::audio_seek(int64_t pos)
@@ -481,10 +516,10 @@ int FFAudioStream::audio_seek(int64_t pos)
 	int64_t tstmp = secs * st->time_base.den / st->time_base.num;
 	if( nudge != AV_NOPTS_VALUE ) tstmp += nudge;
 	avformat_seek_file(fmt_ctx, st->index, -INT64_MAX, tstmp, INT64_MAX, 0);
-	st_eof(0);
 	seek_pos = curr_pos = pos;
-	mbsz = frame_sz = 0;
+	mbsz = 0;
 	history.reset();
+	st_eof(0);
 	return 1;
 }
 
@@ -492,7 +527,7 @@ int FFAudioStream::encode(double **samples, int len)
 {
 	if( encode_activate() <= 0 ) return -1;
 	int ret = 0;
-	int64_t count = load_history(samples, len);
+	int64_t count = load_buffer(samples, len);
 	FFrame *frm = 0;
 
 	while( ret >= 0 && count >= frame_sz ) {
@@ -531,17 +566,28 @@ FFVideoStream::~FFVideoStream()
 	if( convert_ctx ) sws_freeContext(convert_ctx);
 }
 
+int FFVideoStream::decode_frame(AVFrame *frame, int &got_frame)
+{
+	int ret = avcodec_decode_video2(st->codec, frame, &got_frame, ipkt);
+	if( ret < 0 ) {
+		fprintf(stderr, "FFVideoStream::decode_frame: Could not read video frame\n");
+		return -1;
+	}
+	if( got_frame )
+		++curr_pos;
+	return ret;
+}
+
 int FFVideoStream::load(VFrame *vframe, int64_t pos)
 {
-	int ret = -1;
+	int ret = 0;
 	if( video_seek(pos) < 0 ) return -1;
 	AVFrame *picture = av_frame_alloc();
-	for( int retries=100; --retries >= 0 && !st_eof() && curr_pos <= pos; ) {
-		if( (ret=decode_frame(picture)) < 0 ) break;
-		if( !ret ) continue;
-		++curr_pos;  retries = 100;
+	for( int i=0; !flushed && curr_pos<=pos && i<1000; ++i ) {
+		av_frame_unref(picture);
+		ret = decode(picture);
 	}
-	if( ret > 0 ) {
+	if( picture && ret > 0 ) {
 		AVCodecContext *ctx = st->codec;
 		ret = convert_cmodel(vframe, (AVPicture *)picture,
 			ctx->pix_fmt, ctx->width, ctx->height);
@@ -1069,6 +1115,7 @@ int FFMPEG::init_decoder(const char *filename)
 {
 	ff_lock("FFMPEG::init_decoder");
 	av_register_all();
+	load_options("decode.opts", opts);
 	AVDictionary *fopts = 0;
 	av_dict_copy(&fopts, opts, 0);
 	int ret = avformat_open_input(&fmt_ctx, filename, NULL, &fopts);
@@ -1436,10 +1483,9 @@ int FFMPEG::decode(int chn, int64_t pos, double *samples, int len)
 {
 	int aidx = astrm_index[chn].st_idx;
 	FFAudioStream *aud = ffaudio[aidx];
-	if( aud->load(samples, pos, len) < len ) return -1;
+	if( aud->load(pos, len) < len ) return -1;
 	int ch = astrm_index[chn].st_ch;
-	aud->history.read(samples,len,ch);
-	return 0;
+	return aud->history.read(samples,len,ch);
 }
 
 int FFMPEG::decode(int layer, int64_t pos, VFrame *vframe)

@@ -32,6 +32,7 @@ class FFPacket  {
 public:
 	FFPacket();
 	~FFPacket();
+	void init();
 	operator AVPacket*() { return &pkt; }
 	operator AVPacket&() { return pkt; }
 	AVPacket *operator ->() { return &pkt; }
@@ -50,6 +51,7 @@ public:
 	operator AVFrame*() { return frm; }
 	operator AVFrame&() { return *frm; }
 	AVFrame *operator ->() { return frm; }
+
 	int initted() { return init; }
 	void queue(int64_t pos);
 	void dequeue();
@@ -68,14 +70,14 @@ public:
 	long used();
 	long avail();
 	void reset();
-	int iseek(int64_t ofs);
+	void iseek(int64_t ofs);
 	float *rseek(int len);
 	int64_t wseek(int len);
 	int write(const float *fp, long len);
 	int copy(float *fp, long len);
+	int zero(long len);
 	int read(double *dp, long len, int ch);
 	int write(const double *dp, long len, int ch);
-	void swap(float *fp, int fsz, float *dp, int dsz);
 };
 
 class FFStream {
@@ -84,54 +86,58 @@ public:
 	~FFStream();
 	static void ff_lock(const char *cp=0);
 	static void ff_unlock();
+	void queue(FFrame *frm);
+	void dequeue(FFrame *frm);
 
 	virtual int encode_activate();
 	virtual int decode_activate();
-	int decode_frame(AVFrame *frame);
-	virtual int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) = 0;
+	int read_packet();
+	int decode(AVFrame *frame);
+
+	virtual int decode_frame(AVFrame *frame, int &got_frame) = 0;
 	virtual int init_frame(AVFrame *frame) = 0;
 
 	FFMPEG *ffmpeg;
 	AVStream *st;
 	AVFormatContext *fmt_ctx;
 	AVDictionary *opts;
+	FFPacket ipkt;
+	int need_packet, flushed;
 
 	List<FFrame> frms;
 	Mutex *frm_lock;
-	void queue(FFrame *frm);
-	void dequeue(FFrame *frm);
 
 	int64_t nudge;
 	int idx;
 	int eof, reading, writing;
-	int st_eof() { return eof; }
-	void st_eof(int v) { eof = v; }
+	int st_eof() {
+		return eof;
+	}
+	void st_eof(int v) {
+		if( !v ) { flushed = 0;  need_packet = 1; }
+		eof = v;
+	}
 };
 
 class FFAudioStream : public FFStream {
 public:
 	FFAudioStream(FFMPEG *ffmpeg, AVStream *strm, int idx);
 	virtual ~FFAudioStream();
-	int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) {
-		return avcodec_decode_audio4(ctx, frame, done, pkt);
-	}
+	int load_history(float *&bfr, int len);
+	int decode_frame(AVFrame *frame, int &got_frame);
+
 	int encode_activate();
-	int nb_samples() {
-		AVCodecContext *ctx = st->codec;
-		return ctx->codec->capabilities & CODEC_CAP_VARIABLE_FRAME_SIZE ?
-	                10000 : ctx->frame_size;
-	}
+	int nb_samples();
 	void alloc_history(int len);
 	void reserve_history(int len);
-	void demand_history(int len);
 	void append_history(const float *fp, int len);
-	int64_t load_history(double ** const sp, int len);
+	void zero_history(int len);
+	int64_t load_buffer(double ** const sp, int len);
 	float *seek_history(int len);
 	int in_history(int64_t pos);
 
 	int init_frame(AVFrame *frame);
-	int read_samples();
-	int load(double *samples, int64_t pos, int len);
+	int load(int64_t pos, int len);
 	int audio_seek(int64_t pos);
 
 	int encode(double **samples, int len);
@@ -152,15 +158,11 @@ class FFVideoStream : public FFStream {
 public:
 	FFVideoStream(FFMPEG *ffmpeg, AVStream *strm, int idx);
 	virtual ~FFVideoStream();
-	int decoder(AVCodecContext *ctx, AVFrame *frame, int *done, AVPacket *pkt) {
-		return avcodec_decode_video2(ctx, frame, done, pkt);
-	}
-
-	int init_frame(AVFrame *picture);
-	int write_frame(AVFrame *picture);
+	int decode_frame(AVFrame *frame, int &got_frame);
 	int load(VFrame *vframe, int64_t pos);
 	int video_seek(int64_t pos);
 
+	int init_frame(AVFrame *picture);
 	int encode(VFrame *vframe);
 
 	double frame_rate;

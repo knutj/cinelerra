@@ -187,8 +187,6 @@ void Theme::initialize()
 
 void Theme::build_menus()
 {
-
-
 	aspect_ratios.append(new BC_ListBoxItem("3:2"));
 	aspect_ratios.append(new BC_ListBoxItem("4:3"));
 	aspect_ratios.append(new BC_ListBoxItem("16:9"));
@@ -198,21 +196,47 @@ void Theme::build_menus()
 	aspect_ratios.append(new BC_ListBoxItem("2.30:1"));
 	aspect_ratios.append(new BC_ListBoxItem("2.35:1"));
 	aspect_ratios.append(new BC_ListBoxItem("2.66:1"));
+
+	frame_sizes.append(new BC_ListBoxItem("128x96"));
 	frame_sizes.append(new BC_ListBoxItem("160x120"));
+	frame_sizes.append(new BC_ListBoxItem("176x144"));
 	frame_sizes.append(new BC_ListBoxItem("240x180"));
+	frame_sizes.append(new BC_ListBoxItem("320x200"));
 	frame_sizes.append(new BC_ListBoxItem("320x240"));
+	frame_sizes.append(new BC_ListBoxItem("352x288"));
 	frame_sizes.append(new BC_ListBoxItem("360x240"));
 	frame_sizes.append(new BC_ListBoxItem("400x300"));
 	frame_sizes.append(new BC_ListBoxItem("424x318"));
 	frame_sizes.append(new BC_ListBoxItem("512x384"));
+	frame_sizes.append(new BC_ListBoxItem("640x350"));
 	frame_sizes.append(new BC_ListBoxItem("640x480"));
+	frame_sizes.append(new BC_ListBoxItem("704x576"));
 	frame_sizes.append(new BC_ListBoxItem("720x480"));
-	frame_sizes.append(new BC_ListBoxItem("960x540"));
 	frame_sizes.append(new BC_ListBoxItem("720x576"));
-	frame_sizes.append(new BC_ListBoxItem("1280x720"));
+	frame_sizes.append(new BC_ListBoxItem("800x600"));
+	frame_sizes.append(new BC_ListBoxItem("852x480"));
+	frame_sizes.append(new BC_ListBoxItem("852x480"));
+	frame_sizes.append(new BC_ListBoxItem("960x540"));
 	frame_sizes.append(new BC_ListBoxItem("960x1080"));
+	frame_sizes.append(new BC_ListBoxItem("1024x768"));
+	frame_sizes.append(new BC_ListBoxItem("1280x720"));
+	frame_sizes.append(new BC_ListBoxItem("1280x1024"));
+	frame_sizes.append(new BC_ListBoxItem("1366x768"));
+	frame_sizes.append(new BC_ListBoxItem("1408x1152"));
+	frame_sizes.append(new BC_ListBoxItem("1600x1024"));
+	frame_sizes.append(new BC_ListBoxItem("1600x1200"));
 	frame_sizes.append(new BC_ListBoxItem("1920x1080"));
 	frame_sizes.append(new BC_ListBoxItem("1920x1088"));
+	frame_sizes.append(new BC_ListBoxItem("1920x1200"));
+	frame_sizes.append(new BC_ListBoxItem("2048x1536"));
+	frame_sizes.append(new BC_ListBoxItem("2560x1600"));
+	frame_sizes.append(new BC_ListBoxItem("2560x2048"));
+	frame_sizes.append(new BC_ListBoxItem("3200x2048"));
+	frame_sizes.append(new BC_ListBoxItem("3840x2400"));
+	frame_sizes.append(new BC_ListBoxItem("5120x4096"));
+	frame_sizes.append(new BC_ListBoxItem("6400x4096"));
+	frame_sizes.append(new BC_ListBoxItem("7680x4800"));
+
 	sample_rates.append(new BC_ListBoxItem("8000"));
 	sample_rates.append(new BC_ListBoxItem("16000"));
 	sample_rates.append(new BC_ListBoxItem("22050"));
@@ -221,6 +245,7 @@ void Theme::build_menus()
 	sample_rates.append(new BC_ListBoxItem("48000"));
 	sample_rates.append(new BC_ListBoxItem("96000"));
 	sample_rates.append(new BC_ListBoxItem("192000"));
+
 	frame_rates.append(new BC_ListBoxItem("1"));
 	frame_rates.append(new BC_ListBoxItem("5"));
 	frame_rates.append(new BC_ListBoxItem("10"));
@@ -234,6 +259,7 @@ void Theme::build_menus()
 	frame_rates.append(new BC_ListBoxItem("50"));
 	frame_rates.append(new BC_ListBoxItem("59.94"));
 	frame_rates.append(new BC_ListBoxItem("60"));
+
 	char string[BCTEXTLEN];
 	for(int i = 1; i < 17; i++)
 	{
