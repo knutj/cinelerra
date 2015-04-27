@@ -1660,10 +1660,9 @@ int64_t FFMPEG::ff_audio_samples(int stream)
 	return ffaudio[stream]->length;
 }
 
-int64_t FFMPEG::ff_audio_for_video(int stream, int layer)
+int FFMPEG::ff_audio_for_video(int vstream, int astream, int64_t &channels)
 {
-	int64_t channels = 0;
-	int vidx = ffvideo[stream]->idx;
+	int vidx = ffvideo[vstream]->idx;
 	int pidx = -1;
 	// find first program with this video stream
 	for( int i=0; pidx<0 && i<(int)fmt_ctx->nb_programs; ++i ) {
@@ -1675,27 +1674,30 @@ int64_t FFMPEG::ff_audio_for_video(int stream, int layer)
 			if( st_idx == vidx ) pidx = i;
 		}
 	}
-	// find audio layer with this program
+	// find audio astream with this program
 	if( pidx >= 0 ) {
-		int aidx = -1, idx = -1;
+		int aidx = -1, astrm = -1;
 		AVProgram *pgrm = fmt_ctx->programs[pidx];
-		for( int j=0; layer>=0 && j<(int)pgrm->nb_stream_indexes; ++j ) {
+		for( int j=0; astream>=0 && j<(int)pgrm->nb_stream_indexes; ++j ) {
 			aidx = pgrm->stream_index[j];
 			AVStream *st = fmt_ctx->streams[aidx];
 			if( st->codec->codec_type != AVMEDIA_TYPE_AUDIO ) continue;
-			--layer;
+			--astream;
 		}
-		if( layer < 0 && aidx >= 0 ) {
-			for( int i=0; i<ffaudio.size() && idx<0; ++i )
-				if( ffaudio[i]->idx == aidx ) idx = i;
+		if( astream < 0 && aidx >= 0 ) {
+			for( int i=0; i<ffaudio.size() && astrm<0; ++i )
+				if( ffaudio[i]->idx == aidx ) astrm = i;
 		}
-		if( idx >= 0 ) {
-			int ch = ffaudio[idx]->channel0;
-			for( int i=ffaudio[idx]->channels; --i>=0; ++ch )
-				channels |= (1<<ch);
+		if( astrm >= 0 ) {
+			int ch = ffaudio[astrm]->channel0;
+			int64_t channel_mask = 0;
+			for( int i=ffaudio[astrm]->channels; --i>=0; ++ch )
+				channel_mask |= (1<<ch);
+			channels = channel_mask;
+			return astrm;
 		}
 	}
-	return channels;
+	return -1;
 }
 
 

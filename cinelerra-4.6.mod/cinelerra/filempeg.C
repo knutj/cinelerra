@@ -311,36 +311,37 @@ void FileMPEG::get_info(char *title_path, char *path, char *text)
 	return;
 }
 
-int FileMPEG::get_audio_for_video(int stream, int64_t &channels, int layer)
+int FileMPEG::get_audio_for_video(int vstream, int astream, int64_t &channel_mask)
 {
-	channels = 0;
-	if( !fd ) return 1;
+	channel_mask = 0;
+	if( !fd ) return -1;
 	int elements = mpeg3_dvb_channel_count(fd);
 	if( elements <= 0 ) return -1;
 
 	for( int n=0; n<elements; ++n ) {
-		int vidx, aidx, vstream, astream, total_astreams, total_vstreams;
+		int vidx, aidx, vstrm, astrm, total_astreams, total_vstreams;
 		if( mpeg3_dvb_total_vstreams(fd,n,&total_vstreams) ||
 		    mpeg3_dvb_total_astreams(fd,n,&total_astreams) ) continue;
 		for( vidx=0; vidx<total_vstreams; ++vidx ) {
-			if( mpeg3_dvb_vstream_number(fd,n,vidx,&vstream) ) continue;
-			if( vstream == stream ) break;
+			if( mpeg3_dvb_vstream_number(fd,n,vidx,&vstrm) ) continue;
+			if( vstrm == vstream ) break;
 		}
 		if( vidx >= total_vstreams ) continue;
 		for( aidx=0; aidx<total_astreams; ++aidx ) {
-			if( mpeg3_dvb_astream_number(fd,n,aidx,&astream,0) ) continue;
-			if( astream < 0 ) continue;
-			if( layer > 0 ) { --layer;  continue; }
+			if( mpeg3_dvb_astream_number(fd,n,aidx,&astrm,0) ) continue;
+			if( astrm < 0 ) continue;
+			if( astream > 0 ) { --astream;  continue; }
 			int atrack = 0;
-			for(int i=0; i<astream; ++i )
+			for(int i=0; i<astrm; ++i )
 				atrack += mpeg3_audio_channels(fd, i);
-			for(int i=mpeg3_audio_channels(fd, astream); --i>=0; ++atrack )
-				channels |= (1<<atrack);
-			if( layer == 0 ) break;
+			int64_t mask = 0;
+			for(int i=mpeg3_audio_channels(fd, astrm); --i>=0; ++atrack )
+				mask |= (1<<atrack);
+			channel_mask = mask;
+			return astrm;
 		}
 	}
-
-	return 0;
+	return -1;
 }
 
 int FileMPEG::reset_parameters_derived()

@@ -602,11 +602,11 @@ int FileFork::handle_command()
 
 		case GET_AUDIO4VIDEO:
 		{
-			int64_t channels;
-			int stream = *(int*)command_data;
-			int layer = *(int*)(command_data + sizeof(int));
-			result = file->get_audio_for_video(stream, channels, layer);
-			send_result(result, (unsigned char *)&channels, sizeof(channels));
+			int64_t channel_mask = 0;
+			int vstream = *(int*)command_data;
+			int astream = *(int*)(command_data + sizeof(int));
+			result = file->get_audio_for_video(vstream, astream, channel_mask);
+			send_result(result, (unsigned char *)&channel_mask, sizeof(channel_mask));
 			break;
 		}
 
@@ -635,6 +635,31 @@ int FileFork::handle_command()
 			for( char *cp=title; (*bp++=*cp)!=0; ++cp );
 			send_result(result, data, bp-data);
 			break;
+		}
+		case SELECT_VIDEO_STREAM:
+		{
+			Asset asset;
+			int vstream = *(int*)command_data;
+			result = file->select_video_stream(&asset, vstream);
+			unsigned char data[sizeof(asset.frame_rate)+sizeof(asset.video_length)+
+				sizeof(asset.width)+sizeof(asset.height)];
+			unsigned char *bp = data;
+			*(double *)bp = asset.frame_rate; bp += sizeof(asset.frame_rate);
+			*(int *)bp = asset.video_length;  bp += sizeof(asset.video_length);
+			*(int *)bp = asset.width;         bp += sizeof(asset.width);
+			*(int *)bp = asset.height;        bp += sizeof(asset.height);
+			send_result(result, data, bp-data);
+		}
+		case SELECT_AUDIO_STREAM:
+		{
+			Asset asset;
+			int astream = *(int*)command_data;
+			result = file->select_audio_stream(&asset, astream);
+			unsigned char data[sizeof(asset.sample_rate)+sizeof(asset.audio_length)];
+			unsigned char *bp = data;
+			*(int *)bp = asset.sample_rate;   bp += sizeof(asset.sample_rate);
+			*(int *)bp = asset.audio_length;  bp += sizeof(asset.audio_length);
+			send_result(result, data, bp-data);
 		}
 	}
 

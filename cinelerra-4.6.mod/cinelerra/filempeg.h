@@ -96,7 +96,7 @@ public:
 		int64_t &position, unsigned char *&thumbnail, int &ww, int &hh);
 	int set_skimming(int track, int skim, skim_fn fn, void *vp);
 	int skim_video(int track, void *vp, skim_fn fn);
-	int get_audio_for_video(int stream, int64_t &channels, int layer);
+	int get_audio_for_video(int vstream, int astream, int64_t &channel_mask);
 
 // Direct copy routines
 	static int get_best_colormodel(Asset *asset, int driver);

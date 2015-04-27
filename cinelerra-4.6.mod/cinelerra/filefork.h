@@ -94,6 +94,8 @@ public:
 		GET_AUDIO4VIDEO,
 		GET_VIDEO_PID, 
 		GET_VIDEO_INFO,                 // 40
+		SELECT_VIDEO_STREAM,
+		SELECT_AUDIO_STREAM,
 	};
 };
 

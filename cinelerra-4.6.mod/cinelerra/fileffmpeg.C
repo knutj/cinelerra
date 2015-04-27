@@ -101,10 +101,27 @@ int FileFFMPEG::get_video_info(int track, int &pid, double &framerate,
 	return 0;
 }
 
-int FileFFMPEG::get_audio_for_video(int stream, int64_t &channels, int layer)
+int FileFFMPEG::get_audio_for_video(int vstream, int astream, int64_t &channel_mask)
 {
 	if( !ff ) return 1;
-	channels = ff->ff_audio_for_video(stream, layer);
+	return ff->ff_audio_for_video(vstream, astream, channel_mask);
+}
+
+int FileFFMPEG::select_video_stream(Asset *asset, int vstream)
+{
+	if( !ff || !asset->video_data ) return 1;
+	asset->width = ff->ff_video_width(vstream);
+	asset->height = ff->ff_video_height(vstream);
+	asset->video_length = ff->ff_video_frames(vstream);
+	asset->frame_rate = ff->ff_frame_rate(vstream);
+	return 0;
+}
+
+int FileFFMPEG::select_audio_stream(Asset *asset, int astream)
+{
+	if( !ff || !asset->audio_data ) return 1;
+	asset->sample_rate = ff->ff_sample_rate(astream);
+       	asset->audio_length = ff->ff_audio_samples(astream);
 	return 0;
 }
 

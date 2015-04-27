@@ -84,11 +84,13 @@ public:
 	virtual int set_video_position(int64_t x) { return 0; }
 	virtual int set_audio_position(int64_t x) { return 0; }
 	virtual int set_subtitle(int value) { return -1; }
+	virtual int select_video_stream(Asset *asset, int vstream) { return -1; }
+	virtual int select_audio_stream(Asset *asset, int astream) { return -1; }
 	virtual int set_program(int no) { return -1; }
 	virtual int get_cell_time(int no, double &time) { time = -1.; return 1; }
 	virtual int get_system_time(int64_t &tm) { tm = -1; return 1; }
-	virtual int get_audio_for_video(int stream, int64_t &channels, int layer) {
-		 channels = 0;  return 1;
+	virtual int get_audio_for_video(int vstream, int astream, int64_t &channel_mask) {
+		 channel_mask = 0;  return -1;
 	}
 	virtual int get_video_pid(int track) { return -1; }
 	virtual int get_video_info(int track, int &pid, double &framerate,

@@ -543,10 +543,11 @@ cut_edit(Track *track, Edit *edit, int64_t clip_start, int64_t clip_end)
 }
 
 int Commercials::
-scan_audio(int layer, double start, double end)
+scan_audio(int vstream, double start, double end)
 {
-	int64_t channels;
-	scan_file->get_audio_for_video(layer, channels);
+	int64_t channel_mask = 0;
+	int ret = scan_file->get_audio_for_video(vstream, 0, channel_mask);
+	if( ret < 0 || !channel_mask ) return -1;
 	Tracks *tracks = mwindow->edl->tracks;
 	for(Track *atrk=tracks->first; !cancelled && atrk; atrk=atrk->next) {
 		if( atrk->data_type != TRACK_AUDIO ) continue;
@@ -554,7 +555,7 @@ scan_audio(int layer, double start, double end)
 		Edits *edits = atrk->edits;  Edit *next = 0;
 		for( Edit *edit=edits->first; !cancelled && edit; edit=next ) {
 			next = edit->next;
-			if( ((channels>>edit->channel) & 1) == 0 ) continue;
+			if( ((channel_mask>>edit->channel) & 1) == 0 ) continue;
 			Indexable *indexable = edit->get_source();
 			if( !indexable || !indexable->is_asset ) continue;
 			Asset *asset = (Asset *)indexable;

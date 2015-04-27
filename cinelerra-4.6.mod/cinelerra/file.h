@@ -180,10 +180,13 @@ public:
 // return video info
 	int get_video_info(int track, int &pid, double &framerate,
 		int &width, int &height, char *title);
+// update asset with selected audio/video layer data
+	int select_video_stream(Asset *asset, int vstream);
+	int select_audio_stream(Asset *asset, int astream);
 // get dvb system_time
 	int get_system_time(int64_t &tm);
 // get dvb audio channels for video stream
-	int get_audio_for_video(int stream, int64_t &channels, int layer=-1);
+	int get_audio_for_video(int vstream, int astream, int64_t &channel_mask);
 // get frame thumbnail data
 	int get_thumbnail(int stream,
 		int64_t &position, unsigned char *&thumbnail, int &ww, int &hh);

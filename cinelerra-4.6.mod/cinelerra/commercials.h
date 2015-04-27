@@ -76,7 +76,7 @@ public:
 	void dump_ads();
 	int verify_edit(Track *track, Edit *edit, double start, double end);
 	Edit * cut_edit(Track *track, Edit *edit, int64_t clip_start, int64_t clip_end);
-	int scan_audio(int layer, double start, double end);
+	int scan_audio(int vstream, double start, double end);
 	int scan_media();
 	int scan_video();
 	int scan_asset(Asset *asset, Track *vtrack, Edit *edit);

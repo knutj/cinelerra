@@ -269,6 +269,9 @@ public:
 	FFMPEG(FileBase *file_base=0);
 	~FFMPEG();
 
+	int ff_audio_stream(int channel) { return astrm_index[channel].st_idx; }
+	int ff_video_stream(int layer) { return vstrm_index[layer].st_idx; }
+
 	int ff_total_audio_channels();
 	int ff_total_astreams();
 	int ff_audio_channels(int stream);
@@ -276,7 +279,7 @@ public:
 	const char *ff_audio_format(int stream);
 	int ff_audio_pid(int stream);
 	int64_t ff_audio_samples(int stream);
-	int64_t ff_audio_for_video(int stream, int layer);
+	int ff_audio_for_video(int vstream, int astream, int64_t &channels);
 
 	int ff_total_video_layers();
 	int ff_total_vstreams();

@@ -32,7 +32,7 @@ public:
 	static int check_sig(Asset *asset);
 	int get_video_info(int track, int &pid, double &framerate,
 		int &width, int &height, char *title=0);
-	int get_audio_for_video(int stream, int64_t &channels, int layer);
+	int get_audio_for_video(int vstream, int astream, int64_t &channel_mask);
 	static void get_info(char *path,char *text);
 	int open_file(int rd,int wr);
 	int close_file(void);
@@ -45,6 +45,8 @@ public:
 	int64_t get_memory_usage(void);
 	int colormodel_supported(int colormodel);
 	int get_best_colormodel(Asset *asset,int driver);
+	int select_video_stream(Asset *asset, int vstream);
+	int select_audio_stream(Asset *asset, int astream);
 };
 
 

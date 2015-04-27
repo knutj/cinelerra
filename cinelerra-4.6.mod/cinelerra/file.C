@@ -1218,7 +1218,7 @@ int File::get_system_time(int64_t &tm)
 	return file ? file->get_system_time(tm) : -1;
 }
 
-int File::get_audio_for_video(int stream, int64_t &channels, int layer)
+int File::get_audio_for_video(int vstream, int astream, int64_t &channel_mask)
 {
 #ifdef USE_FILEFORK
 	if(file_fork)
@@ -1226,17 +1226,17 @@ int File::get_audio_for_video(int stream, int64_t &channels, int layer)
 		FileForker this_is(*forked);
 		unsigned char buffer[2*sizeof(int)];
 		int offset = 0;
-		*(int*)(buffer + offset) = stream;
+		*(int*)(buffer + offset) = vstream;
 		offset += sizeof(int);
-		*(int*)(buffer + offset) = layer;
+		*(int*)(buffer + offset) = astream;
 		file_fork->send_command(FileFork::GET_AUDIO4VIDEO, buffer, sizeof(buffer));
 		int result = file_fork->read_result();
-		channels = *(int64_t *)file_fork->result_data;
+		channel_mask = *(int64_t *)file_fork->result_data;
 		return result;
 	}
 #endif
 
-	return file ? file->get_audio_for_video(stream, channels, layer) : -1;
+	return file ? file->get_audio_for_video(vstream, astream, channel_mask) : -1;
 }
 
 int File::get_video_pid(int track)
@@ -1281,6 +1281,48 @@ int File::get_video_info(int track, int &pid, double &framerate,
 
 	return !file ? -1 :
 		 file->get_video_info(track, pid, framerate, width, height, title);
+}
+
+int File::select_video_stream(Asset *asset, int vstream)
+{
+#ifdef USE_FILEFORK
+	if(file_fork)
+	{
+		FileForker this_is(*forked);
+		file_fork->send_command(FileFork::SELECT_VIDEO_STREAM,
+				(unsigned char*)&vstream, sizeof(vstream));
+		int result = file_fork->read_result();
+		if( !result ) {
+			unsigned char *bp = file_fork->result_data;
+			asset->frame_rate    = *(double*)  bp;  bp += sizeof(asset->frame_rate);
+			asset->video_length = *(int64_t *) bp;  bp += sizeof(asset->video_length);
+			asset->width        = *(int *)     bp;  bp += sizeof(asset->width);
+			asset->height       = *(int *)     bp;  bp += sizeof(asset->height);
+		}
+	}
+#endif
+	return !file ? -1 :
+		 file->select_video_stream(asset, vstream);
+}
+
+int File::select_audio_stream(Asset *asset, int astream)
+{
+#ifdef USE_FILEFORK
+	if(file_fork)
+	{
+		FileForker this_is(*forked);
+		file_fork->send_command(FileFork::SELECT_AUDIO_STREAM,
+				(unsigned char*)&astream, sizeof(astream));
+		int result = file_fork->read_result();
+		if( !result ) {
+			unsigned char *bp = file_fork->result_data;
+			asset->audio_length = *(int64_t *) bp;  bp += sizeof(asset->audio_length);
+			asset->sample_rate  = *(int *)     bp;  bp += sizeof(asset->sample_rate);
+		}
+	}
+#endif
+	return !file ? -1 :
+		 file->select_audio_stream(asset, astream);
 }
 
 

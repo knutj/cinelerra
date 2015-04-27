@@ -3403,7 +3403,6 @@ void MWindow::resync_guis()
 
 int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tracks)
 {
-	int64_t channels = 0;
 	File *file = new File;
 	EDLSession *session = edl->session;
 	double old_framerate = session->frame_rate;
@@ -3412,17 +3411,12 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 	if( !result && delete_tracks > 0 )
 		undo->update_undo_before();
 	if( !result && asset->get_video_layers() > 0 ) {
-		int pid, width, height;
-		double framerate;
-		char title[BCTEXTLEN];
-		result = file->get_video_info(vstream,
-			pid, framerate, width, height, title);
-		if( result ) {
-			result = 0;
-			framerate = asset->get_frame_rate();
-			width = asset->get_w();
-			height = asset->get_h();
-		}
+		// try to get asset up to date, may fail
+		file->select_video_stream(asset, vstream);
+		// either way use what was/is there.
+		double framerate = asset->get_frame_rate();
+		int width = asset->get_w();
+		int height = asset->get_h();
 		// must be multiple of 4 for opengl
 		width = (width+3) & ~3;  height = (height+3) & ~3;
 		int driver = session->playback_config->vconfig->driver;
@@ -3467,10 +3461,12 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 	}
 	if( !result && asset->channels > 0 ) {
 		session->sample_rate = asset->get_sample_rate();
-		result = file->get_audio_for_video(vstream, channels, astream);
-		if( result || !channels ) channels = (1<<asset->channels)-1;
+		int64_t channel_mask = 0;
+		result = file->get_audio_for_video(vstream, astream, channel_mask);
+		if( !result ) file->select_audio_stream(asset, astream);
+		if( result || !channel_mask ) channel_mask = (1<<asset->channels)-1;
 		result = 0;
-		for( int64_t mask=channels; mask!=0; mask>>=1 ) result += mask & 1;
+		for( uint64_t mask=channel_mask; mask!=0; mask>>=1 ) result += mask & 1;
 		if( result > 6 ) result = 6;
 		session->audio_tracks = session->audio_channels = result;
 		switch( result ) {
@@ -3498,7 +3494,7 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 				Edit *edit = track->edits->first;
 					for( Edit *next_edit=0; edit; edit=next_edit ) {
 					next_edit = edit->next;
-					if( !((1<<edit->channel) & channels) ||
+					if( !((1<<edit->channel) & channel_mask) ||
 					    !edit->asset || !edit->asset->is_asset ||
 					    *asset != *edit->asset )
 						delete edit;
