@@ -318,30 +318,37 @@ int FileMPEG::get_audio_for_video(int vstream, int astream, int64_t &channel_mas
 	int elements = mpeg3_dvb_channel_count(fd);
 	if( elements <= 0 ) return -1;
 
-	for( int n=0; n<elements; ++n ) {
-		int vidx, aidx, vstrm, astrm, total_astreams, total_vstreams;
+	int pidx = -1;
+	int total_astreams = 0, total_vstreams = 0;
+	for( int n=0; pidx<0 && n<elements; ++n ) {
+		total_astreams = total_vstreams = 0;
 		if( mpeg3_dvb_total_vstreams(fd,n,&total_vstreams) ||
 		    mpeg3_dvb_total_astreams(fd,n,&total_astreams) ) continue;
-		for( vidx=0; vidx<total_vstreams; ++vidx ) {
-			if( mpeg3_dvb_vstream_number(fd,n,vidx,&vstrm) ) continue;
-			if( vstrm == vstream ) break;
-		}
-		if( vidx >= total_vstreams ) continue;
-		for( aidx=0; aidx<total_astreams; ++aidx ) {
-			if( mpeg3_dvb_astream_number(fd,n,aidx,&astrm,0) ) continue;
-			if( astrm < 0 ) continue;
-			if( astream > 0 ) { --astream;  continue; }
-			int atrack = 0;
-			for(int i=0; i<astrm; ++i )
-				atrack += mpeg3_audio_channels(fd, i);
-			int64_t mask = 0;
-			for(int i=mpeg3_audio_channels(fd, astrm); --i>=0; ++atrack )
-				mask |= (1<<atrack);
-			channel_mask = mask;
-			return astrm;
+		if( !total_vstreams || !total_astreams ) continue;
+		for( int i=0; pidx<0 && i<total_vstreams; ++i ) {
+			int vstrm = -1;
+			if( mpeg3_dvb_vstream_number(fd,n,i,&vstrm) ) continue;
+			if( vstrm == vstream ) pidx = n;
 		}
 	}
-	return -1;
+	if( pidx < 0 ) return -1;
+	int ret = -1;
+	int64_t channels = 0;
+	for( int i=0; i<total_astreams; ++i ) {
+		int astrm = -1;
+		if( mpeg3_dvb_astream_number(fd,pidx,i,&astrm,0) ) continue;
+		if( astrm < 0 ) continue;
+		if( ret < 0 ) ret = astrm;
+		if( astream > 0 ) { --astream;  continue; }
+		int atrack = 0;
+		for(int i=0; i<astrm; ++i )
+			atrack += mpeg3_audio_channels(fd, i);
+		int64_t mask = (1 << mpeg3_audio_channels(fd, astrm)) - 1;
+		channels |= mask << atrack;
+		if( !astream ) break;
+	}
+	channel_mask = channels;
+	return ret;
 }
 
 int FileMPEG::reset_parameters_derived()

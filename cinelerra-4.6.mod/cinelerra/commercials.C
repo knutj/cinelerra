@@ -546,8 +546,8 @@ int Commercials::
 scan_audio(int vstream, double start, double end)
 {
 	int64_t channel_mask = 0;
-	int ret = scan_file->get_audio_for_video(vstream, 0, channel_mask);
-	if( ret < 0 || !channel_mask ) return -1;
+	int astrm = scan_file->get_audio_for_video(vstream, -1, channel_mask);
+	if( astrm < 0 || !channel_mask ) return -1;
 	Tracks *tracks = mwindow->edl->tracks;
 	for(Track *atrk=tracks->first; !cancelled && atrk; atrk=atrk->next) {
 		if( atrk->data_type != TRACK_AUDIO ) continue;

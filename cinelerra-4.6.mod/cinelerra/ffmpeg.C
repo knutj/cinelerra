@@ -1660,10 +1660,13 @@ int64_t FFMPEG::ff_audio_samples(int stream)
 	return ffaudio[stream]->length;
 }
 
-int FFMPEG::ff_audio_for_video(int vstream, int astream, int64_t &channels)
+// find audio astream/channels with this program,
+//   or all program audio channels (astream=-1)
+int FFMPEG::ff_audio_for_video(int vstream, int astream, int64_t &channel_mask)
 {
-	int vidx = ffvideo[vstream]->idx;
+	channel_mask = 0;
 	int pidx = -1;
+	int vidx = ffvideo[vstream]->idx;
 	// find first program with this video stream
 	for( int i=0; pidx<0 && i<(int)fmt_ctx->nb_programs; ++i ) {
 		AVProgram *pgrm = fmt_ctx->programs[i];
@@ -1674,30 +1677,27 @@ int FFMPEG::ff_audio_for_video(int vstream, int astream, int64_t &channels)
 			if( st_idx == vidx ) pidx = i;
 		}
 	}
-	// find audio astream with this program
-	if( pidx >= 0 ) {
-		int aidx = -1, astrm = -1;
-		AVProgram *pgrm = fmt_ctx->programs[pidx];
-		for( int j=0; astream>=0 && j<(int)pgrm->nb_stream_indexes; ++j ) {
-			aidx = pgrm->stream_index[j];
-			AVStream *st = fmt_ctx->streams[aidx];
-			if( st->codec->codec_type != AVMEDIA_TYPE_AUDIO ) continue;
-			--astream;
-		}
-		if( astream < 0 && aidx >= 0 ) {
-			for( int i=0; i<ffaudio.size() && astrm<0; ++i )
-				if( ffaudio[i]->idx == aidx ) astrm = i;
-		}
+	if( pidx < 0 ) return -1;
+	int ret = -1;
+	int64_t channels = 0;
+	AVProgram *pgrm = fmt_ctx->programs[pidx];
+	for( int j=0; j<(int)pgrm->nb_stream_indexes; ++j ) {
+		int aidx = pgrm->stream_index[j];
+		AVStream *st = fmt_ctx->streams[aidx];
+		if( st->codec->codec_type != AVMEDIA_TYPE_AUDIO ) continue;
+		if( astream > 0 ) { --astream;  continue; }
+		int astrm = -1;
+		for( int i=0; astrm<0 && i<ffaudio.size(); ++i )
+			if( ffaudio[i]->idx == aidx ) astrm = i;
 		if( astrm >= 0 ) {
-			int ch = ffaudio[astrm]->channel0;
-			int64_t channel_mask = 0;
-			for( int i=ffaudio[astrm]->channels; --i>=0; ++ch )
-				channel_mask |= (1<<ch);
-			channels = channel_mask;
-			return astrm;
+			if( ret < 0 ) ret = astrm;
+			int64_t mask = (1 << ffaudio[astrm]->channels) - 1;
+			channels |= mask << ffaudio[astrm]->channel0;
 		}
+		if( !astream ) break;
 	}
-	return -1;
+	channel_mask = channels;
+	return ret;
 }
 
 

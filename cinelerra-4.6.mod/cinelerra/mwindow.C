@@ -3462,14 +3462,14 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 	if( !result && asset->channels > 0 ) {
 		session->sample_rate = asset->get_sample_rate();
 		int64_t channel_mask = 0;
-		result = file->get_audio_for_video(vstream, astream, channel_mask);
-		if( !result ) file->select_audio_stream(asset, astream);
-		if( result || !channel_mask ) channel_mask = (1<<asset->channels)-1;
-		result = 0;
-		for( uint64_t mask=channel_mask; mask!=0; mask>>=1 ) result += mask & 1;
-		if( result > 6 ) result = 6;
-		session->audio_tracks = session->audio_channels = result;
-		switch( result ) {
+		int astrm = file->get_audio_for_video(vstream, astream, channel_mask);
+		if( astrm >= 0 ) file->select_audio_stream(asset, astrm);
+		if( astrm < 0 || !channel_mask ) channel_mask = (1<<asset->channels)-1;
+		int atracks = 0;
+		for( uint64_t mask=channel_mask; mask!=0; mask>>=1 ) atracks += mask & 1;
+		if( atracks > 6 ) atracks = 6;
+		session->audio_tracks = session->audio_channels = atracks;
+		switch( atracks ) {
 		case 6:
 			session->achannel_positions[0] = 90;
 			session->achannel_positions[1] = 150;
@@ -3483,7 +3483,6 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 			session->achannel_positions[1] = 0;
 			break;
 		}
-		result = 0;
 		remap_audio(MWindow::AUDIO_1_TO_1);
 
 		if( delete_tracks ) {
@@ -3523,7 +3522,7 @@ int MWindow::select_asset(int vtrack, int delete_tracks)
 	if( !edit ) return 1;
 	Asset *asset = edit->asset;
 	if( !asset || !asset->is_asset ) return 1;
-	return select_asset(asset, edit->channel, 0, delete_tracks);
+	return select_asset(asset, edit->channel, -1, delete_tracks);
 }
 
 void MWindow::dump_plugindb(FILE *fp)

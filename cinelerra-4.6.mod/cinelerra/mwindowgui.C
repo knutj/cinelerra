@@ -1107,8 +1107,8 @@ int MWindowGUI::keypress_event()
 		{
 			case '1': case '2': case '3': case '4':
 			case '5': case '6': case '7': case '8':
-			if( !alt_down() ) break;
-			if( !mwindow->select_asset(get_keypress()-'1',-1) )
+			if( !alt_down() || shift_down() ) break;
+			if( !mwindow->select_asset(get_keypress()-'1',1) )
 				result = 1;
 			break;
 			case LEFT:
