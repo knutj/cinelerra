@@ -67,6 +67,7 @@ THEORA_PATH := $(shell echo ../thirdparty/libtheora*)
 OPENJ2K_PATH := $(shell echo ../thirdparty/openjpeg*)
 VPX_PATH := $(shell echo ../thirdparty/libvpx*)
 X264_PATH := $(shell echo ../thirdparty/x264*)
+X265_PATH := $(shell echo ../thirdparty/x265*)
 
 TWOLAME_LIB := $(TWOLAME_PATH)/libtwolame/.libs/libtwolame.a
 LAME_LIB := $(LAME_PATH)/libmp3lame/.libs/libmp3lame.a
@@ -75,6 +76,7 @@ VORBIS_LIB := $(VORBIS_PATH)/lib/.libs/libvorbis.a
 THEORA_LIB := $(THEORA_PATH)/lib/.libs/libtheora.a
 VPX_LIB := $(VPX_PATH)/libvpx.a
 X264_LIB := $(X264_PATH)/libx264.a
+X265_LIB := $(X265_PATH)/libx265.a
 
 #broken
 OPENJ2K_LIB := $(OPENJ2K_PATH)/bin/libopenjpip.a \
@@ -90,6 +92,7 @@ STATIC_LIBS := \
 	$(THEORA_LIB) \
 	$(VPX_LIB) \
 	$(X264_LIB) \
+	$(X265_LIB) \
 
 LIBS = \
 	../quicktime/$(OBJDIR)/libquicktime.a \

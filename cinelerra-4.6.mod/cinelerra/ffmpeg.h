@@ -54,7 +54,6 @@ public:
 
 	int initted() { return init; }
 	void queue(int64_t pos);
-	void dequeue();
 };
 
 class FFAudioHistory {
@@ -87,7 +86,6 @@ public:
 	static void ff_lock(const char *cp=0);
 	static void ff_unlock();
 	void queue(FFrame *frm);
-	void dequeue(FFrame *frm);
 
 	virtual int encode_activate();
 	virtual int decode_activate();
@@ -100,7 +98,6 @@ public:
 	FFMPEG *ffmpeg;
 	AVStream *st;
 	AVFormatContext *fmt_ctx;
-	AVDictionary *opts;
 	FFPacket ipkt;
 	int need_packet, flushed;
 
@@ -109,7 +106,9 @@ public:
 
 	int64_t nudge;
 	int idx;
-	int eof, reading, writing;
+	int reading, writing;
+	int eof;
+
 	int st_eof() {
 		return eof;
 	}
@@ -215,6 +214,8 @@ public:
 	void set_loglevel(const char *ap);
 	static double to_secs(int64_t time, AVRational time_base);
 	int info(char *text, int len);
+	void queue(FFrame *frm);
+	void dequeue(FFrame *frm);
 
 	int init_decoder(const char *filename);
 	int open_decoder();
@@ -254,9 +255,10 @@ public:
 	ArrayList<ffidx> vstrm_index;
 	int mux_audio(FFrame *frm);
 	int mux_video(FFrame *frm);
-
 	Condition *mux_lock;
-	int done;
+	Mutex *que_lock;
+
+	int done, flow;
 
 	void start_muxer();
 	void stop_muxer();

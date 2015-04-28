@@ -58,6 +58,10 @@ inc_faad2="include"
 add_library faad2 \
 	libfaad/.libs/libfaad.a \
 	common/mp4ff/libmp4ff.a
+# fdk replaces faac/faad2, but is experimental...
+inc_fdk="libAACdec/include libAACenc/include libSYS/include"
+add_library fdk \
+	.libs/libfdk-aac.a
 inc_festival="src"
 add_library festival \
 	src/lib/libFestival.a
@@ -183,6 +187,9 @@ add_library twolame \
 inc_x264="."
 add_library x264 \
 	libx264.a
+inc_x265=". source"
+add_library x265 \
+	libx265.a
 inc_libvpx="."
 add_library libvpx \
 	libvpx.a \
@@ -258,10 +265,11 @@ probe libvpx "vpx/vpx_decoder.h" vpx_codec_decode -lvpx
 probe tiff "tiff.h tiffio.h" TIFFOpen -ltiff
 probe twolame "twolame.h" twolame_encode_buffer_float32_interleaved -ltwolame
 probe x264 "stdint.h x264.h" x264_encoder_encode -lx264
+probe x265 "x265.h" x265_encoder_encode -lx265
 
 echo ""
 # for ffmpeg deps/quicktime link
-forced_libs="ffmpeg libdv lame giflib libuuid libdv x264"
+forced_libs="ffmpeg libdv lame giflib libuuid libdv x264 x265"
 for name in $LIBS; do
   if is_in $name $forced_libs; then
     set - ${!name}
@@ -278,7 +286,7 @@ done
 # add dependencies (order matters)
 for dep in \
 	ffmpeg/faac ffmpeg/faad2 ffmpeg/twolame ffmpeg/lame \
-	ffmpeg/libvorbis ffmpeg/libtheora ffmpeg/x264 \
+	ffmpeg/libvorbis ffmpeg/libtheora ffmpeg/x264 ffmpeg/fdk \
 	libiec61883/libraw1394 libavc1394/librom1394 \
 	openexr/ilmbase ilmbase/libogg \
 	libtheora/libogg libtheora/libvorbis ; do

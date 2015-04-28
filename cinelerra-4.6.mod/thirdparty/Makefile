@@ -14,11 +14,14 @@
 #   vi configure
 #     add inc_<name> <inc_paths>
 #     add add_library name <lib_paths>
+#     add probe call if the library may be already in system
 #     fix forced_libs list: for lib in $forced_libs; do
 #     add dependencies (order matters): for dep in <pairs>; do
 #   vi Makefile
 #     add pkg.<data> (pkg.x = .flags, .vars, .params)
 #     add $(call rules,$(call std-build,<name>,<dep>...))
+#     add deps to other call rules if they require the new library
+#     add config enables if other libraries use the new library
 #
 TOPDIR := $(shell pwd)
 BLD := $(TOPDIR)/build
@@ -92,17 +95,21 @@ esound.cfg_params= --enable-shared=no
 esound.ldflags=-lm
 faac.cfg_params= --enable-shared=no
 faad2.cfg_params= --enable-shared=no
+fdk.cfg_vars= ./autogen.sh ;
+fdk.cfg_params= --enable-shared=no
+fdk.mak_params= ; for f in $(call bld_path,fdk,/lib*/include); do ln -s include `dirname $$$$f`/fdk-aac ; done
 fftw.cfg_params= --disable-fortran --enable-shared=no
 ffmpeg.cfg_params= \
 	--enable-pthreads --enable-gpl \
 	--disable-ffserver --disable-ffplay \
-	--enable-libfaac \
+	--enable-libfdk-aac \
 	--enable-libtwolame \
 	--enable-libmp3lame \
 	--enable-libvorbis \
 	--enable-libtheora \
 	--enable-libvpx \
 	--enable-libx264 \
+	--enable-libx265 \
 	--enable-nonfree \
 	--extra-cflags="\
 		$(call inc_path,faad2,include) \
@@ -112,7 +119,13 @@ ffmpeg.cfg_params= \
 		$(call inc_path,libvorbis,include) \
 		$(call inc_path,libtheora,include) \
 		$(call inc_path,libvpx) \
-		$(call inc_path,x264)" \
+		$(call inc_path,x264) \
+		$(call inc_path,x265) \
+		$(call inc_path,x265,source) \
+		$(call inc_path,fdk,libAACdec) \
+		$(call inc_path,fdk,libAACenc) \
+		$(call inc_path,fdk,libSYS) \
+		$(call inc_path,fdk,libSYS/include)" \
 	--extra-cxxflags="-D__STDC_CONSTANT_MACROS" \
 	--extra-libs="\
 		$(call ld_path,faad2,libfaad/.libs) \
@@ -122,7 +135,10 @@ ffmpeg.cfg_params= \
 		$(call ld_path,libvorbis,lib/.libs) \
 		$(call ld_path,libtheora,lib/.libs) \
 		$(call ld_path,libvpx) \
-		$(call ld_path,x264) -ldl" \
+		$(call ld_path,x264) \
+		$(call ld_path,x265) \
+		$(call ld_path,fdk,.libs) \
+		-ldl" \
 	--extra-ldflags="-ldl"
 
 flac.cfg_params= --enable-shared=no
@@ -156,6 +172,7 @@ openexr.cfg_params+=--with-ilmbase-prefix=$(call bld_path,ilmbase,usr)
 speech_tools.mak_params=-j1
 twolame.cfg_params=--enable-shared=no
 x264.cfg_params= --enable-static
+x265.cfg_vars=echo "exec cmake source -DENABLE_SHARED=no" > ./configure; chmod +x ./configure;
 
 # compile flag vars
 $(foreach tgt,$(TARGETS), \
@@ -182,7 +199,8 @@ $(call rules,$(call std-build,encore))
 $(call rules,$(call std-build,esound,audiofile))
 $(call rules,$(call std-build,faac))
 $(call rules,$(call std-build,faad2))
-$(call rules,$(call std-build,ffmpeg, faad2 faac twolame lame libtheora x264 libvpx))
+$(call rules,$(call std-build,fdk))
+$(call rules,$(call std-build,ffmpeg, faad2 faac fdk twolame lame libtheora x264 x265 libvpx))
 $(call rules,$(call std-build,fftw))
 $(call rules,$(call std-build,flac,libogg))
 $(call rules,$(call std-build,giflib))
@@ -206,6 +224,7 @@ $(call rules,$(call std-build,speech_tools))
 $(call rules,$(call std-build,tiff))
 $(call rules,$(call std-build,twolame))
 $(call rules,$(call std-build,x264))
+$(call rules,$(call std-build,x265))
 $(call rules,$(call std-build,libvpx))
 
 # specialize festival, multiple tarballs
