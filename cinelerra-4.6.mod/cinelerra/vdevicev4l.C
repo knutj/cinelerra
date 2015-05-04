@@ -297,7 +297,7 @@ unsigned long VDeviceV4L::translate_colormodel(int colormodel)
 		case BC_YUV422:      result = VIDEO_PALETTE_YUV422;      break;
 		case BC_YUV420P:     result = VIDEO_PALETTE_YUV420P;     break;
 		case BC_YUV422P:     result = VIDEO_PALETTE_YUV422P;     break;
-		//case BC_YUV411P:     result = VIDEO_PALETTE_YUV411P;     break;
+		case BC_YUV411P:     result = VIDEO_PALETTE_YUV411P;     break;
 		case BC_RGB888:      result = VIDEO_PALETTE_RGB24;       break;
 		default: result = VIDEO_PALETTE_RGB24; break;
 	}
@@ -474,7 +474,7 @@ int VDeviceV4L::frame_to_vframe(VFrame *frame, unsigned char *input)
 			}
 
 			case BC_YUV420P:
-			//case BC_YUV411P:
+			case BC_YUV411P:
 				memcpy(frame->get_y(), input, width * height);
 				memcpy(frame->get_u(), input + width * height, width * height / 4);
 				memcpy(frame->get_v(), input + width * height + width * height / 4, width * height / 4);
@@ -504,7 +504,7 @@ int VDeviceV4L::frame_to_vframe(VFrame *frame, unsigned char *input)
 			inheight, 
 			colormodel, 
 			-1);
-		cmodel_transfer(frame->get_rows(), 
+		BC_CModels::transfer(frame->get_rows(), 
 			in_frame->get_rows(),
 			frame->get_y(),
 			frame->get_u(),

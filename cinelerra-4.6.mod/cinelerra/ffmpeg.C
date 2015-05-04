@@ -13,6 +13,7 @@
 #endif
 
 #include "asset.h"
+#include "bccmodels.h"
 #include "fileffmpeg.h"
 #include "file.h"
 #include "ffmpeg.h"
@@ -217,7 +218,7 @@ FFStream::FFStream(FFMPEG *ffmpeg, AVStream *st, int idx)
 	this->st = st;
 	this->idx = idx;
 	fmt_ctx = 0;
-	nudge = 0;
+	nudge = AV_NOPTS_VALUE;
 	eof = 0;
 	reading = writing = 0;
 	need_packet = 1;
@@ -637,8 +638,10 @@ PixelFormat FFVideoStream::color_model_to_pix_fmt(int color_model)
 	case BC_YUV420P:	return AV_PIX_FMT_YUV420P;
 	case BC_YUV422P:	return AV_PIX_FMT_YUV422P;
 	case BC_YUV444P:	return AV_PIX_FMT_YUV444P;
-//	case BC_YUV411P:	return AV_PIX_FMT_YUV411P; // broken
+	case BC_YUV411P:	return AV_PIX_FMT_YUV411P;
 	case BC_RGB565:		return AV_PIX_FMT_RGB565;
+	case BC_RGB161616:      return AV_PIX_FMT_RGB48LE;
+	case BC_RGBA16161616:   return AV_PIX_FMT_RGBA64LE;
 	default: break;
 	}
 
@@ -656,8 +659,10 @@ int FFVideoStream::pix_fmt_to_color_model(PixelFormat pix_fmt)
 	case AV_PIX_FMT_YUV420P:	return BC_YUV420P;
 	case AV_PIX_FMT_YUV422P:	return BC_YUV422P;
 	case AV_PIX_FMT_YUV444P:	return BC_YUV444P;
-//	case AV_PIX_FMT_YUV411P:	return BC_YUV411P; // broken
+	case AV_PIX_FMT_YUV411P:	return BC_YUV411P;
 	case AV_PIX_FMT_RGB565:		return BC_RGB565;
+	case AV_PIX_FMT_RGB48LE:	return BC_RGB161616;
+	case AV_PIX_FMT_RGBA64LE:	return BC_RGBA16161616;
 	default: break;
 	}
 
@@ -709,7 +714,19 @@ int FFVideoStream::convert_cmodel(VFrame *frame,
 	// try direct transfer
 	if( !convert_picture_vframe(frame, ip, ifmt, iw, ih) ) return 0;
 	// use indirect transfer
-	VFrame vframe(iw, ih, BC_RGBA8888);
+	const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(ifmt);
+	int max_bits = 0;
+	for( int i = 0; i <desc->nb_components; ++i ) {
+		int bits = desc->comp[i].depth_minus1 + 1;
+		if( bits > max_bits ) max_bits = bits;
+	}
+// from libavcodec/pixdesc.c
+#define pixdesc_has_alpha(pixdesc) ((pixdesc)->nb_components == 2 || \
+ (pixdesc)->nb_components == 4 || (pixdesc)->flags & AV_PIX_FMT_FLAG_PAL)
+	int icolor_model = pixdesc_has_alpha(desc) ?
+		(max_bits > 8 ? BC_RGBA16161616 : BC_RGBA8888) :
+		(max_bits > 8 ? BC_RGB161616 : BC_RGB888) ;
+	VFrame vframe(iw, ih, icolor_model);
 	if( convert_picture_vframe(&vframe, ip, ifmt, iw, ih) ) return 1;
 	frame->transfer_from(&vframe);
 	return 0;
@@ -760,7 +777,13 @@ int FFVideoStream::convert_pixfmt(VFrame *frame,
 	// try direct transfer
 	if( !convert_vframe_picture(frame, op, ofmt, ow, oh) ) return 0;
 	// use indirect transfer
-	VFrame vframe(frame->get_w(), frame->get_h(), BC_RGBA8888);
+	int colormodel = frame->get_color_model();
+	int bits = BC_CModels::calculate_pixelsize(colormodel) * 8;
+	bits /= BC_CModels::components(colormodel);
+	int icolor_model =  BC_CModels::has_alpha(colormodel) ?
+		(bits > 8 ? BC_RGBA16161616 : BC_RGBA8888) :
+		(bits > 8 ? BC_RGB161616: BC_RGB888) ;
+	VFrame vframe(frame->get_w(), frame->get_h(), icolor_model);
 	vframe.transfer_from(frame);
 	if( convert_vframe_picture(&vframe, op, ofmt, ow, oh) ) return 1;
 	return 0;
@@ -1392,18 +1415,46 @@ int FFMPEG::decode_activate()
 				int st_idx = pgrm->stream_index[j];
 				AVStream *st = fmt_ctx->streams[st_idx];
 				AVCodecContext *avctx = st->codec;
-				int idx = -1;
 				if( avctx->codec_type == AVMEDIA_TYPE_AUDIO ) {
-					for( int i=0; i<ffaudio.size() && idx<0; ++i )
-						if( ffaudio[i]->idx == st_idx ) idx = i;
-					if( idx >= 0 ) ffaudio[idx]->nudge = nudge;
+					for( int k=0; k<ffaudio.size(); ++k ) {
+						if( ffaudio[k]->idx == st_idx )
+							ffaudio[k]->nudge = nudge;
+					}
 				}
 				else if( avctx->codec_type == AVMEDIA_TYPE_VIDEO ) {
-					for( int i=0; i<ffvideo.size() && idx<0; ++i )
-						if( ffvideo[i]->idx == st_idx ) idx = i;
-					if( idx >= 0 ) ffvideo[idx]->nudge = nudge;
+					for( int k=0; k<ffvideo.size(); ++k ) {
+						if( ffvideo[k]->idx == st_idx )
+							ffvideo[k]->nudge = nudge;
+					}
 				}
 			}
+		}
+		int64_t vstart_time = 0, astart_time = 0;
+		int nstreams = fmt_ctx->nb_streams;
+		for( int i=0; i<nstreams; ++i ) {
+			AVStream *st = fmt_ctx->streams[i];
+			AVCodecContext *avctx = st->codec;
+			switch( avctx->codec_type ) {
+			case AVMEDIA_TYPE_VIDEO:
+				if( st->start_time == AV_NOPTS_VALUE ) continue;
+				if( vstart_time >= st->start_time ) continue;
+				vstart_time = st->start_time;
+				break;
+			case AVMEDIA_TYPE_AUDIO:
+				if( st->start_time == AV_NOPTS_VALUE ) continue;
+				if( astart_time >= st->start_time ) continue;
+				astart_time = st->start_time;
+			default: break;
+			}
+		}
+		int64_t nudge = vstart_time > astart_time ? vstart_time : astart_time;
+		for( int k=0; k<ffvideo.size(); ++k ) {
+			if( ffvideo[k]->nudge != AV_NOPTS_VALUE ) continue;
+			ffvideo[k]->nudge = nudge;
+		}
+		for( int k=0; k<ffaudio.size(); ++k ) {
+			if( ffaudio[k]->nudge != AV_NOPTS_VALUE ) continue;
+			ffaudio[k]->nudge = nudge;
 		}
 		decoding = 1;
 	}

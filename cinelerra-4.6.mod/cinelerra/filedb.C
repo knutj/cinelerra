@@ -172,8 +172,7 @@ int FileDB::read_frame(VFrame *frame)
 		memset(fp->get_v(),0x80,swidth/2 * sheight/2);
 	}
 	if( !result && fp == vframe ) {
-		BC_WindowBase::get_cmodels()->transfer(
-			frame->get_rows(), fp->get_rows(),
+		BC_CModels::transfer(frame->get_rows(), fp->get_rows(),
 			frame->get_y(), frame->get_u(), frame->get_v(),
 			fp->get_y(), fp->get_u(), fp->get_v(),
 			0, 0, fp->get_w(), fp->get_h(),

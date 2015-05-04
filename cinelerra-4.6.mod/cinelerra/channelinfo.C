@@ -265,7 +265,6 @@ void ChanSearchGUI::create_objects()
 	add_subwindow(title);  x += title->get_w();
 	search_text = new ChanSearchText(this, x, y, get_w()-x-10);
 	add_subwindow(search_text);
-	text = (char *)search_text->get_text();
 	x = padx;  y += pady + 5;
 	title_text = new ChanSearchTitleText(this, x, y);
 	add_subwindow(title_text);  x += title_text->get_w() + padx;
@@ -320,7 +319,6 @@ ChanSearchGUI::ChanSearchGUI(ChanSearch *cswindow)
 	search_list = 0;
 	cancel = 0;
 	results = 0;
-	text = 0;
 
 	search_x = search_y = text_x = text_y = 0;
 	cancel_x = cancel_y = cancel_w = cancel_h = 0;
@@ -386,10 +384,11 @@ int ChanSearchGUI::close_event()
 
 int ChanSearchGUI::search(const char *sp)
 {
-	int n = strlen(text);
+	char const *tp = search_text->get_text();
+	int n = strlen(tp);
 	for( const char *cp=sp; *cp!=0; ++cp ) {
-		if( match_case_enable ? !strncmp(text, cp, n) :
-			!strncasecmp(text, cp, n) ) return 1;
+		if( match_case_enable ? !strncmp(tp, cp, n) :
+			!strncasecmp(tp, cp, n) ) return 1;
 	}
 	return 0;
 }

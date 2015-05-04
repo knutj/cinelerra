@@ -1516,7 +1516,7 @@ int FileOGG::read_frame(VFrame *frame)
 						- yuv.y_stride);
 		// copy into temp frame...
 		
-		cmodel_transfer(frame->get_rows(),
+		BC_CModels::transfer(frame->get_rows(),
 			temp_frame->get_rows(),
 			frame->get_y(),
 			frame->get_u(),
@@ -1977,7 +1977,7 @@ int FileOGG::write_frames_theora(VFrame ***frames, int len, int e_o_s)
 		} else
 		{
 
-			cmodel_transfer(temp_frame->get_rows(),
+			BC_CModels::transfer(temp_frame->get_rows(),
 				frame->get_rows(),
 				temp_frame->get_y(),
 				temp_frame->get_u(),

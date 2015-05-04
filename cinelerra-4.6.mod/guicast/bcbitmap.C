@@ -129,7 +129,7 @@ BC_XvShmImage::BC_XvShmImage(BC_Bitmap *bitmap, int index,
  : BC_BitmapImage(bitmap, index)
 {
 	Display *display = top_level->get_display();
-	int id = BC_WindowBase::get_cmodels()->bc_to_x(color_model);
+	int id = BC_CModels::bc_to_x(color_model);
 // Create the XvImage
 	xv_image = XvShmCreateImage(display, bitmap->xv_portid, id,
 			0, w, h, &shm_info);
@@ -216,7 +216,7 @@ BC_XvImage::BC_XvImage(BC_Bitmap *bitmap, int index,
  : BC_BitmapImage(bitmap, index)
 {
 	Display *display = top_level->display;
-	int id = BC_WindowBase::get_cmodels()->bc_to_x(color_model);
+	int id = BC_CModels::bc_to_x(color_model);
 	xv_image = XvCreateImage(display, bitmap->xv_portid, id, 0, w, h);
 	dataSize = xv_image->data_size;
 	data = new unsigned char[dataSize + 8];
@@ -475,8 +475,7 @@ int BC_Bitmap::get_default_depth()
 
 long BC_Bitmap::best_buffer_size()
 {
-	long pixelsize = BC_WindowBase::get_cmodels()->
-		calculate_pixelsize(get_color_model());
+	long pixelsize = BC_CModels::calculate_pixelsize(get_color_model());
 	return pixelsize * w * h;
 }
 
@@ -665,7 +664,7 @@ int BC_Bitmap::read_frame(VFrame *frame,
 //  in_x, in_y, in_w, in_h, out_x, out_y, out_w, out_h);
 //if(color_model == 6 && frame->get_color_model() == 19)
 //printf("BC_Bitmap::read_frame 1 %d %d %d %d\n", frame->get_w(), frame->get_h(), get_w(), get_h());
-		BC_WindowBase::get_cmodels()->transfer(
+		BC_CModels::transfer(
 			bfr->get_row_data(), frame->get_rows(),
 			bfr->get_y_data(), bfr->get_u_data(), bfr->get_v_data(),
 			frame->get_y(), frame->get_u(), frame->get_v(),

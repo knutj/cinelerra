@@ -80,7 +80,6 @@ int BC_WindowBase::shm_completion_event = -1;
 
 
 BC_Resources BC_WindowBase::resources;
-BC_CModels BC_WindowBase::cmodels;
 
 Window XGroupLeader = 0;
 
@@ -147,7 +146,7 @@ BC_WindowBase::~BC_WindowBase()
 	delete pixmap;
 
 #ifdef HAVE_GL
-	if( get_resources()->get_synchronous() ) {
+	if( get_resources()->get_synchronous() && top_level->options & GLX_WINDOW ) {
 		if( !glx_win ) {
 // NVIDIA library threading problem, XCloseDisplay SEGVs without this
 			sync_lock("BC_WindowBase::~BC_WindowBase:XDestroyWindow");
@@ -3016,7 +3015,7 @@ int BC_WindowBase::grab_port_id(BC_WindowBase *window, int color_model)
 	if(!get_resources()->use_xvideo) return -1;
 
 // Translate from color_model to X color model
-	x_color_model = cmodels.bc_to_x(color_model);
+	x_color_model = BC_CModels::bc_to_x(color_model);
 
 // Only local server is fast enough.
 	if(!resources.use_shm) return -1;
@@ -3496,11 +3495,6 @@ int BC_WindowBase::get_color_model()
 BC_Resources* BC_WindowBase::get_resources()
 {
 	return &BC_WindowBase::resources;
-}
-
-BC_CModels* BC_WindowBase::get_cmodels()
-{
-	return &BC_WindowBase::cmodels;
 }
 
 BC_Synchronous* BC_WindowBase::get_synchronous()

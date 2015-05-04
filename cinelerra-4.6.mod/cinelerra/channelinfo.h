@@ -47,7 +47,6 @@ public:
 	BC_Title *click_tip;
 	BC_Title *results;
 
-	char *text;
 	int title_text_enable;
 	int info_text_enable;
 	int match_case_enable;

@@ -535,7 +535,7 @@ int VDeviceX11::write_buffer(VFrame *output_channels, EDL *edl)
 
 		if(bitmap->hardware_scaling())
 		{
-			cmodel_transfer(bitmap->get_row_pointers(), 
+			BC_CModels::transfer(bitmap->get_row_pointers(), 
 				output_channels->get_rows(), 0, 0, 0,
 				output_channels->get_y(),
 				output_channels->get_u(),
@@ -554,7 +554,7 @@ int VDeviceX11::write_buffer(VFrame *output_channels, EDL *edl)
 		}
 		else
 		{
-			cmodel_transfer(bitmap->get_row_pointers(), 
+			BC_CModels::transfer(bitmap->get_row_pointers(), 
 				output_channels->get_rows(), 0, 0, 0,
 				output_channels->get_y(),
 				output_channels->get_u(),

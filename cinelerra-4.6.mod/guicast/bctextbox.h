@@ -40,6 +40,8 @@ class BC_ScrollTextBoxYScroll;
 
 class BC_TextBox : public BC_SubWindow
 {
+	char *text;
+	wchar_t *wtext;
 public:
 	BC_TextBox(int x, int y, int w, int rows, int size, char *text,
 		int has_border=1, int font=MEDIUMFONT);
@@ -183,8 +185,6 @@ private:
 	int background_color;
 	int size, tsize, dirty;
 	int wlen, wsize, *positions, plen;
-	char *text;
-	wchar_t *wtext;
 	char temp_string[KEYPRESSLEN];
 	int is_utf8;
 	int active;

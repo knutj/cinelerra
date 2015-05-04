@@ -59,7 +59,7 @@
 #define BC_YUV422P      17
 #define BC_YUV444P      27
 #define BC_YUV411P      18
-#define BC_YUV9P        28     // Disasterous cmodel from Sorenson
+#define BC_YUV410P      28
 
 // Colormodels purely used by Quicktime are done in Quicktime.
 
@@ -73,93 +73,11 @@
 
 
 
-
-
-#ifndef PERMUTATION_ARGS
-
-
-
-#define PERMUTATION_ARGS \
-	unsigned char **output_rows,  \
-	unsigned char **input_rows, \
-	unsigned char *out_y_plane, \
-	unsigned char *out_u_plane, \
-	unsigned char *out_v_plane, \
-	unsigned char *in_y_plane, \
-	unsigned char *in_u_plane, \
-	unsigned char *in_v_plane, \
-	int in_x,  \
-	int in_y,  \
-	int in_w,  \
-	int in_h, \
-	int out_x,  \
-	int out_y,  \
-	int out_w,  \
-	int out_h, \
-	int in_colormodel,  \
-	int out_colormodel, \
-	int bg_color, \
-	int total_in_w, \
-	int total_out_w, \
-	int scale, \
-	int out_pixelsize, \
-	int in_pixelsize, \
-	int *row_table, \
-	int *column_table, \
-	int bg_r, \
-	int bg_g, \
-	int bg_b
-
-
-
-#endif // !PERMUTATION_ARGS
-
-
-
-
-
-
-
-
 // Access with BC_WindowBase::cmodels
 class BC_CModels
 {
 public:
 	BC_CModels();
-
-
-
-	class YuvTables
-	{
-	public:
-		int rtoy_tab[0x100], gtoy_tab[0x100], btoy_tab[0x100];
-		int rtou_tab[0x100], gtou_tab[0x100], btou_tab[0x100];
-		int rtov_tab[0x100], gtov_tab[0x100], btov_tab[0x100];
-
-		int vtor_tab[0x100], vtog_tab[0x100];
-		int utog_tab[0x100], utob_tab[0x100];
-
-// Used by init_yuv only
-		int *vtor, *vtog, *utog, *utob;
-
-		float vtor_float_tab[0x100], vtog_float_tab[0x100];
-		float utog_float_tab[0x100], utob_float_tab[0x100];
-		float *vtor_float, *vtog_float, *utog_float, *utob_float;
-
-		int rtoy_tab16[0x10000], gtoy_tab16[0x10000], btoy_tab16[0x10000];
-		int rtou_tab16[0x10000], gtou_tab16[0x10000], btou_tab16[0x10000];
-		int rtov_tab16[0x10000], gtov_tab16[0x10000], btov_tab16[0x10000];
-
-		int vtor_tab16[0x10000], vtog_tab16[0x10000];
-		int utog_tab16[0x10000], utob_tab16[0x10000];
-		int *vtor16, *vtog16, *utog16, *utob16;
-
-		float v16tor_float_tab[0x10000], v16tog_float_tab[0x10000];
-		float u16tog_float_tab[0x10000], u16tob_float_tab[0x10000];
-		float *v16tor_float, *v16tog_float, *u16tog_float, *u16tob_float;
-	};
-
-	static YuvTables yuv_table;
 
 	static int calculate_pixelsize(int colormodel);
 	static int calculate_datasize(int w, int h, int bytes_per_line, int color_model);
@@ -173,8 +91,6 @@ public:
 	static int is_planar(int color_model);
 	static void to_text(char *string, int cmodel);
 	static int from_text(const char *text);
-
-
 
 	static void transfer(unsigned char **output_rows, /* Leave NULL if non existent */
 		unsigned char **input_rows,
@@ -200,16 +116,6 @@ public:
 
 	static void init_yuv();
 	static int bc_to_x(int color_model);
-
-
-
-	static void cmodel_default(PERMUTATION_ARGS);
-	static void cmodel_float(PERMUTATION_ARGS);
-	static void yuv420p(PERMUTATION_ARGS);
-	static void yuv9p(PERMUTATION_ARGS);
-	static void yuv444p(PERMUTATION_ARGS);
-	static void yuv422(PERMUTATION_ARGS);
-
 };
 
 

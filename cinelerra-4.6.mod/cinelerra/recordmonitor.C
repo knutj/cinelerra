@@ -1106,7 +1106,7 @@ overlay(VFrame *out)
 	int xx = x * scale, yy = y * scale;
 	int w = in->get_w(), h = in->get_h();
 	int ww = w * scale, hh = h * scale;
-	BC_WindowBase::get_cmodels()->transfer(out->get_rows(), in->get_rows(),
+	BC_CModels::transfer(out->get_rows(), in->get_rows(),
 		out->get_y(), out->get_u(), out->get_v(),
 		in->get_y(), in->get_u(), in->get_v(),
 		0, 0, w, h, xx, yy, ww, hh,

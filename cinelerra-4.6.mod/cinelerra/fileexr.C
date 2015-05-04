@@ -471,7 +471,7 @@ int FileEXR::write_frame(VFrame *frame, VFrame *data, FrameWriterUnit *unit)
 			asset->height,
 			native_cmodel,
 			-1);
-		cmodel_transfer(exr_unit->temp_frame->get_rows(), /* Leave NULL if non existent */
+		BC_CModels::transfer(exr_unit->temp_frame->get_rows(), /* Leave NULL if non existent */
 			frame->get_rows(),
 			exr_unit->temp_frame->get_y(), /* Leave NULL if non existent */
 			exr_unit->temp_frame->get_u(),

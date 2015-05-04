@@ -194,27 +194,12 @@ BC_Pixmap *BC_DragWindow::prepare_frame(VFrame *frame, BC_WindowBase *parent_win
 					BC_RGBA8888,
 					-1); 
 
-		BC_WindowBase::get_cmodels()->transfer(temp_frame->get_rows(), 
-			frame->get_rows(),
-			0,
-			0,
-			0,
-			0,
-			0,
-			0,
-			0, 
-			0, 
-			frame->get_w(), 
-			frame->get_h(),
-			0, 
-			0, 
-			temp_frame->get_w(), 
-			temp_frame->get_h(),
-			frame->get_color_model(), 
-			temp_frame->get_color_model(),
-			0,
-			frame->get_w(),
-			temp_frame->get_w());
+		BC_CModels::transfer(temp_frame->get_rows(), frame->get_rows(),
+			0, 0, 0, 0, 0, 0,
+			0, 0, frame->get_w(), frame->get_h(),
+			0, 0, temp_frame->get_w(), temp_frame->get_h(),
+			frame->get_color_model(), temp_frame->get_color_model(),
+			0, frame->get_w(), temp_frame->get_w());
 	}
 	temp_frame->get_rows()[(temp_frame->get_h() / 2)][(temp_frame->get_w() / 2) * 4 + 3] = 0;
 	my_pixmap = new BC_Pixmap(parent_window,

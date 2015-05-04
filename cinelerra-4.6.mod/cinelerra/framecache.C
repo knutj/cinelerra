@@ -101,7 +101,7 @@ int FrameCache::get_frame(VFrame *frame,
 // Frame may have come from the readahead thread.
 // Those frames are in the codec color model.
 // But to pass frame_exists, they must be identical.
-// 			cmodel_transfer(frame->get_rows(), 
+// 			BC_CModels::transfer(frame->get_rows(), 
 // 				result->data->get_rows(),
 // 				result->data->get_y(),
 // 				result->data->get_u(),

@@ -410,7 +410,7 @@ int FileList::read_frame(VFrame *frame)
 		else
 		{
 // Never happens
-			cmodel_transfer(frame->get_rows(), /* Leave NULL if non existent */
+			BC_CModels::transfer(frame->get_rows(), /* Leave NULL if non existent */
 				temp->get_rows(),
 				frame->get_y(), /* Leave NULL if non existent */
 				frame->get_u(),

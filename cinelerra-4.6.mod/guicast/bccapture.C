@@ -210,27 +210,12 @@ int BC_Capture::capture_frame(VFrame *frame, int &x1, int &y1)
 	else
 		XGetSubImage(display, rootwin, x1, y1, w, h, 0xffffffff, ZPixmap, ximage, 0, 0);
 
-	BC_WindowBase::get_cmodels()->transfer(frame->get_rows(),
-		row_data,
-		frame->get_y(),
-		frame->get_u(),
-		frame->get_v(),
-		0,
-		0,
-		0,
-		0,
-		0,
-		w,
-		h,
-		0,
-		0,
-		frame->get_w(),
-		frame->get_h(),
-		bitmap_color_model,
-		frame->get_color_model(),
-		0,
-		frame->get_w(),
-		w);
+	BC_CModels::transfer(frame->get_rows(), row_data,
+		frame->get_y(), frame->get_u(), frame->get_v(), 0,
+		0, 0, 0, 0, w, h, 0, 0,
+		frame->get_w(), frame->get_h(),
+		bitmap_color_model, frame->get_color_model(),
+		0, frame->get_w(), w);
 
 	return 0;
 }

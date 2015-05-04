@@ -24,11 +24,7 @@ OBJS = \
 	$(OBJDIR)/bcbitmap.o \
 	$(OBJDIR)/bcbutton.o \
 	$(OBJDIR)/bccapture.o \
-	$(OBJDIR)/bccmodel_default.o \
-	$(OBJDIR)/bccmodel_float.o \
 	$(OBJDIR)/bccmodels.o \
-	$(OBJDIR)/bccmodel_yuv420p.o \
-	$(OBJDIR)/bccmodel_yuv422.o \
 	$(OBJDIR)/bccounter.o \
 	$(OBJDIR)/bcclipboard.o \
 	$(OBJDIR)/bcdelete.o \
@@ -77,6 +73,7 @@ OBJS = \
 	$(OBJDIR)/bcwindowbase.o \
 	$(OBJDIR)/bcwindowdraw.o \
 	$(OBJDIR)/bcwindowevents.o \
+	$(OBJDIR)/bcxfer.o \
 	$(OBJDIR)/condition.o \
 	$(OBJDIR)/errorbox.o \
 	$(OBJDIR)/filesystem.o \
@@ -121,6 +118,11 @@ $(shell echo $(OBJS) > $(OBJDIR)/objs)
 
 all: $(OUTPUT) $(UTILS)
 
+$(OBJDIR)/bcxfer.o:	bcxfer.C xfer.C xfer.h
+	$(CXX) `cat $(OBJDIR)/c_flags` -c $< -o $@
+
+bcxfer.C:	bccmdl.py
+	./bccmdl.py > bcxfer.C
 
 $(OUTPUT): $(OBJS)
 	ar rcs $(OUTPUT) `cat $(OBJDIR)/objs`
@@ -160,6 +162,7 @@ test3:	$(OBJDIR)/test3.o $(STATICOUTPUT)
 
 clean:
 	rm -rf $(OBJDIR)
+	rm bcxfer.C
 	find \( -name core \
 		-o -name '*.o' -o -name '*.a' \
 		-o -name '*.so' \) -exec rm -f {} \;

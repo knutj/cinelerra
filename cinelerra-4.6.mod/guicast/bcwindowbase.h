@@ -268,7 +268,6 @@ public:
 	static BC_Resources* get_resources();
 // User must create synchronous object first
 	static BC_Synchronous* get_synchronous();
-	static BC_CModels* get_cmodels();
 	static int shm_completion_event;
 // bckeyboard / remote control
 	virtual int keyboard_listener(BC_WindowBase *wp) { return 0; }
@@ -699,7 +698,6 @@ private:
 	int has_focus;
 
 	static BC_Resources resources;
-	static BC_CModels cmodels;
 
 #ifndef SINGLE_THREAD
 // Array of repeaters for multiple repeating objects.

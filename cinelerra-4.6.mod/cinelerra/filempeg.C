@@ -1362,7 +1362,7 @@ int FileMPEG::write_frames(VFrame ***frames, int len)
 								-1);
 						}
 
-						cmodel_transfer(temp_frame->get_rows(), 
+						BC_CModels::transfer(temp_frame->get_rows(), 
 							frame->get_rows(),
 							temp_frame->get_y(),
 							temp_frame->get_u(),
@@ -1423,7 +1423,7 @@ int FileMPEG::write_frames(VFrame ***frames, int len)
 // frame->get_h(),
 // temp_frame->get_color_model(),
 // frame->get_color_model()); sleep(1);
-						cmodel_transfer(temp_frame->get_rows(), 
+						BC_CModels::transfer(temp_frame->get_rows(), 
 							frame->get_rows(),
 							temp_frame->get_y(),
 							temp_frame->get_u(),
@@ -1609,7 +1609,7 @@ int FileMPEG::read_frame(VFrame *frame)
 	char *y, *u, *v;
 	mpeg3_read_yuvframe_ptr(fd, &y, &u, &v, file->current_layer);
 	if( y && u && v ) {
-		cmodel_transfer(frame->get_rows(), 0,
+		BC_CModels::transfer(frame->get_rows(), 0,
 			frame->get_y(),
 			frame->get_u(),
 			frame->get_v(),

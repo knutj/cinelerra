@@ -139,7 +139,7 @@ public:
 
 // direct copy with no alpha
 	int copy_from(VFrame *frame);
-// cmodel_transfer
+// BC_CModels::transfer
 	int transfer_from(VFrame *frame, int bg_color=0);
 // Required for YUV
 	int clear_frame();

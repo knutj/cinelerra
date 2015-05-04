@@ -2049,7 +2049,7 @@ int File::read_frame(VFrame *frame, int is_thread)
 // frame->get_color_model(),
 // frame->get_w(),
 // frame->get_h());
-			cmodel_transfer(frame->get_rows(), 
+			BC_CModels::transfer(frame->get_rows(), 
 				temp_frame->get_rows(),
 				frame->get_y(),
 				frame->get_u(),

@@ -210,27 +210,15 @@ void AssetPicon::create_objects()
 						pixmap_h, 
 						BC_RGB888,
 						-1);
-					cmodel_transfer(icon_vframe->get_rows(), /* Leave NULL if non existent */
+					BC_CModels::transfer(
+						icon_vframe->get_rows(),
 						gui->temp_picon->get_rows(),
-						0, /* Leave NULL if non existent */
-						0,
-						0,
-						0, /* Leave NULL if non existent */
-						0,
-						0,
-						0,        /* Dimensions to capture from input frame */
-						0, 
+						0, 0, 0, 0, 0, 0, 0, 0, 
 						gui->temp_picon->get_w(), 
 						gui->temp_picon->get_h(),
-						0,       /* Dimensions to project on output frame */
-						0, 
-						pixmap_w, 
-						pixmap_h,
-						BC_RGB888, 
-						BC_RGB888,
-						0,         /* When transfering BC_RGBA8888 to non-alpha this is the background color in 0xRRGGBB hex */
-						0,       /* For planar use the luma rowspan */
-						0);     /* For planar use the luma rowspan */
+						0, 0, pixmap_w, pixmap_h,
+						BC_RGB888, BC_RGB888,
+						0, 0, 0);
 
 					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 

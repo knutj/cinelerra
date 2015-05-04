@@ -335,7 +335,7 @@ int RGBShiftEffect::process_realtime(VFrame *input, VFrame *output)
 
 	int w = input->get_w(), h = input->get_h();
 	int color_model = input->get_color_model();
-	int is_yuv = BC_WindowBase::get_cmodels()->is_yuv(color_model);
+	int is_yuv = BC_CModels::is_yuv(color_model);
 	if( is_yuv ) color_model = BC_RGB888;
 	VFrame *frame = input;
 	if( input->get_rows()[0] == output->get_rows()[0] || !is_yuv ) {
@@ -347,8 +347,7 @@ int RGBShiftEffect::process_realtime(VFrame *input, VFrame *output)
 			temp_frame = new VFrame(w, h, color_model);
 		frame = temp_frame;
 		if( color_model != input->get_color_model() )
-			BC_WindowBase::get_cmodels()->transfer(
-				frame->get_rows(), input->get_rows(),
+			BC_CModels::transfer(frame->get_rows(), input->get_rows(),
 				frame->get_y(), frame->get_u(), frame->get_v(),
 				input->get_y(), input->get_u(), input->get_v(),
 				0, 0, input->get_w(), input->get_h(),

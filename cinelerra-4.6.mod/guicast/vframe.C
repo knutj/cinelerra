@@ -300,6 +300,8 @@ int VFrame::clear_objects(int do_opengl)
 	switch(color_model)
 	{
 		case BC_COMPRESSED:
+		case BC_YUV410P:
+		case BC_YUV411P:
 		case BC_YUV420P:
 		case BC_YUV422P:
 		case BC_YUV444P:
@@ -344,7 +346,7 @@ VFrameScene* VFrame::get_scene()
 
 int VFrame::calculate_bytes_per_pixel(int color_model)
 {
-	return BC_WindowBase::get_cmodels()->calculate_pixelsize(color_model);
+	return BC_CModels::calculate_pixelsize(color_model);
 }
 
 long VFrame::get_bytes_per_line()
@@ -355,21 +357,31 @@ long VFrame::get_bytes_per_line()
 long VFrame::get_data_size()
 {
 	return calculate_data_size(w, h, bytes_per_line, color_model) - 4;
-//	return h * bytes_per_line;
 }
 
 long VFrame::calculate_data_size(int w, int h, int bytes_per_line, int color_model)
 {
-	return BC_WindowBase::get_cmodels()->calculate_datasize(w, h, bytes_per_line, color_model);
-	return 0;
+	return BC_CModels::calculate_datasize(w, h, bytes_per_line, color_model);
 }
 
 void VFrame::create_row_pointers()
 {
 	switch(color_model)
 	{
+		case BC_YUV410P:
+			if(!this->v_offset)
+			{
+				this->y_offset = 0;
+				this->u_offset = w * h;
+				this->v_offset = w * h + w / 4 * h / 4;
+			}
+			y = this->data + this->y_offset;
+			u = this->data + this->u_offset;
+			v = this->data + this->v_offset;
+			break;
+
 		case BC_YUV420P:
-//		case BC_YUV411P:
+		case BC_YUV411P:
 			if(!this->v_offset)
 			{
 				this->y_offset = 0;
@@ -887,6 +899,13 @@ int VFrame::clear_frame()
 		case BC_COMPRESSED:
 			break;
 
+		case BC_YUV410P:
+			bzero(get_y(), w*h);
+			bzero(get_u(), w / 4 * h / 4);
+			bzero(get_v(), w / 4 * h / 4);
+			break;
+
+		case BC_YUV411P:
 		case BC_YUV420P:
 			bzero(get_y(), w*h);
 			bzero(get_u(), w*h / 4);
@@ -1033,7 +1052,14 @@ int VFrame::copy_from(VFrame *frame)
 			this->compressed_size = frame->compressed_size;
 			break;
 
+		case BC_YUV410P:
+			memcpy(get_y(), frame->get_y(), w * h);
+			memcpy(get_u(), frame->get_u(), w / 4 * h / 4);
+			memcpy(get_v(), frame->get_v(), w / 4 * h / 4);
+			break;
+
 		case BC_YUV420P:
+		case BC_YUV411P:
 //printf("%d %d %p %p %p %p %p %p\n", w, h, get_y(), get_u(), get_v(), frame->get_y(), frame->get_u(), frame->get_v());
 			memcpy(get_y(), frame->get_y(), w * h);
 			memcpy(get_u(), frame->get_u(), w * h / 4);
