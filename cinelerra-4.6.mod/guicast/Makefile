@@ -122,7 +122,7 @@ $(OBJDIR)/bcxfer.o:	bcxfer.C xfer.C xfer.h
 	$(CXX) `cat $(OBJDIR)/c_flags` -c $< -o $@
 
 bcxfer.C:	bccmdl.py
-	./bccmdl.py > bcxfer.C
+	python < ./bccmdl.py > bcxfer.C
 
 $(OUTPUT): $(OBJS)
 	ar rcs $(OUTPUT) `cat $(OBJDIR)/objs`
