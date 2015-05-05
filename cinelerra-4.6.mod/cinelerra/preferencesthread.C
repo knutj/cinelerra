@@ -196,17 +196,16 @@ int PreferencesThread::apply_settings()
 		(*this_aconfig != *aconfig) || (*this_vconfig != *vconfig) ||
 		!preferences->brender_asset->equivalent(*mwindow->preferences->brender_asset, 0, 1);
 
+	if( preferences->file_forking != mwindow->preferences->file_forking ) {
+		MainError::show_error(
+			_("Reseting file forking requires restarting cinelerra"));
+	}
 	mwindow->edl->copy_session(edl, 1);
 	mwindow->preferences->copy_from(preferences);
 	mwindow->init_brender();
 
 	BC_Signals::set_catch_segv(mwindow->preferences->trap_sigsegv);
 	BC_Signals::set_catch_intr(mwindow->preferences->trap_sigintr);
-
-	if( preferences->file_forking )
-		MWindow::init_fileserver(mwindow->preferences);
-	else
-		MWindow::finit_fileserver();
 
 	mwindow->reset_android_remote();
 

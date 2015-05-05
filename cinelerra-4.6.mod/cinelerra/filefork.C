@@ -638,28 +638,32 @@ int FileFork::handle_command()
 		}
 		case SELECT_VIDEO_STREAM:
 		{
-			Asset asset;
+			Asset *asset = new Asset;
 			int vstream = *(int*)command_data;
-			result = file->select_video_stream(&asset, vstream);
-			unsigned char data[sizeof(asset.frame_rate)+sizeof(asset.video_length)+
-				sizeof(asset.width)+sizeof(asset.height)];
+			result = file->select_video_stream(asset, vstream);
+			unsigned char data[sizeof(asset->frame_rate)+sizeof(asset->video_length)+
+				sizeof(asset->width)+sizeof(asset->height)];
 			unsigned char *bp = data;
-			*(double *)bp = asset.frame_rate; bp += sizeof(asset.frame_rate);
-			*(int *)bp = asset.video_length;  bp += sizeof(asset.video_length);
-			*(int *)bp = asset.width;         bp += sizeof(asset.width);
-			*(int *)bp = asset.height;        bp += sizeof(asset.height);
+			*(double *)bp = asset->frame_rate; bp += sizeof(asset->frame_rate);
+			*(int *)bp = asset->video_length;  bp += sizeof(asset->video_length);
+			*(int *)bp = asset->width;         bp += sizeof(asset->width);
+			*(int *)bp = asset->height;        bp += sizeof(asset->height);
+			delete asset;
 			send_result(result, data, bp-data);
+			break;
 		}
 		case SELECT_AUDIO_STREAM:
 		{
-			Asset asset;
+			Asset *asset = new Asset;
 			int astream = *(int*)command_data;
-			result = file->select_audio_stream(&asset, astream);
-			unsigned char data[sizeof(asset.sample_rate)+sizeof(asset.audio_length)];
+			result = file->select_audio_stream(asset, astream);
+			unsigned char data[sizeof(asset->sample_rate)+sizeof(asset->audio_length)];
 			unsigned char *bp = data;
-			*(int *)bp = asset.sample_rate;   bp += sizeof(asset.sample_rate);
-			*(int *)bp = asset.audio_length;  bp += sizeof(asset.audio_length);
+			*(int *)bp = asset->sample_rate;   bp += sizeof(asset->sample_rate);
+			*(int *)bp = asset->audio_length;  bp += sizeof(asset->audio_length);
+			delete asset;
 			send_result(result, data, bp-data);
+			break;
 		}
 	}
 

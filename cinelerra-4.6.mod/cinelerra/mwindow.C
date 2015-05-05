@@ -1848,16 +1848,6 @@ void MWindow::init_fileserver(Preferences *preferences)
 #endif
 }
 
-void MWindow::finit_fileserver()
-{
-#ifdef USE_FILEFORK
-	if( file_server ) {
-		delete file_server;
-		file_server = 0;
-	}
-#endif
-}
-
 void MWindow::create_objects(int want_gui, 
 	int want_new,
 	char *config_path)

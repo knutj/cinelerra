@@ -565,7 +565,6 @@ public:
 // Initialize shared memory
 	void init_shm();
 	static void init_fileserver(Preferences *preferences);
-	static void finit_fileserver();
 
 // Initialize channel DB's for playback
 	void init_channeldb();

@@ -473,8 +473,7 @@ int File::open_file(Preferences *preferences,
 	if(debug) printf("File::open_file %d\n", __LINE__);
 
 #ifdef USE_FILEFORK
-	if(!is_fork && MWindow::file_server && (rd || wr))
-	{
+	if( !is_fork && MWindow::file_server && (rd || wr) ) {
 		FileForker this_is(*forked);
 // printf("File::open_file %d file_server=%p rd=%d wr=%d %d\n", 
 // __LINE__, 
@@ -882,8 +881,6 @@ int File::close_file(int ignore_thread)
 			current_frame);
 
 		delete file_fork;
-		file_fork = 0;
-		
 	}
 #endif
 
@@ -906,7 +903,6 @@ int File::close_file(int ignore_thread)
 
 		file->close_file();
 		delete file;
-
 	}
 	if(debug) printf("File::close_file file=%p %d\n", file, __LINE__);
 
@@ -914,9 +910,6 @@ int File::close_file(int ignore_thread)
 	delete_temp_frame_buffer();
 	if(debug) printf("File::close_file file=%p %d\n", file, __LINE__);
 
-#ifdef USE_FILEFORK
-	delete file_fork;
-#endif
 	if(debug) printf("File::close_file file=%p %d\n", file, __LINE__);
 
 	reset_parameters();
