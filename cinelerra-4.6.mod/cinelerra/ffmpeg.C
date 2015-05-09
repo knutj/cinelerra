@@ -27,6 +27,11 @@
 
 Mutex FFMPEG::fflock("FFMPEG::fflock");
 
+static void ff_err(int ret, const char *msg)
+{
+	char errmsg[BCSTRLEN];  av_strerror(ret, errmsg, sizeof(errmsg));
+	fprintf(stderr,"%s: %s\n",msg, errmsg);
+}
 
 FFPacket::FFPacket()
 {
@@ -218,11 +223,15 @@ FFStream::FFStream(FFMPEG *ffmpeg, AVStream *st, int idx)
 	this->st = st;
 	this->idx = idx;
 	fmt_ctx = 0;
+	filter_graph = 0;
+	buffersrc_ctx = 0;
+	buffersink_ctx = 0;
 	nudge = AV_NOPTS_VALUE;
 	eof = 0;
 	reading = writing = 0;
 	need_packet = 1;
 	flushed = 0;
+	frame = fframe = 0;
 }
 
 FFStream::~FFStream()
@@ -230,6 +239,10 @@ FFStream::~FFStream()
 	if( reading > 0 || writing > 0 ) avcodec_close(st->codec);
 	if( fmt_ctx ) avformat_close_input(&fmt_ctx);
 	while( frms.first ) frms.remove(frms.first);
+	if( filter_graph ) avfilter_graph_free(&filter_graph);
+	if( frame ) av_frame_free(&frame);
+	if( fframe ) av_frame_free(&fframe);
+	bsfilter.remove_all_objects();
 }
 
 void FFStream::ff_lock(const char *cp)
@@ -298,10 +311,10 @@ int FFStream::decode(AVFrame *frame)
 	int retries = 100;
 	int got_frame = 0;
 
-	while( !flushed && --retries >= 0 && !got_frame ) {
+	while( ret >= 0 && !flushed && --retries >= 0 && !got_frame ) {
 		if( need_packet ) {
 			need_packet = 0;
-			int ret = read_packet();
+			ret = read_packet();
 			if( ret < 0 ) break;
 			if( !ret ) ipkt->stream_index = st->index;
 		}
@@ -322,10 +335,52 @@ int FFStream::decode(AVFrame *frame)
 
 	if( retries < 0 )
 		fprintf(stderr, "FFStream::decode: Retry limit\n");
+	if( ret >= 0 )
+		ret = got_frame;
+	else
+		fprintf(stderr, "FFStream::decode: failed\n");
 
-	return got_frame;
+	return ret;
 }
 
+int FFStream::load_filter(AVFrame *frame)
+{
+	int ret = av_buffersrc_add_frame_flags(buffersrc_ctx,
+			frame, AV_BUFFERSRC_FLAG_KEEP_REF);
+	if( ret < 0 ) {
+		av_frame_unref(frame);
+		fprintf(stderr, "FFStream::load_filter: av_buffersrc_add_frame_flags failed\n");
+	}
+	return ret;
+}
+
+int FFStream::read_filter(AVFrame *frame)
+{
+	int ret = av_buffersink_get_frame(buffersink_ctx, frame);
+	if( ret < 0 ) {
+		if( ret == AVERROR(EAGAIN) ) return 0;
+		if( ret == AVERROR_EOF ) { st_eof(1); return -1; }
+		fprintf(stderr, "FFStream::read_filter: av_buffersink_get_frame failed\n");
+		return ret;
+	}
+	return 1;
+}
+
+int FFStream::read_frame(AVFrame *frame)
+{
+	if( !filter_graph || !buffersrc_ctx || !buffersink_ctx )
+		return decode(frame);
+	if( !fframe && !(fframe=av_frame_alloc()) ) {
+		fprintf(stderr, "FFStream::read_frame: av_frame_alloc failed\n");
+		return -1;
+	}
+	int ret = -1;
+	while( !flushed && !(ret=read_filter(frame)) ) {
+		if( (ret=decode(fframe)) < 0 ) break;
+		if( ret > 0 && (ret=load_filter(fframe)) < 0 ) break;
+	}
+	return ret;
+}
 
 FFAudioStream::FFAudioStream(FFMPEG *ffmpeg, AVStream *strm, int idx)
  : FFStream(ffmpeg, strm, idx)
@@ -351,7 +406,7 @@ int FFAudioStream::load_history(float *&bfr, int len)
 {
 	if( resample_context ) {
 		if( len > aud_bfr_sz ) {	
-			delete aud_bfr;
+			delete [] aud_bfr;
 			aud_bfr = 0;
 		}
 		if( !aud_bfr ) {
@@ -378,10 +433,6 @@ int FFAudioStream::decode_frame(AVFrame *frame, int &got_frame)
 	if( ret < 0 ) {
 		fprintf(stderr, "FFAudioStream::decode_frame: Could not read audio frame\n");
 		return -1;
-	}
-	if( got_frame ) {
-		load_history((float *&)frame->extended_data[0], frame->nb_samples);
-		curr_pos += frame->nb_samples;
 	}
 	return ret;
 }
@@ -468,16 +519,21 @@ int FFAudioStream::load(int64_t pos, int len)
 	if( mbsz < len ) mbsz = len;
 	int ret = 0;
 	int64_t end_pos = pos + len;
-	AVFrame *frame = av_frame_alloc();
+	if( !frame && !(frame=av_frame_alloc()) ) {
+		fprintf(stderr, "FFAudioStream::load: av_frame_alloc failed\n");
+		return -1;
+	}
 	for( int i=0; ret>=0 && !flushed && curr_pos<end_pos && i<1000; ++i ) {
-		av_frame_unref(frame);
-		ret = decode(frame);
+		ret = read_frame(frame);
+		if( ret > 0 ) {
+			load_history((float *&)frame->extended_data[0], frame->nb_samples);
+			curr_pos += frame->nb_samples;
+		}
 	}
 	if( flushed && end_pos > curr_pos ) {
 		zero_history(end_pos - curr_pos);
 		curr_pos = end_pos;
 	}
-	av_frame_free(&frame);
 	return curr_pos - pos;
 }
 
@@ -509,8 +565,8 @@ int FFAudioStream::encode(double **samples, int len)
 
 	while( ret >= 0 && count >= frame_sz ) {
 		frm = new FFrame(this);
-		AVFrame *frame = *frm;
 		if( (ret=frm->initted()) < 0 ) break;
+		AVFrame *frame = *frm;
 		float *bfrp = seek_history(frame_sz);
 		ret =  swr_convert(resample_context,
 			(uint8_t **)frame->extended_data, frame_sz,
@@ -523,8 +579,8 @@ int FFAudioStream::encode(double **samples, int len)
 		curr_pos += frame_sz;
 		count -= frame_sz;
 	}
-	if( ret < 0 ) delete frm;
-	return ret < 0 ? 1 : 0;
+	delete frm;
+	return ret >= 0 ? 0 : 1;
 }
 
 FFVideoStream::FFVideoStream(FFMPEG *ffmpeg, AVStream *strm, int idx)
@@ -557,20 +613,21 @@ int FFVideoStream::decode_frame(AVFrame *frame, int &got_frame)
 
 int FFVideoStream::load(VFrame *vframe, int64_t pos)
 {
-	int ret = 0;
 	if( video_seek(pos) < 0 ) return -1;
-	AVFrame *picture = av_frame_alloc();
-	for( int i=0; !flushed && curr_pos<=pos && i<1000; ++i ) {
-		av_frame_unref(picture);
-		ret = decode(picture);
+	if( !frame && !(frame=av_frame_alloc()) ) {
+		fprintf(stderr, "FFVideoStream::load: av_frame_alloc failed\n");
+		return -1;
 	}
-	if( picture && ret > 0 ) {
+	int ret = 0;
+	for( int i=0; ret>=0 && !flushed && curr_pos<=pos && i<1000; ++i ) {
+		ret = read_frame(frame);
+	}
+	if( ret > 0 ) {
 		AVCodecContext *ctx = st->codec;
-		ret = convert_cmodel(vframe, (AVPicture *)picture,
+		ret = convert_cmodel(vframe, (AVPicture *)frame,
 			ctx->pix_fmt, ctx->width, ctx->height);
 	}
 	ret = ret > 0 ? 1 : ret < 0 ? -1 : 0;
-	av_frame_free(&picture);
 	return ret;
 }
 
@@ -581,6 +638,7 @@ int FFVideoStream::video_seek(int64_t pos)
 //   3*gop_size seems excessive, but less causes tears
 	int gop = 3*st->codec->gop_size;
 	if( gop < 4 ) gop = 4;
+	if( gop > 64 ) gop = 64;
 	if( pos >= curr_pos && pos <= curr_pos + gop ) return 0;
 // back up a few frames to read up to current to help repair damages
 	if( (pos-=gop) < 0 ) pos = 0;
@@ -623,7 +681,7 @@ int FFVideoStream::encode(VFrame *vframe)
 		fprintf(stderr, "FFVideoStream::encode: encode failed\n");
 		delete picture;
 	}
-	return 0;
+	return ret >= 0 ? 0 : 1;
 }
 
 
@@ -712,7 +770,7 @@ int FFVideoStream::convert_cmodel(VFrame *frame,
 		 AVPicture *ip, PixelFormat ifmt, int iw, int ih)
 {
 	// try direct transfer
-	if( !convert_picture_vframe(frame, ip, ifmt, iw, ih) ) return 0;
+	if( !convert_picture_vframe(frame, ip, ifmt, iw, ih) ) return 1;
 	// use indirect transfer
 	const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(ifmt);
 	int max_bits = 0;
@@ -727,9 +785,9 @@ int FFVideoStream::convert_cmodel(VFrame *frame,
 		(max_bits > 8 ? BC_RGBA16161616 : BC_RGBA8888) :
 		(max_bits > 8 ? BC_RGB161616 : BC_RGB888) ;
 	VFrame vframe(iw, ih, icolor_model);
-	if( convert_picture_vframe(&vframe, ip, ifmt, iw, ih) ) return 1;
+	if( convert_picture_vframe(&vframe, ip, ifmt, iw, ih) ) return -1;
 	frame->transfer_from(&vframe);
-	return 0;
+	return 1;
 }
 
 int FFVideoStream::convert_vframe_picture(VFrame *frame,
@@ -813,7 +871,7 @@ FFMPEG::~FFMPEG()
 	close_encoder();
 	ffaudio.remove_all_objects();
 	ffvideo.remove_all_objects();
-	avformat_close_input(&fmt_ctx);
+	if( encoding ) avformat_free_context(fmt_ctx);
 	ff_unlock();
 	delete que_lock;
 	delete mux_lock;
@@ -938,14 +996,14 @@ int FFMPEG::scan_option_line(char *cp, char *tag, char *val)
 	bp = cp;
 	while( *cp && *cp != '\n' ) ++cp;
 	len = cp - bp;
-	if( !len || len > BCTEXTLEN-1 ) return 1;
+	if( len > BCTEXTLEN-1 ) return 1;
 	while( bp < cp ) *val++ = *bp++;
 	*val = 0;
 	return 0;
 }
 
-int FFMPEG::read_options(const char *options,
-		 char *format, char *codec, AVDictionary *&opts)
+int FFMPEG::read_options(const char *options, char *format, char *codec,
+		char *bsfilter, char *bsargs, AVDictionary *&opts)
 {
 	FILE *fp = fopen(options,"r");
 	if( !fp ) {
@@ -953,6 +1011,13 @@ int FFMPEG::read_options(const char *options,
 		return 1;
 	}
 	int ret = read_options(fp, options, format, codec, opts);
+	char *cp = codec;
+	while( *cp && *cp != '|' ) ++cp;
+	if( *cp == '|' && !scan_option_line(cp+1, bsfilter, bsargs) ) {
+		do { *cp-- = 0; } while( cp>=codec && (*cp==' ' || *cp == '\t' ) );
+	}
+	else
+		bsfilter[0] = bsargs[0] = 0;
 	fclose(fp);
 	return ret;
 }
@@ -1171,6 +1236,7 @@ int FFMPEG::open_decoder()
 			vid->aspect_ratio = (double)st->sample_aspect_ratio.num / st->sample_aspect_ratio.den;
 			vid->nudge = st->start_time;
 			vid->reading = -1;
+			//vid->create_filter("edgedetect", avctx,avctx);
 		}
 		else if( avctx->codec_type == AVMEDIA_TYPE_AUDIO ) {
 			has_audio = 1;
@@ -1195,6 +1261,7 @@ int FFMPEG::open_decoder()
 			}
 			aud->nudge = st->start_time;
 			aud->reading = -1;
+			//aud->create_filter("aecho", avctx,avctx);
 		}
 	}
 	if( bad_time )
@@ -1239,8 +1306,9 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 	set_option_path(option_path, "%s/%s.opts", path, path);
 	read_options(option_path, sopts);
 	get_option_path(option_path, path, spec);
-	char format_name[BCSTRLEN], codec_name[BCSTRLEN];
-	if( read_options(option_path, format_name, codec_name, sopts) ) {
+	char format_name[BCSTRLEN], codec_name[BCTEXTLEN];
+	char bsfilter[BCSTRLEN], bsargs[BCTEXTLEN];
+	if( read_options(option_path, format_name, codec_name, bsfilter, bsargs, sopts) ) {
 		fprintf(stderr, "FFMPEG::open_encoder: read options failed %s:%s\n",
 			option_path, filename);
 		return 1;
@@ -1248,6 +1316,7 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 
 	int ret = 0;
 	ff_lock("FFMPEG::open_encoder");
+	FFStream *fst = 0;
 	AVStream *st = 0;
 
 	const AVCodecDescriptor *codec_desc = 0;
@@ -1287,7 +1356,7 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 			int aidx = ffaudio.size();
 			int idx = aidx + ffvideo.size();
 			FFAudioStream *aud = new FFAudioStream(this, st, idx);
-			ffaudio.append(aud);
+			ffaudio.append(aud);  fst = aud;
 			ctx->channels = asset->channels;
 			for( int ch=0; ch<asset->channels; ++ch )
 				astrm_index.append(ffidx(aidx, ch));
@@ -1321,13 +1390,13 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 			int idx = vidx + ffaudio.size();
 			FFVideoStream *vid = new FFVideoStream(this, st, idx);
 			vstrm_index.append(ffidx(vidx, 0));
-			ffvideo.append(vid);
+			ffvideo.append(vid);  fst = vid;
 			vid->width = asset->width;
-			ctx->width = (vid->width+15) & ~15;
+			ctx->width = (vid->width+3) & ~3;
 			vid->height = asset->height;
-			ctx->height = (vid->height+15) & ~15;
+			ctx->height = (vid->height+3) & ~3;
 			ctx->sample_aspect_ratio = to_sample_aspect_ratio(asset->aspect_ratio);
-			ctx->pix_fmt = codec->pix_fmts[0];
+			ctx->pix_fmt = codec->pix_fmts ? codec->pix_fmts[0] : AV_PIX_FMT_YUV420P;
 			AVRational frame_rate = check_frame_rate(codec, asset->frame_rate);
 			if( !frame_rate.num || !frame_rate.den ) {
 				fprintf(stderr, "FFMPEG::open_audio_encode:"
@@ -1348,6 +1417,7 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 	if( !ret ) {
 		ret = avcodec_open2(st->codec, codec, &sopts);
 		if( ret < 0 ) {
+			ff_err(ret,"FFMPEG::open_encoder");
 			fprintf(stderr, "FFMPEG::open_encoder: open failed %s:%s\n",
 				codec_name, filename);
 			ret = 1;
@@ -1358,6 +1428,8 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 	if( !ret ) {
 		if( fmt_ctx->oformat->flags & AVFMT_GLOBALHEADER )
 			st->codec->flags |= CODEC_FLAG_GLOBAL_HEADER;
+		if( fst && bsfilter[0] )
+			fst->add_bsfilter(bsfilter, !bsargs[0] ? 0 : bsargs);
 	}
 
 	ff_unlock();
@@ -1522,8 +1594,7 @@ int FFMPEG::decode(int layer, int64_t pos, VFrame *vframe)
 	if( !has_video || layer >= vstrm_index.size() ) return -1;
 	int vidx = vstrm_index[layer].st_idx;
 	FFVideoStream *vid = ffvideo[vidx];
-	if( vid->load(vframe, pos) ) return -1;
-	return 0;
+	return vid->load(vframe, pos);
 }
 
 int FFMPEG::encode(int stream, double **samples, int len)
@@ -1567,14 +1638,13 @@ int FFMPEG::mux_audio(FFrame *frm)
 	int got_packet = 0;
 	int ret = avcodec_encode_audio2(ctx, pkt, frame, &got_packet);
 	if( ret >= 0 && got_packet ) {
+		frm->fst->bs_filter(pkt);
 		av_packet_rescale_ts(pkt, ctx->time_base, st->time_base);
 		pkt->stream_index = st->index;
 		ret = av_interleaved_write_frame(fmt_ctx, pkt);
 	}
-	if( ret < 0 ) {
-		char errmsg[BCSTRLEN];  av_strerror(ret, errmsg, sizeof(errmsg));
-		fprintf(stderr, "FFMPEG::mux_audio:Error encoding audio: %s\n", errmsg);
-	}
+	if( ret < 0 )
+		ff_err(ret, "FFMPEG::mux_audio");
 	return ret >= 0 ? 0 : 1;
 }
 
@@ -1598,14 +1668,13 @@ int FFMPEG::mux_video(FFrame *frm)
 	else
 		ret = avcodec_encode_video2(st->codec, pkt, frame, &got_packet);
 	if( ret >= 0 && got_packet ) {
+		frm->fst->bs_filter(pkt);
 		av_packet_rescale_ts(pkt, st->codec->time_base, st->time_base);
 		pkt->stream_index = st->index;
 		ret = av_interleaved_write_frame(fmt_ctx, pkt);
 	}
-	if( ret < 0 ) {
-		char errmsg[BCSTRLEN];  av_strerror(ret, errmsg, sizeof(errmsg));
-		fprintf(stderr, "FFMPEG::mux_video:Error encoding video: %s\n", errmsg);
-	}
+	if( ret < 0 )
+		ff_err(ret, "FFMPEG::mux_video");
 	return ret >= 0 ? 0 : 1;
 }
 
@@ -1650,11 +1719,13 @@ void FFMPEG::dequeue(FFrame *frm)
 	}
 	frm->fst->frms.remove_pointer(frm);
 	int afrms = 0, vfrms = 0;
-	for( int i=0; i<ffaudio.size(); ++i )
-		afrms += ffaudio[i]->frms.total();
-	for( int i=0; i<ffvideo.size(); ++i )
-		vfrms += ffvideo[i]->frms.total();
-	if( afrms < 2 || vfrms < 2 ) {
+	if( has_audio )
+		for( int i=0; i<ffaudio.size(); ++i )
+			afrms += ffaudio[i]->frms.total();
+	if( has_video )
+		for( int i=0; i<ffvideo.size(); ++i )
+			vfrms += ffvideo[i]->frms.total();
+	if( (has_audio && afrms < 2) || (has_video && vfrms < 2) ) {
 		flow = 1;
 		que_lock->unlock();
 	}
@@ -1837,127 +1908,140 @@ int FFMPEG::ff_cpus()
 	return file_base->file->cpus;
 }
 
-void FFMPEG::dump_context(AVCodecContext *ctx)
+int FFVideoStream::create_filter(const char *filter_spec,
+		AVCodecContext *src_ctx, AVCodecContext *sink_ctx)
 {
+	avfilter_register_all();
+	filter_graph = avfilter_graph_alloc();
+	AVFilter *buffersrc = avfilter_get_by_name("buffer");
+	AVFilter *buffersink = avfilter_get_by_name("buffersink");
 
-	printf("dump_context %d\n", __LINE__);
-	printf("    log_level_offset=%d\n",ctx->log_level_offset);
-	printf("    bit_rate=%d\n",ctx->bit_rate);
-	printf("    bit_rate_tolerance=%d\n",ctx->bit_rate_tolerance);
-	printf("    global_quality=%d\n",ctx->global_quality);
-	printf("    compression_level=%d\n",ctx->compression_level);
-	printf("    flags=%d\n",ctx->flags);
-	printf("    flags2=%d\n",ctx->flags2);
-	printf("    extradata_size=%d\n",ctx->extradata_size);
-	printf("    ticks_per_frame=%d\n",ctx->ticks_per_frame);
-	printf("    delay=%d\n",ctx->delay);
-	printf("    width=%d\n",ctx->width);
-	printf("    height=%d\n",ctx->height);
-	printf("    coded_width=%d\n",ctx->coded_width);
-	printf("    coded_height=%d\n",ctx->coded_height);
-	printf("    gop_size=%d\n",ctx->gop_size);
-	printf("    me_method=%d\n",ctx->me_method);
-	printf("    max_b_frames=%d\n",ctx->max_b_frames);
-	printf("    rc_strategy=%d\n",ctx->rc_strategy);
-	printf("    b_frame_strategy=%d\n",ctx->b_frame_strategy);
-	printf("    has_b_frames=%d\n",ctx->has_b_frames);
-	printf("    mpeg_quant=%d\n",ctx->mpeg_quant);
-	printf("    slice_count=%d\n",ctx->slice_count);
-	printf("    prediction_method=%d\n",ctx->prediction_method);
-	printf("    me_cmp=%d\n",ctx->me_cmp);
-	printf("    me_sub_cmp=%d\n",ctx->me_sub_cmp);
-	printf("    mb_cmp=%d\n",ctx->mb_cmp);
-	printf("    ildct_cmp=%d\n",ctx->ildct_cmp);
-	printf("    dia_size=%d\n",ctx->dia_size);
-	printf("    last_predictor_count=%d\n",ctx->last_predictor_count);
-	printf("    pre_me=%d\n",ctx->pre_me);
-	printf("    me_pre_cmp=%d\n",ctx->me_pre_cmp);
-	printf("    pre_dia_size=%d\n",ctx->pre_dia_size);
-	printf("    me_subpel_quality=%d\n",ctx->me_subpel_quality);
-	printf("    me_range=%d\n",ctx->me_range);
-	printf("    intra_quant_bias=%d\n",ctx->intra_quant_bias);
-	printf("    inter_quant_bias=%d\n",ctx->inter_quant_bias);
-	printf("    slice_flags=%d\n",ctx->slice_flags);
-	printf("    mb_decision=%d\n",ctx->mb_decision);
-	printf("    scenechange_threshold=%d\n",ctx->scenechange_threshold);
-	printf("    noise_reduction=%d\n",ctx->noise_reduction);
-	printf("    intra_dc_precision=%d\n",ctx->intra_dc_precision);
-	printf("    skip_top=%d\n",ctx->skip_top);
-	printf("    skip_bottom=%d\n",ctx->skip_bottom);
-	printf("    mb_lmin=%d\n",ctx->mb_lmin);
-	printf("    mb_lmax=%d\n",ctx->mb_lmax);
-	printf("    me_penalty_compensation=%d\n",ctx->me_penalty_compensation);
-	printf("    bidir_refine=%d\n",ctx->bidir_refine);
-	printf("    brd_scale=%d\n",ctx->brd_scale);
-	printf("    keyint_min=%d\n",ctx->keyint_min);
-	printf("    refs=%d\n",ctx->refs);
-	printf("    chromaoffset=%d\n",ctx->chromaoffset);
-	printf("    mv0_threshold=%d\n",ctx->mv0_threshold);
-	printf("    b_sensitivity=%d\n",ctx->b_sensitivity);
-	printf("    slices=%d\n",ctx->slices);
-	printf("    sample_rate=%d\n",ctx->sample_rate);
-	printf("    channels=%d\n",ctx->channels);
-	printf("    frame_size=%d\n",ctx->frame_size);
-	printf("    frame_number=%d\n",ctx->frame_number);
-	printf("    block_align=%d\n",ctx->block_align);
-	printf("    cutoff=%d\n",ctx->cutoff);
-	printf("    refcounted_frames=%d\n",ctx->refcounted_frames);
-	printf("    qmin=%d\n",ctx->qmin);
-	printf("    qmax=%d\n",ctx->qmax);
-	printf("    max_qdiff=%d\n",ctx->max_qdiff);
-	printf("    rc_buffer_size=%d\n",ctx->rc_buffer_size);
-	printf("    rc_override_count=%d\n",ctx->rc_override_count);
-	printf("    rc_max_rate=%d\n",ctx->rc_max_rate);
-	printf("    rc_min_rate=%d\n",ctx->rc_min_rate);
-	printf("    rc_initial_buffer_occupancy=%d\n",ctx->rc_initial_buffer_occupancy);
-	printf("    coder_type=%d\n",ctx->coder_type);
-	printf("    context_model=%d\n",ctx->context_model);
-	printf("    frame_skip_threshold=%d\n",ctx->frame_skip_threshold);
-	printf("    frame_skip_factor=%d\n",ctx->frame_skip_factor);
-	printf("    frame_skip_exp=%d\n",ctx->frame_skip_exp);
-	printf("    frame_skip_cmp=%d\n",ctx->frame_skip_cmp);
-	printf("    trellis=%d\n",ctx->trellis);
-	printf("    min_prediction_order=%d\n",ctx->min_prediction_order);
-	printf("    max_prediction_order=%d\n",ctx->max_prediction_order);
-	printf("    timecode_frame_start=%jd\n",ctx->timecode_frame_start);
-	printf("    rtp_payload_size=%d\n",ctx->rtp_payload_size);
-	printf("    mv_bits=%d\n",ctx->mv_bits);
-	printf("    header_bits=%d\n",ctx->header_bits);
-	printf("    i_tex_bits=%d\n",ctx->i_tex_bits);
-	printf("    p_tex_bits=%d\n",ctx->p_tex_bits);
-	printf("    i_count=%d\n",ctx->i_count);
-	printf("    p_count=%d\n",ctx->p_count);
-	printf("    skip_count=%d\n",ctx->skip_count);
-	printf("    misc_bits=%d\n",ctx->misc_bits);
-	printf("    frame_bits=%d\n",ctx->frame_bits);
-	printf("    workaround_bugs=%d\n",ctx->workaround_bugs);
-	printf("    strict_std_compliance=%d\n",ctx->strict_std_compliance);
-	printf("    error_concealment=%d\n",ctx->error_concealment);
-	printf("    debug=%d\n",ctx->debug);
-	printf("    debug_mv=%d\n",ctx->debug_mv);
-	printf("    err_recognition=%d\n",ctx->err_recognition);
-	printf("    reordered_opaque=%jd\n",ctx->reordered_opaque);
-	printf("    dct_algo=%d\n",ctx->dct_algo);
-	printf("    idct_algo=%d\n",ctx->idct_algo);
-	printf("    bits_per_coded_sample=%d\n",ctx->bits_per_coded_sample);
-	printf("    bits_per_raw_sample=%d\n",ctx->bits_per_raw_sample);
-	printf("    lowres=%d\n",ctx->lowres);
-	printf("    thread_count=%d\n",ctx->thread_count);
-	printf("    thread_type=%d\n",ctx->thread_type);
-	printf("    active_thread_type=%d\n",ctx->active_thread_type);
-	printf("    thread_safe_callbacks=%d\n",ctx->thread_safe_callbacks);
-	printf("    nsse_weight=%d\n",ctx->nsse_weight);
-	printf("    profile=%d\n",ctx->profile);
-	printf("    level=%d\n",ctx->level);
-	printf("    subtitle_header_size=%d\n",ctx->subtitle_header_size);
-	printf("    side_data_only_packets=%d\n",ctx->side_data_only_packets);
-	printf("    initial_padding=%d\n",ctx->initial_padding);
-	printf("    pts_correction_num_faulty_pts=%jd\n",ctx->pts_correction_num_faulty_pts);
-	printf("    pts_correction_num_faulty_dts=%jd\n",ctx->pts_correction_num_faulty_dts);
-	printf("    pts_correction_last_pts=%jd\n",ctx->pts_correction_last_pts);
-	printf("    pts_correction_last_dts=%jd\n",ctx->pts_correction_last_dts);
-	printf("    sub_charenc_mode=%d\n",ctx->sub_charenc_mode);
-	printf("    skip_alpha=%d\n",ctx->skip_alpha);
-	printf("    seek_preroll=%d\n",ctx->seek_preroll);
+	int ret = 0;  char args[BCTEXTLEN];
+	snprintf(args, sizeof(args),
+		"video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d",
+		src_ctx->width, src_ctx->height, src_ctx->pix_fmt,
+		st->time_base.num, st->time_base.den,
+		src_ctx->sample_aspect_ratio.num, src_ctx->sample_aspect_ratio.den);
+	if( ret >= 0 )
+		ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
+			args, NULL, filter_graph);
+	if( ret >= 0 )
+		ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
+			NULL, NULL, filter_graph);
+	if( ret >= 0 )
+		ret = av_opt_set_bin(buffersink_ctx, "pix_fmts",
+			(uint8_t*)&sink_ctx->pix_fmt, sizeof(sink_ctx->pix_fmt),
+			AV_OPT_SEARCH_CHILDREN);
+	if( ret < 0 )
+		ff_err(ret, "FFVideoStream::create_filter");
+	else
+		ret = FFStream::create_filter(filter_spec);
+	return ret >= 0 ? 0 : 1;
+}
+
+int FFAudioStream::create_filter(const char *filter_spec,
+		AVCodecContext *src_ctx, AVCodecContext *sink_ctx)
+{
+	avfilter_register_all();
+	filter_graph = avfilter_graph_alloc();
+	AVFilter *buffersrc = avfilter_get_by_name("abuffer");
+	AVFilter *buffersink = avfilter_get_by_name("abuffersink");
+	int ret = 0;  char args[BCTEXTLEN];
+	snprintf(args, sizeof(args),
+		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+		st->time_base.num, st->time_base.den, src_ctx->sample_rate,
+		av_get_sample_fmt_name(src_ctx->sample_fmt), src_ctx->channel_layout);
+	if( ret >= 0 )
+		ret = avfilter_graph_create_filter(&buffersrc_ctx, buffersrc, "in",
+			args, NULL, filter_graph);
+	if( ret >= 0 )
+		ret = avfilter_graph_create_filter(&buffersink_ctx, buffersink, "out",
+			NULL, NULL, filter_graph);
+	if( ret >= 0 )
+		ret = av_opt_set_bin(buffersink_ctx, "sample_fmts",
+			(uint8_t*)&sink_ctx->sample_fmt, sizeof(sink_ctx->sample_fmt),
+			AV_OPT_SEARCH_CHILDREN);
+	if( ret >= 0 )
+		ret = av_opt_set_bin(buffersink_ctx, "channel_layouts",
+			(uint8_t*)&sink_ctx->channel_layout,
+			sizeof(sink_ctx->channel_layout), AV_OPT_SEARCH_CHILDREN);
+	if( ret >= 0 )
+		ret = av_opt_set_bin(buffersink_ctx, "sample_rates",
+			(uint8_t*)&sink_ctx->sample_rate, sizeof(sink_ctx->sample_rate),
+			AV_OPT_SEARCH_CHILDREN);
+	if( ret < 0 )
+		ff_err(ret, "FFAudioStream::create_filter");
+	else
+		ret = FFStream::create_filter(filter_spec);
+	return ret >= 0 ? 0 : 1;
+}
+
+int FFStream::create_filter(const char *filter_spec)
+{
+	/* Endpoints for the filter graph. */
+	AVFilterInOut *outputs = avfilter_inout_alloc();
+	outputs->name = av_strdup("in");
+	outputs->filter_ctx = buffersrc_ctx;
+	outputs->pad_idx = 0;
+	outputs->next = 0;
+
+	AVFilterInOut *inputs  = avfilter_inout_alloc();
+	inputs->name = av_strdup("out");
+	inputs->filter_ctx = buffersink_ctx;
+	inputs->pad_idx	= 0;
+	inputs->next = 0;
+
+	int ret = !outputs->name || !inputs->name ? -1 : 0;
+	if( ret >= 0 )
+		ret = avfilter_graph_parse_ptr(filter_graph, filter_spec,
+			&inputs, &outputs, NULL);
+	if( ret >= 0 )
+		ret = avfilter_graph_config(filter_graph, NULL);
+
+	if( ret < 0 )
+		ff_err(ret, "FFStream::create_filter");
+	avfilter_inout_free(&inputs);
+	avfilter_inout_free(&outputs);
+	return ret;
+}
+
+void FFStream::add_bsfilter(const char *bsf, const char *ap)
+{
+	bsfilter.append(new BSFilter(bsf,ap));
+}
+
+int FFStream::bs_filter(AVPacket *pkt)
+{
+	if( !bsfilter.size() ) return 0;
+	av_packet_split_side_data(pkt);
+
+	int ret = 0;
+	for( int i=0; i<bsfilter.size(); ++i ) {
+		AVPacket bspkt = *pkt;
+		ret = av_bitstream_filter_filter(bsfilter[i]->bsfc,
+			 st->codec, bsfilter[i]->args, &bspkt.data, &bspkt.size,
+			 pkt->data, pkt->size, pkt->flags & AV_PKT_FLAG_KEY);
+		if( ret < 0 ) break;
+		int size = bspkt.size;
+		uint8_t *data = bspkt.data;
+		if( !ret && bspkt.data != pkt->data ) {
+			size = bspkt.size;
+			data = (uint8_t *)av_malloc(size + FF_INPUT_BUFFER_PADDING_SIZE);
+			if( !data ) { ret = AVERROR(ENOMEM);  break; }
+			memcpy(data, bspkt.data, size);
+			memset(data+size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+			ret = 1;
+		}
+		if( ret > 0 ) {
+			pkt->side_data = 0;  pkt->side_data_elems = 0;
+			av_free_packet(pkt);
+			ret = av_packet_from_data(&bspkt, data, size);
+			if( ret < 0 ) break;
+		}
+		*pkt = bspkt;
+	}
+	if( ret < 0 )
+		ff_err(ret,"FFStream::bs_filter");
+	return ret;
 }
 

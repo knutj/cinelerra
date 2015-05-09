@@ -120,6 +120,7 @@ int FileFFMPEG::select_video_stream(Asset *asset, int vstream)
 int FileFFMPEG::select_audio_stream(Asset *asset, int astream)
 {
 	if( !ff || !asset->audio_data ) return 1;
+	asset->channels = ff->ff_audio_channels(astream);
 	asset->sample_rate = ff->ff_sample_rate(astream);
        	asset->audio_length = ff->ff_audio_samples(astream);
 	return 0;

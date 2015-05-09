@@ -5,14 +5,13 @@ THEME_DATA := $(OBJDIR)/suv_data.o
 
 OUTPUT_THEME := $(PLUGIN_DIR)/suv.plugin
 AVC_DIR := $(shell cd ../../thirdparty/libavc*; pwd)
-LIBRAW_DIR := $(shell cd ../../thirdparty/libraw1394*; pwd)
-JPEG_DIR := $(shell cd ../../quicktime/thirdparty/jpeg; pwd)
 
-CFLAGS += -I$(AVC_DIR) -I$(LIBRAW_DIR) -I$(JPEG_DIR)
+CFLAGS += -I$(AVC_DIR)
+
 
 $(OUTPUT_THEME): $(OBJS) $(THEME_DATA)
 	$(LDLINKER) -o $(OUTPUT_THEME) $(OBJS) $(THEME_DATA)
-	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT))
+	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT_THEME))
 
 
 

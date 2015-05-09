@@ -102,8 +102,10 @@ fftw.cfg_params= --disable-fortran --enable-shared=no
 ffmpeg.cfg_params= \
 	--enable-pthreads --enable-gpl \
 	--disable-ffserver --disable-ffplay \
+	--enable-libfaac \
 	--enable-libfdk-aac \
 	--enable-libtwolame \
+	--enable-libopenjpeg \
 	--enable-libmp3lame \
 	--enable-libvorbis \
 	--enable-libtheora \
@@ -116,6 +118,7 @@ ffmpeg.cfg_params= \
 		$(call inc_path,faac,include) \
 		$(call inc_path,twolame,libtwolame) \
 		$(call inc_path,lame,include) \
+		$(call inc_path,openjpeg,src/lib) \
 		$(call inc_path,libvorbis,include) \
 		$(call inc_path,libtheora,include) \
 		$(call inc_path,libvpx) \
@@ -132,6 +135,7 @@ ffmpeg.cfg_params= \
 		$(call ld_path,faac,libfaac/.libs) \
 		$(call ld_path,twolame,libtwolame/.libs) \
 		$(call ld_path,lame,libmp3lame/.libs) \
+		$(call ld_path,openjpeg,bin) \
 		$(call ld_path,libvorbis,lib/.libs) \
 		$(call ld_path,libtheora,lib/.libs) \
 		$(call ld_path,libvpx) \
@@ -164,7 +168,8 @@ libtheora.cflags="$(inc_path libogg,include) $(inc_path libogg,src) $(inc_path l
 libtheora.ldflags="$(ld_path libvorbis,lib/.libs) $(ld_path libogg,src/.libs)"
 libtheora.cfg_params= --disable-examples --enable-shared=no
 libvorbis.cfg_params= --disable-oggtest --enable-shared=no
-openjpeg.cfg_vars=echo "exec cmake -DBUILD_SHARED_LIBS:BOOL=OFF ." > ./configure; chmod +x ./configure;
+openjpeg.cfg_vars=echo "exec cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_MJ2:BOOL=ON ." > ./configure; chmod +x ./configure;
+openjpeg.mak_params= openmj2
 opencv.cfg_vars=echo "exec cmake -DBUILD_SHARED_LIBS:BOOL=OFF ." > ./configure; chmod +x ./configure;
 openexr.cfg_vars=LD_LIBRARY_PATH=$(call bld_path,ilmbase,usr/lib)
 openexr.cfg_params=--enable-shared=no
@@ -200,7 +205,7 @@ $(call rules,$(call std-build,esound,audiofile))
 $(call rules,$(call std-build,faac))
 $(call rules,$(call std-build,faad2))
 $(call rules,$(call std-build,fdk))
-$(call rules,$(call std-build,ffmpeg, faad2 faac fdk twolame lame libtheora x264 x265 libvpx))
+$(call rules,$(call std-build,ffmpeg, faad2 faac fdk twolame lame openjpeg libtheora x264 x265 libvpx))
 $(call rules,$(call std-build,fftw))
 $(call rules,$(call std-build,flac,libogg))
 $(call rules,$(call std-build,giflib))

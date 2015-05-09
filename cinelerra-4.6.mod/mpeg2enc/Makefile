@@ -60,6 +60,7 @@ FF_LIBS += $(FFMPEG_DIR)/libswresample/libswresample.a
 
 TWOLAME_PATH := $(shell echo ../thirdparty/twolame*)
 LAME_PATH := $(shell echo ../thirdparty/lame*)
+OPENJPEG_PATH := $(shell echo ../thirdparty/openjpeg*)
 FDK_PATH := $(shell echo ../thirdparty/fdk*)
 OGG_PATH := $(shell echo ../thirdparty/libogg*)
 VORBIS_PATH := $(shell echo ../thirdparty/libvorbis*)
@@ -72,6 +73,7 @@ X265_PATH := $(shell echo ../thirdparty/x265*)
 
 TWOLAME_LIB := $(TWOLAME_PATH)/libtwolame/.libs/libtwolame.a
 LAME_LIB := $(LAME_PATH)/libmp3lame/.libs/libmp3lame.a
+OPENJPEG_LIB := $(OPENJPEG_PATH)/bin/libopenmj2.a
 FDK_LIB := $(FDK_PATH)/.libs/libfdk-aac.a
 OGG_LIB := $(OGG_PATH)/src/.libs/libogg.a
 VORBIS_LIB := $(VORBIS_PATH)/lib/.libs/libvorbis.a
@@ -89,6 +91,7 @@ STATIC_LIBS := \
 	$(FF_LIBS) \
 	$(TWOLAME_LIB) \
 	$(LAME_LIB) \
+	$(OPENJPEG_LIB) \
 	$(FDK_LIB) \
 	$(OGG_LIB) \
 	$(VORBIS_LIB) \

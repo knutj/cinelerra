@@ -11,17 +11,21 @@
 #include "linklist.h"
 #include "asset.inc"
 #include "bccmodels.h"
+#include "cstrdup.h"
 #include "ffmpeg.inc"
 #include "filebase.inc"
 #include "fileffmpeg.inc"
 #include "vframe.inc"
 
 extern "C" {
+#include "libavfilter/buffersrc.h"
+#include "libavfilter/buffersink.h"
 #include "libavformat/avformat.h"
 #include "libavformat/avio.h"
 #include "libavcodec/avcodec.h"
 #include "libavfilter/avfilter.h"
 #include "libavutil/avutil.h"
+#include "libavutil/opt.h"
 #include "libavutil/pixdesc.h"
 #include "libswresample/swresample.h"
 #include "libswscale/swscale.h"
@@ -94,10 +98,39 @@ public:
 
 	virtual int decode_frame(AVFrame *frame, int &got_frame) = 0;
 	virtual int init_frame(AVFrame *frame) = 0;
+	virtual int create_filter(const char *filter_spec,
+		AVCodecContext *src_ctx, AVCodecContext *sink_ctx) = 0;
+	int create_filter(const char *filter_spec);
+	int load_filter(AVFrame *frame);
+	int read_filter(AVFrame *frame);
+	int read_frame(AVFrame *frame);
 
 	FFMPEG *ffmpeg;
 	AVStream *st;
 	AVFormatContext *fmt_ctx;
+
+	AVFilterContext *buffersink_ctx;
+	AVFilterContext *buffersrc_ctx;
+	AVFilterGraph *filter_graph;
+	AVFrame *frame, *fframe;
+
+	class BSFilter {
+	public:
+		AVBitStreamFilterContext *bsfc;
+		const char *args;
+		BSFilter(const char *bsf, const char *ap) {
+			bsfc = av_bitstream_filter_init(bsf);
+			args = ap ? cstrdup(ap) : 0;
+		}
+		~BSFilter() {
+			av_bitstream_filter_close(bsfc);
+			delete [] args;
+		}
+	};
+	void add_bsfilter(const char *bsf, const char *ap);
+	ArrayList<BSFilter *> bsfilter;
+	int bs_filter(AVPacket *pkt);
+
 	FFPacket ipkt;
 	int need_packet, flushed;
 
@@ -124,6 +157,8 @@ public:
 	virtual ~FFAudioStream();
 	int load_history(float *&bfr, int len);
 	int decode_frame(AVFrame *frame, int &got_frame);
+	int create_filter(const char *filter_spec,
+		AVCodecContext *src_ctx, AVCodecContext *sink_ctx);
 
 	int encode_activate();
 	int nb_samples();
@@ -138,7 +173,6 @@ public:
 	int init_frame(AVFrame *frame);
 	int load(int64_t pos, int len);
 	int audio_seek(int64_t pos);
-
 	int encode(double **samples, int len);
 
 	int channel0, channels;
@@ -158,10 +192,12 @@ public:
 	FFVideoStream(FFMPEG *ffmpeg, AVStream *strm, int idx);
 	virtual ~FFVideoStream();
 	int decode_frame(AVFrame *frame, int &got_frame);
-	int load(VFrame *vframe, int64_t pos);
-	int video_seek(int64_t pos);
+	int create_filter(const char *filter_spec,
+		AVCodecContext *src_ctx, AVCodecContext *sink_ctx);
 
 	int init_frame(AVFrame *picture);
+	int load(VFrame *vframe, int64_t pos);
+	int video_seek(int64_t pos);
 	int encode(VFrame *vframe);
 
 	double frame_rate;
@@ -203,8 +239,8 @@ public:
 	int check_option(const char *path, char *spec);
 	const char *get_file_format();
 	int scan_option_line(char *cp,char *tag,char *val);
-	int read_options(const char *options,
-		char *format, char *codec, AVDictionary *&opts);
+	int read_options(const char *options, char *format, char *codec,
+		char *bsfilter, char *bsargs, AVDictionary *&opts);
 	int read_options(FILE *fp, const char *options,
 		char *format, char *codec, AVDictionary *&opts);
 	int read_options(const char *options, AVDictionary *&opts);

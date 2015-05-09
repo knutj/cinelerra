@@ -3455,11 +3455,11 @@ int MWindow::select_asset(Asset *asset, int vstream, int astream, int delete_tra
 		int astrm = file->get_audio_for_video(vstream, astream, channel_mask);
 		if( astrm >= 0 ) file->select_audio_stream(asset, astrm);
 		if( astrm < 0 || !channel_mask ) channel_mask = (1<<asset->channels)-1;
-		int atracks = 0;
-		for( uint64_t mask=channel_mask; mask!=0; mask>>=1 ) atracks += mask & 1;
-		if( atracks > 6 ) atracks = 6;
-		session->audio_tracks = session->audio_channels = atracks;
-		switch( atracks ) {
+		int channels = 0;
+		for( uint64_t mask=channel_mask; mask!=0; mask>>=1 ) channels += mask & 1;
+		if( channels > 6 ) channels = 6;
+		session->audio_tracks = session->audio_channels = channels;
+		switch( channels ) {
 		case 6:
 			session->achannel_positions[0] = 90;
 			session->achannel_positions[1] = 150;

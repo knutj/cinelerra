@@ -1179,6 +1179,25 @@ int FileMPEG::get_video_info(int track, int &pid,
 	return 0;
 }
 
+int FileMPEG::select_video_stream(Asset *asset, int vstream)
+{
+	if( !fd ) return -1;
+	asset->width = mpeg3_video_width(fd, vstream);
+	asset->height = mpeg3_video_height(fd, vstream);
+	asset->video_length = mpeg3_video_frames(fd, vstream);
+	asset->frame_rate = mpeg3_frame_rate(fd, vstream);
+	return 0;
+}
+
+int FileMPEG::select_audio_stream(Asset *asset, int astream)
+{
+	if( !fd ) return -1;
+	asset->channels = mpeg3_audio_channels(fd, astream);
+	asset->sample_rate = mpeg3_sample_rate(fd, astream);
+	asset->audio_length = mpeg3_audio_samples(fd, astream);
+	return 0;
+}
+
 int FileMPEG::get_thumbnail(int stream,
 	int64_t &position, unsigned char *&thumbnail, int &ww, int &hh)
 {

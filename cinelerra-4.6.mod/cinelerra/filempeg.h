@@ -92,6 +92,8 @@ public:
 	int get_video_pid(int track);
 	int get_video_info(int track, int &pid, double &framerate,
 		int &width, int &height, char *title=0);
+	int select_video_stream(Asset *asset, int vstream);
+	int select_audio_stream(Asset *asset, int astream);
 	int get_thumbnail(int stream,
 		int64_t &position, unsigned char *&thumbnail, int &ww, int &hh);
 	int set_skimming(int track, int skim, skim_fn fn, void *vp);

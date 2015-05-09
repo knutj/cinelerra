@@ -657,8 +657,10 @@ int FileFork::handle_command()
 			Asset *asset = new Asset;
 			int astream = *(int*)command_data;
 			result = file->select_audio_stream(asset, astream);
-			unsigned char data[sizeof(asset->sample_rate)+sizeof(asset->audio_length)];
+			unsigned char data[sizeof(asset->channels)+sizeof(asset->sample_rate)+
+				sizeof(asset->audio_length)];
 			unsigned char *bp = data;
+			*(int *)bp = asset->channels;      bp += sizeof(asset->channels);
 			*(int *)bp = asset->sample_rate;   bp += sizeof(asset->sample_rate);
 			*(int *)bp = asset->audio_length;  bp += sizeof(asset->audio_length);
 			delete asset;

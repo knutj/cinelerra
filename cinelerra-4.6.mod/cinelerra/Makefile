@@ -389,7 +389,6 @@ endif
 
 CFLAGS += \
 	-c \
-	-g \
 	-I../guicast \
 	-I../quicktime \
 	-I../libzmpeg3 \
