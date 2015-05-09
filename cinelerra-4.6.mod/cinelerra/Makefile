@@ -1,5 +1,5 @@
 include ../global_config
-include ../thirdparty/config.mak
+include $(THIRDPARTY)/config.mak
 
 OBJS = \
 	$(OBJDIR)/aattachmentpoint.o \

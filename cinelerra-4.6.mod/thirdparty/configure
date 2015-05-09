@@ -133,7 +133,7 @@ add_library libjpeg \
 	.libs/libjpeg.a \
 	.libs/libturbojpeg.a \
 	simd/.libs/libsimd.a
-inc_openjpeg="src/lib"
+inc_openjpeg="src/lib/openmj2"
 add_library openjpeg \
 	bin/libopenmj2.a
 inc_libogg="include"
@@ -363,7 +363,7 @@ done >> config.mak
 echo >> config.mak '
 # translate config.mak into libs/incs
 
-pkg_path=$(lastword $(wildcard ../thirdparty/$(1)*))
+pkg_path=$(lastword $(wildcard $(THIRDPARTY)/$(1)*))
 lib_static=$(call pkg_path,$(1))/$(2)
 lib_shared=$(2)
 inc_static=-I$(1)/$(2)

@@ -1,9 +1,14 @@
-CFLAGS += -I../ -I../../cinelerra \
-	-I../../guicast \
-	-I../../quicktime \
+
+CFLAGS += -I../ -I$(TOPDIR)/cinelerra \
+	-I$(TOPDIR)/guicast \
+	-I$(TOPDIR)/quicktime \
 	-I../colors \
 	-fPIC \
-	
+
+include $(TOPDIR)/thirdparty/config.mak
+CFLAGS += $(static_includes)
+LFLAGS += $(static_libraries)
+
 #	-g
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)

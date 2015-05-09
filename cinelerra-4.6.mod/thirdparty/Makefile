@@ -23,11 +23,10 @@
 #     add deps to other call rules if they require the new library
 #     add config enables if other libraries use the new library
 #
-TOPDIR := $(shell pwd)
-BLD := $(TOPDIR)/build
 
 include ../global_config
 include config.mak
+BLD := $(THIRDPARTY)/build
 
 pkg-source=$(BLD)/$(1).source
 pkg-config=$(BLD)/$(1).configure
@@ -39,7 +38,7 @@ unpack=$(call unpack_$(call ext,$(1)),$(1))
 unpack_gz=tar -xzf $(1)
 unpack_bz2=tar -xjf $(1)
 unpack_xz=tar -xJf $(1)
-bld_path=`echo $(TOPDIR)/$(1)*`/$(2)
+bld_path=`echo $(THIRDPARTY)/$(1)*`/$(2)
 inc_path=$(if $(filter $(firstword $($(1))),static),-I$(call bld_path,$(1),$(2)))
 ld_path=$(if $(filter $(firstword $($(1))),static),-L$(call bld_path,$(1),$(2)))
 
@@ -91,7 +90,7 @@ $(BLD):
 encore.cfg_vars= true ||
 esound.cfg_vars:= AUDIOFILE_CFLAGS="$(call inc_path,audiofile,libaudiofile) -laudiofile"
 esound.cfg_vars+= AUDIOFILE_LIBS="$(call ld_path,audiofile,libaudiofile/.libs)"
-esound.cfg_params= --enable-shared=no
+esound.cfg_params= --enable-shared=no --with-pic
 esound.ldflags=-lm
 faac.cfg_params= --enable-shared=no
 faad2.cfg_params= --enable-shared=no
@@ -118,7 +117,7 @@ ffmpeg.cfg_params= \
 		$(call inc_path,faac,include) \
 		$(call inc_path,twolame,libtwolame) \
 		$(call inc_path,lame,include) \
-		$(call inc_path,openjpeg,src/lib) \
+		$(call inc_path,openjpeg,src/lib/openmj2) \
 		$(call inc_path,libvorbis,include) \
 		$(call inc_path,libtheora,include) \
 		$(call inc_path,libvpx) \
