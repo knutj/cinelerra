@@ -247,12 +247,9 @@ probe() {
 probe audiofile "audiofile.h" afOpenFile -laudiofile
 probe faac "stdint.h faac.h" faacEncGetVersion -lfaac
 probe faad2 "faad.h" NeAACDecInit -lfaad
-# dont build festival
-festival="shared"
-speech_tools="shared"
-## dont build festival in shared build
-#if [ "$STATIC_LIBRARIES" = "n" ]; then festival="shared"; fi
-#if [ "$STATIC_LIBRARIES" = "n" ]; then speech_tools="shared"; fi
+# dont build festival in shared build
+if [ "$STATIC_LIBRARIES" = "n" ]; then festival="shared"; fi
+if [ "$STATIC_LIBRARIES" = "n" ]; then speech_tools="shared"; fi
 probe fftw "fftw3.h" fftw_execute -lfftw3
 probe flac "FLAC/stream_decoder.h" FLAC__stream_decoder_new -lFLAC
 probe lame "lame/lame.h" hip_decode_init -lmp3lame
@@ -341,6 +338,10 @@ for name in $LIBS; do
     eval $name=\"static ${!sta_libs}\"
   fi
 done
+
+# dont build festival
+festival="shared"
+speech_tools="shared"
 
 shared=""
 static=""
