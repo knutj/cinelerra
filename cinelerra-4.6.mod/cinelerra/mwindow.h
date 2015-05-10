@@ -186,7 +186,7 @@ public:
 	static PluginServer* scan_plugindb(char *title,
 		int data_type);
 	void dump_plugindb(FILE *fp);
-	void stop_playback();
+	void stop_playback(int wait=0);
 
 
 

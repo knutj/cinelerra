@@ -320,7 +320,7 @@ MWindow::~MWindow()
 
 void MWindow::quit(int unlock)
 {
-	stop_playback();
+	stop_playback(1);
 	if(unlock) gui->unlock_window();
 
 	brender_lock->lock("MWindow::quit");
@@ -1257,13 +1257,16 @@ int MWindow::put_commercial()
 	return result;
 }
 
-void MWindow::stop_playback()
+void MWindow::stop_playback(int wait)
 {
+	int locked  = gui->get_window_lock();
+        if( locked ) gui->unlock_window();
+
 	cwindow->playback_engine->que->send_command(STOP,
 		CHANGE_NONE, 
 		0,
 		0);
-	cwindow->playback_engine->interrupt_playback(0);
+	cwindow->playback_engine->interrupt_playback(wait);
 
 	for(int i = 0; i < vwindows.size(); i++)
 	{
@@ -1274,9 +1277,10 @@ void MWindow::stop_playback()
 				CHANGE_NONE, 
 				0,
 				0);
-			vwindow->playback_engine->interrupt_playback(0);
+			vwindow->playback_engine->interrupt_playback(wait);
 		}
 	}
+        if( locked ) gui->lock_window("MWindow::stop_playback");
 }
 
 int MWindow::load_filenames(ArrayList<char*> *filenames, 
@@ -1294,7 +1298,7 @@ if(debug) printf("MWindow::load_filenames %d\n", __LINE__);
 
 // Need to stop playback since tracking depends on the EDL not getting
 // deleted.
-	stop_playback();
+	stop_playback(1);
 
 	undo->update_undo_before();
 
