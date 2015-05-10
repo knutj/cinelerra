@@ -47,7 +47,7 @@ CC = g++
 GCC = gcc
 
 ifneq ($(HAVE_CFLAGS), y)
-CFLAGS = -O2 -fno-omit-frame-pointer
+CFLAGS = -O2 -g -fno-omit-frame-pointer
 CFLAGS += -pthread -fno-math-errno -fno-signed-zeros
 endif
 CFLAGS += -Wall

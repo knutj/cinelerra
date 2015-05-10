@@ -126,9 +126,16 @@ static bc_buffertrace_t* new_bc_buffertrace(int size, void *ptr, const char *loc
 	return result;
 }
 
-
-
-
+static void bc_copy_textfile(FILE *ofp, const char *fmt,...)
+{
+	va_list ap;    va_start(ap, fmt);
+	char bfr[BCTEXTLEN];  vsnprintf(bfr, sizeof(bfr), fmt, ap);
+	va_end(ap);
+	FILE *ifp = fopen(bfr,"r");
+	if( !ifp ) return;
+	while( fgets(bfr,sizeof(bfr),ifp) ) fputs(bfr,ofp);
+	fclose(ifp);
+}
 
 
 // Need our own table to avoid recursion with the memory manager
@@ -853,6 +860,8 @@ static void handle_dump(int n, siginfo_t * info, void *sc)
 		fprintf(fp,"\nMAIN HOOK:\n");
 		BC_Signals::trap_hook(fp, BC_Signals::trap_data);
 	}
+	fprintf(fp,"\nMEMINFO:\n");  bc_copy_textfile(fp,"/proc/meminfo");
+	fprintf(fp,"\nMAPS:\n");     bc_copy_textfile(fp,"/proc/%d/maps",pid);
 	fprintf(fp,"\n\n");
 	if( fp != stdout ) fclose(fp);
 // must be root

@@ -11,13 +11,16 @@ LFLAGS += $(static_libraries)
 
 #	-g
 
+OUTPUT_G = $(OBJDIR)/$(subst .plugin,.debuginfo,$(notdir $(OUTPUT)))
+
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)
 $(shell echo $(LFLAGS) > $(OBJDIR)/l_flags)
 
 
 $(OUTPUT): $(OBJS)
 	$(LDLINKER) -o $(OUTPUT) $(OBJS) `cat $(OBJDIR)/l_flags`
-	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT))
+	$(if $(findstring -g,$(CFLAGS)),objcopy --only-keep-debug $(OUTPUT) $(OUTPUT_G))
+	strip $(OUTPUT)
 
 install:
 	rm -f $(subst ../$(OBJDIR)/,, ../../bin/$(OUTPUT))
@@ -33,3 +36,6 @@ wc:
 
 $(OBJS):
 	$(CC) -c `cat $(OBJDIR)/c_flags` $(subst $(OBJDIR)/,, $*.C) -o $*.o
+
+val-%:
+	@echo $($(subst val-,,$@))

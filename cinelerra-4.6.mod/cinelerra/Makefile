@@ -331,6 +331,7 @@ OBJS = \
 DCRAW := $(OBJDIR)/dcraw.o
 THEME_DATA := $(OBJDIR)/theme_data.o
 
+OUTPUT_G = $(OBJDIR)/cinelerra.debuginfo
 OUTPUT = ../bin/cinelerra
 
 CUTADS = $(OBJDIR)/cutads
@@ -456,7 +457,8 @@ all:	$(OUTPUT) $(CUTADS)
 # Also VFS only overrides the C library when dynamic linking is used.
 $(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(LIBRARIES)
 	$(LINKER) `cat $(OBJDIR)/objs`
-	$(if $(findstring -g,$(CFLAGS)),,strip $(OUTPUT))
+	$(if $(findstring -g,$(CFLAGS)),objcopy --only-keep-debug $(OUTPUT) $(OUTPUT_G))
+	strip $(OUTPUT)
 
 $(CUTADS):	$(CUTOBJS) $(CUTLIBS)
 	g++ -pthread -o $(OBJDIR)/cutads $(CUTOBJS) $(CUTLIBS)

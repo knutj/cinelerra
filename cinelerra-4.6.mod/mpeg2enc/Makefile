@@ -116,12 +116,15 @@ LIBS = \
 
 HVEG2LIB = $(OBJDIR)/hveg2enc.a
 HVEG2ENC = ../bin/hveg2enc.plugin
+HVEG2ENC_G = $(OBJDIR)/hveg2enc_g
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)
 $(shell echo $(HVEG2LIB)  $(OBJ) $(NASMOBJ) $(ASMOBJ) > $(OBJDIR)/objs)
 
 $(HVEG2ENC):	$(OBJDIR)/hveg2enc.o $(HVEG2LIB)
 	$(CXX) `cat $(OBJDIR)/c_flags` -o $@ $^ $(LIBS)
+	$(if $(findstring -g,$(CFLAGS)),objcopy --only-keep-debug $(HVEG2ENC) $(HVEG2ENC_G))
+	strip $(HVEG2ENC)
 
 $(OBJDIR)/hveg2enc.o:	mpeg2enc.c
 	$(CC) -c `cat $(OBJDIR)/c_flags` -Dmpeg2enc=main -o $@ $^
