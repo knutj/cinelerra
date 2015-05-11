@@ -156,7 +156,7 @@ add_library libtheora \
 inc_libuuid="."
 add_library libuuid \
 	.libs/libuuid.a
-inc_libvorbis="."
+inc_libvorbis="include ."
 add_library libvorbis \
 	lib/.libs/libvorbis.a \
 	lib/.libs/libvorbisenc.a \
