@@ -373,6 +373,7 @@ LIBS += \
 	-llzma \
 	-lfontconfig \
 	-lfreetype \
+	$(EXTRA_LIBS)
 
 ifeq ($(HAVE_GL), y)
 LIBS += -lGL -lGLU

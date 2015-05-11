@@ -112,7 +112,8 @@ LIBS = \
 	-llzma \
 	-lbz2 \
 	-lm \
-	-ldl
+	-ldl \
+	$(EXTRA_LIBS)
 
 HVEG2LIB = $(OBJDIR)/hveg2enc.a
 HVEG2ENC = ../bin/hveg2enc.plugin

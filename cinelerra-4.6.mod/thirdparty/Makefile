@@ -141,7 +141,7 @@ ffmpeg.cfg_params= \
 		$(call ld_path,x264) \
 		$(call ld_path,x265) \
 		$(call ld_path,fdk,.libs) \
-		-ldl" \
+		-ldl $(EXTRA_LIBS)" \
 	--extra-ldflags="-ldl"
 
 flac.cfg_params= --enable-shared=no

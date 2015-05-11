@@ -1948,7 +1948,7 @@ int FFAudioStream::create_filter(const char *filter_spec,
 	AVFilter *buffersink = avfilter_get_by_name("abuffersink");
 	int ret = 0;  char args[BCTEXTLEN];
 	snprintf(args, sizeof(args),
-		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%"PRIx64,
+		"time_base=%d/%d:sample_rate=%d:sample_fmt=%s:channel_layout=0x%jx",
 		st->time_base.num, st->time_base.den, src_ctx->sample_rate,
 		av_get_sample_fmt_name(src_ctx->sample_fmt), src_ctx->channel_layout);
 	if( ret >= 0 )
