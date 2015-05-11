@@ -61,8 +61,10 @@ install:	bin/mpeg2enc.plugin bin/mplex
 	$(MAKE) -C doc install
 	cp COPYING README bin
 ifeq ($(STATIC_LIBRARIES), y)
-	cp thirdparty/festival/src/main/festival bin
-	cp -a thirdparty/festival/lib bin/
+	if [ -d thirdparty/festival ]; then \
+		cp thirdparty/festival/src/main/festival bin ; \
+		cp -a thirdparty/festival/lib bin/ ; \
+	fi
 endif
 	cp -a models bin
 	cd bin && find -name '.svn' -exec rm -r {} \; -prune
