@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "keyframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -469,7 +468,6 @@ void DenoiseMJPEG::update_gui()
 }
 
 
-NEW_PICON_MACRO(DenoiseMJPEG)
 NEW_WINDOW_MACRO(DenoiseMJPEG, DenoiseMJPEGWindow)
 LOAD_CONFIGURATION_MACRO(DenoiseMJPEG, DenoiseMJPEGConfig)
 

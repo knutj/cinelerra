@@ -24,7 +24,6 @@
 #include "brightness.h"
 #include "bchash.h"
 #include "language.h"
-#include "picon_png.h"
 
 #include <stdio.h>
 #include <stdint.h>
@@ -98,7 +97,6 @@ const char* BrightnessMain::plugin_title() { return N_("Brightness/Contrast"); }
 int BrightnessMain::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(BrightnessMain, BrightnessWindow)	
-NEW_PICON_MACRO(BrightnessMain)	
 LOAD_CONFIGURATION_MACRO(BrightnessMain, BrightnessConfig)
 
 int BrightnessMain::process_buffer(VFrame *frame,

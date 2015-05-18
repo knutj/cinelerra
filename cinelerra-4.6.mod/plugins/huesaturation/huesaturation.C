@@ -26,7 +26,6 @@
 #include "guicast.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "playback3d.h"
 #include "pluginvclient.h"
@@ -577,7 +576,6 @@ int HueEffect::process_buffer(VFrame *frame,
 const char* HueEffect::plugin_title() { return N_("Hue saturation"); }
 int HueEffect::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(HueEffect)
 NEW_WINDOW_MACRO(HueEffect, HueWindow)
 LOAD_CONFIGURATION_MACRO(HueEffect, HueConfig)
 

@@ -7,7 +7,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/flip.o \
 	$(OBJDIR)/flipwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/flip.plugin
+PLUGIN = flip
 
 include ../../plugin_config
 

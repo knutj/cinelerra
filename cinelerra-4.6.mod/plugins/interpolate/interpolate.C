@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "aggregated.h"
 #include "language.h"
-#include "picon_png.h"
 #include "interpolate.h"
 
 #include <stdio.h>
@@ -174,7 +173,6 @@ int InterpolatePixelsMain::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(InterpolatePixelsMain, InterpolatePixelsWindow)
 
-NEW_PICON_MACRO(InterpolatePixelsMain)
 
 void InterpolatePixelsMain::update_gui()
 {

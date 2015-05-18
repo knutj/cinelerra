@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/swapchannels.o
 
-OUTPUT = $(PLUGIN_DIR)/swapchannels.plugin
+PLUGIN = swapchannels
 
 include ../../plugin_config
 

@@ -342,9 +342,7 @@ const char* ReframeRT::plugin_title() { return N_("ReframeRT"); }
 int ReframeRT::is_realtime() { return 1; }
 int ReframeRT::is_synthesis() { return 1; }
 
-#include "picon_png.h"
 
-NEW_PICON_MACRO(ReframeRT)
 NEW_WINDOW_MACRO(ReframeRT, ReframeRTWindow)
 LOAD_CONFIGURATION_MACRO(ReframeRT, ReframeRTConfig)
 

@@ -24,7 +24,6 @@
 #include "bchash.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "swapchannels.h"
 #include "vframe.h"
 
@@ -213,7 +212,6 @@ const char* SwapMain::plugin_title()  { return N_("Swap channels"); }
 int SwapMain::is_synthesis() { return 1; }
 int SwapMain::is_realtime()  { return 1; }
 
-NEW_PICON_MACRO(SwapMain)
 NEW_WINDOW_MACRO(SwapMain, SwapWindow)
 
 

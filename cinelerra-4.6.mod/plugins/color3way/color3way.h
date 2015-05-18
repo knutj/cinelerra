@@ -102,7 +102,6 @@ class Color3WayMain : public PluginVClient
 public:
 	Color3WayMain(PluginServer *server);
 	~Color3WayMain();
-	VFrame *new_picon();
 
 // required for all realtime plugins
 	PLUGIN_CLASS_MEMBERS2(Color3WayConfig);

@@ -621,7 +621,6 @@ const char* PerspectiveMain::plugin_title() { return N_("Perspective"); }
 int PerspectiveMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(PerspectiveMain)
 
 NEW_WINDOW_MACRO(PerspectiveMain, PerspectiveWindow)
 

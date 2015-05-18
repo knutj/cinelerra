@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/radialblur.o
 
-OUTPUT = $(PLUGIN_DIR)/radialblur.plugin
+PLUGIN = radialblur
 
 include ../../plugin_config
 

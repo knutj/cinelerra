@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -265,7 +264,6 @@ int ShiftInterlaceMain::is_realtime() { return 1; }
 
 
 
-NEW_PICON_MACRO(ShiftInterlaceMain)
 
 
 LOAD_CONFIGURATION_MACRO(ShiftInterlaceMain, ShiftInterlaceConfig)

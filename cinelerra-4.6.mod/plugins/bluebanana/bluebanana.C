@@ -87,8 +87,6 @@ BluebananaMain::~BluebananaMain() {
 const char* BluebananaMain::plugin_title() { return "Blue Banana"; }
 int BluebananaMain::is_realtime() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(BluebananaMain)
 NEW_WINDOW_MACRO(BluebananaMain, BluebananaWindow)
 LOAD_CONFIGURATION_MACRO(BluebananaMain, BluebananaConfig)
 

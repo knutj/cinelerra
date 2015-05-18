@@ -180,8 +180,6 @@ const char* LoopVideo::plugin_title() { return N_("Loop video"); }
 int LoopVideo::is_realtime() { return 1; }
 int LoopVideo::is_synthesis() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(LoopVideo)
 
 NEW_WINDOW_MACRO(LoopVideo, LoopVideoWindow)
 

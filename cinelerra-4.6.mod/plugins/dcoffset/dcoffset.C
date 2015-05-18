@@ -24,7 +24,6 @@
 #include "dcoffset.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "transportque.h"
 
@@ -61,7 +60,6 @@ const char* DCOffset::plugin_title() { return N_("DC Offset"); }
 int DCOffset::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(DCOffset)
 
 int DCOffset::process_buffer(int64_t size, 
 	Samples *buffer,

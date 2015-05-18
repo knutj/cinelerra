@@ -25,7 +25,6 @@
 #include "guicast.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginaclient.h"
 #include "revmodel.hpp"
 #include "samples.h"
@@ -454,7 +453,6 @@ FreeverbEffect::~FreeverbEffect()
 	
 }
 
-NEW_PICON_MACRO(FreeverbEffect)
 NEW_WINDOW_MACRO(FreeverbEffect, FreeverbWindow)
 
 

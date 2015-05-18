@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/freezeframe.o
 
-OUTPUT = $(PLUGIN_DIR)/freezeframe.plugin
+PLUGIN = freezeframe
 
 include ../../plugin_config
 

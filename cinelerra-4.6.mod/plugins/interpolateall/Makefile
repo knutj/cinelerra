@@ -3,7 +3,7 @@ include ../../global_config
 OBJS := $(OBJDIR)/interpolateall.o
 
 
-OUTPUT := $(PLUGIN_DIR)/interpolateall.plugin
+PLUGIN = interpolateall
 
 include ../../plugin_config
 

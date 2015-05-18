@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 #include "slide.h"
 
@@ -214,12 +213,6 @@ int SlideMain::is_transition() { return 1; }
 int SlideMain::uses_gui() { return 1; }
 
 NEW_WINDOW_MACRO(SlideMain, SlideWindow)
-
-
-VFrame* SlideMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 
 void SlideMain::save_data(KeyFrame *keyframe)

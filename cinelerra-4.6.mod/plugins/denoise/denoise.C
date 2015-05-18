@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "denoise.h"
 #include "language.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "units.h"
 #include "vframe.h"
@@ -59,7 +58,6 @@ DenoiseEffect::~DenoiseEffect()
 	delete_dsp();
 }
 
-NEW_PICON_MACRO(DenoiseEffect)
 
 LOAD_CONFIGURATION_MACRO(DenoiseEffect, DenoiseConfig)
 

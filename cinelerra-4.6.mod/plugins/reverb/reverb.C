@@ -27,7 +27,6 @@
 #include "filexml.h"
 #include "format.inc"
 #include "language.h"
-#include "picon_png.h"
 #include "reverb.h"
 #include "reverbwindow.h"
 #include "samples.h"
@@ -284,7 +283,6 @@ int Reverb::process_realtime(int64_t size,
 	return 0;
 }
 
-NEW_PICON_MACRO(Reverb)
 
 NEW_WINDOW_MACRO(Reverb, ReverbWindow)
 

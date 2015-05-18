@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/echo.o
 
-OUTPUT = $(PLUGIN_DIR)/echo.plugin
+PLUGIN := echo
 
 include ../../plugin_config
 

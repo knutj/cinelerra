@@ -61,7 +61,6 @@ public:
 
 
 	const char* plugin_title();
-        VFrame* new_picon();
 	int get_parameters();
 	int load_defaults();  
 	int save_defaults();  

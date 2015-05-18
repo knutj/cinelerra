@@ -26,7 +26,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "mainprogress.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "transportque.inc"
 #include "vframe.h"
@@ -337,7 +336,6 @@ const char* FieldFrame::plugin_title() { return N_("Fields to frames"); }
 int FieldFrame::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(FieldFrame)
 NEW_WINDOW_MACRO(FieldFrame, FieldFrameWindow)
 
 int FieldFrame::load_configuration()

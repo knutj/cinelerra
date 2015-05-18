@@ -23,7 +23,6 @@
 #include "edl.inc"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 #include <string.h>
@@ -53,7 +52,6 @@ int DissolveMain::is_video() { return 1; }
 int DissolveMain::is_transition() { return 1; }
 int DissolveMain::uses_gui() { return 0; }
 
-NEW_PICON_MACRO(DissolveMain)
 
 
 int DissolveMain::process_realtime(VFrame *incoming, VFrame *outgoing)

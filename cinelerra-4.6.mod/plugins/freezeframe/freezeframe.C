@@ -25,7 +25,6 @@
 #include "format.inc"
 #include "freezeframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "transportque.inc"
 
 
@@ -167,7 +166,6 @@ int FreezeFrameMain::is_realtime() { return 1; }
 
 
 NEW_WINDOW_MACRO(FreezeFrameMain, FreezeFrameWindow)
-NEW_PICON_MACRO(FreezeFrameMain)
 
 int FreezeFrameMain::load_configuration()
 {

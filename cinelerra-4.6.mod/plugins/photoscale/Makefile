@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/photoscale.o
 
-OUTPUT = $(PLUGIN_DIR)/photoscale.plugin
+PLUGIN = photoscale
 
 include ../../plugin_config
 

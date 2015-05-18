@@ -30,7 +30,9 @@ int BC_CModels::is_planar(int colormodel)
 	case BC_YUV422P:
 	case BC_YUV444P:
 	case BC_YUV411P:
-	case BC_YUV410P:      return 1;
+	case BC_YUV410P:
+	case BC_RGB_FLOATP:
+	case BC_RGBA_FLOATP:  return 1;
 	}
 	return 0;
 }
@@ -52,6 +54,8 @@ int BC_CModels::components(int colormodel)
 	case BC_YUV101010:    return 3;
 	case BC_RGB_FLOAT:    return 3;
 	case BC_RGBA_FLOAT:   return 4;
+	case BC_RGB_FLOATP:   return 3;
+	case BC_RGBA_FLOATP:  return 4;
 	}
 	return 0;
 }
@@ -92,6 +96,8 @@ int BC_CModels::calculate_pixelsize(int colormodel)
 	case BC_YUV422:       return 2;
 	case BC_YUV411P:      return 1;
 	case BC_YUV410P:      return 1;
+	case BC_RGB_FLOATP:   return 4;
+	case BC_RGBA_FLOATP:  return 4;
 	}
 	return 0;
 }
@@ -113,6 +119,8 @@ int BC_CModels::calculate_max(int colormodel)
 	case BC_YUVA16161616: return 0xffff;
 	case BC_RGB_FLOAT:    return 1;
 	case BC_RGBA_FLOAT:   return 1;
+	case BC_RGB_FLOATP:   return 1;
+	case BC_RGBA_FLOATP:  return 1;
 	}
 	return 0;
 }
@@ -127,6 +135,8 @@ int BC_CModels::calculate_datasize(int w, int h, int bytes_per_line, int color_m
 	case BC_YUV411P: return w * h + w * h / 2 + 4;
 	case BC_YUV422P: return w * h * 2 + 4;
 	case BC_YUV444P: return w * h * 3 + 4;
+	case BC_RGB_FLOATP: return w * h * 3 * sizeof(float) + 4;
+	case BC_RGBA_FLOATP: return w * h * 4 * sizeof(float) + 4;
 	}
 	return h * bytes_per_line + 4;
 }
@@ -153,6 +163,8 @@ void BC_CModels::to_text(char *string, int cmodel)
 	case BC_YUVA16161616: strcpy(string, "YUVA-16 Bit"); break;
 	case BC_RGB_FLOAT:    strcpy(string, "RGB-FLOAT");   break;
 	case BC_RGBA_FLOAT:   strcpy(string, "RGBA-FLOAT");  break;
+	case BC_RGB_FLOATP:   strcpy(string, "RGB-FLOATP");  break;
+	case BC_RGBA_FLOATP:  strcpy(string, "RGBA-FLOATP"); break;
 	default: strcpy(string, "RGB-8 Bit"); break;
 	}
 }
@@ -165,6 +177,8 @@ int BC_CModels::from_text(const char *text)
 	if(!strcasecmp(text, "RGBA-16 Bit")) return BC_RGBA16161616;
 	if(!strcasecmp(text, "RGB-FLOAT"))   return BC_RGB_FLOAT;
 	if(!strcasecmp(text, "RGBA-FLOAT"))  return BC_RGBA_FLOAT;
+	if(!strcasecmp(text, "RGB-FLOATP"))  return BC_RGB_FLOATP;
+	if(!strcasecmp(text, "RGBA-FLOATP")) return BC_RGBA_FLOATP;
 	if(!strcasecmp(text, "YUV-8 Bit"))   return BC_YUV888;
 	if(!strcasecmp(text, "YUVA-8 Bit"))  return BC_YUVA8888;
 	if(!strcasecmp(text, "YUV-16 Bit"))  return BC_YUV161616;
@@ -184,6 +198,7 @@ int BC_CModels::has_alpha(int colormodel)
 	case BC_YUVA16161616:
 	case BC_UYVA8888:
 	case BC_RGBA_FLOAT:
+	case BC_RGBA_FLOATP:
 		return 1;
 	}
 	return 0;
@@ -194,6 +209,8 @@ int BC_CModels::is_float(int colormodel)
 	switch(colormodel) {
 	case BC_RGB_FLOAT:
 	case BC_RGBA_FLOAT:
+	case BC_RGB_FLOATP:
+	case BC_RGBA_FLOATP:
 		return 1;
 	}
 	return 0;

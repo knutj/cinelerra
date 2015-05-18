@@ -201,8 +201,6 @@ const char* TimeStretchRT::plugin_title() { return N_("Time Stretch RT"); }
 int TimeStretchRT::is_realtime() { return 1; }
 int TimeStretchRT::is_synthesis() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(TimeStretchRT)
 
 NEW_WINDOW_MACRO(TimeStretchRT, TimeStretchRTWindow)
 

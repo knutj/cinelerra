@@ -20,31 +20,31 @@ base = {
   },
   "rgb565": {
     "i8": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
-           " uint32_t r = (in>>8)&0xf8u, g = (in>>3)&0xfcu, b = (in&0x1fu)<<3;",
-      "w": " uint16_t ot = ((r<<8) & 0xf800u) | ((g<<3) & 0x07e0u) | ((b>>3) & 0x001fu);\n" +
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
+           " int r = (in>>8)&0xf8u, g = (in>>3)&0xfcu, b = (in&0x1fu)<<3;",
+      "w": " uint32_t ot = ((r<<8) & 0xf800u) | ((g<<3) & 0x07e0u) | ((b>>3) & 0x001fu);\n" +
            " *(uint16_t*)out = ot; out += sizeof(uint16_t);",
     },
     "i16": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
-           " uint32_t r = in&0xf800u, g = (in<<5)&0xfc00u, b = (in<<11)&0xf800u;",
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
+           " int r = in&0xf800u, g = (in<<5)&0xfc00u, b = (in<<11)&0xf800u;",
       "w": " uint32_t ot = (r&0xf800u) | ((g>>5) & 0x07e0u) | ((b>>11) & 0x001fu);\n" +
-           " *(uint16_t*)out = ot; out += sizeof(uint16_t);",
+           " *out++ = ot;",
     },
     "fp": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
            " float r = (in>>11)/31.f, g = ((in>>5)&0x3fu)/63.f, b = (in&0x1fu)/31.f;",
       "w": " uint32_t vr = 31*r+.5f, vg = 63*g+.5f, vb = 31*b+.5f;\n" +
-           " out++ = ((vr<<11)&0xf800u) | ((vg<<6)&0x07e0u) | (vb&0x001fu);",
+           " *out++ = ((vr<<11)&0xf800u) | ((vg<<6)&0x07e0u) | (vb&0x001fu);",
     },
   },
   "rgb888": {
     "i8": {
-      "r": " uint32_t r = *inp++, g = *inp++, b = *inp++;",
+      "r": " int r = *inp++, g = *inp++, b = *inp++;",
       "w": " *out++ = r; *out++ = g; *out++ = b;",
     },
     "i16": {
-      "r": " uint32_t r = *inp++*0x101u, g = *inp++*0x101u, b = *inp++*0x101u;",
+      "r": " int r = *inp++*0x101u, g = *inp++*0x101u, b = *inp++*0x101u;",
       "w": " *out++ = r>>8; *out++ = g>>8; *out++ = b>>8;",
     },
     "fp": {
@@ -54,11 +54,11 @@ base = {
   },
   "rgb161616": {
     "i8": {
-      "r": " uint32_t r = *inp++>>8, g = *inp++>>8, b = *inp++>>8;",
+      "r": " int r = *inp++>>8, g = *inp++>>8, b = *inp++>>8;",
       "w": " *out++ = r*0x101u; *out++ = g*0x101u; *out++ = b*0x101u;",
     },
     "i16": {
-      "r": " uint32_t r = *inp++, g = *inp++, b = *inp++;",
+      "r": " int r = *inp++, g = *inp++, b = *inp++;",
       "w": " *out++ = r; *out++ = g; *out++ = b;",
     },
     "fp": {
@@ -68,11 +68,11 @@ base = {
   },
   "rgbfloat": {
     "i8": {
-      "r": " uint32_t r = *inp++*255+.5f, g = *inp++*255+.5f, b = *inp++*255+.5f;",
+      "r": " int r = *inp++*255+.5f, g = *inp++*255+.5f, b = *inp++*255+.5f;",
       "w": " *out++ = r/255.f; *out++ = g/255.f; *out++ = b/255.f;",
     },
     "i16": {
-      "r": " uint32_t r = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, b = *inp++*65535.f+.5f;",
+      "r": " int r = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, b = *inp++*65535.f+.5f;",
       "w": " *out++ = r/65535.f; *out++ = g/65535.f; *out++ = b/65535.f;",
     },
     "fp": {
@@ -83,19 +83,19 @@ base = {
 
   "bgr565": {
     "i8": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
-           " uint32_t b = (in>>8)&0xf8u, g = (in>>3)&0xfcu, r = (in&0x1fu)<<3;",
-      "w": " uint16_t ot = ((b&0xf8u)<<8) | ((g&0xfcu)<<3) | ((r&0xf8u)>>3);\n" +
-           " *(uint16_t*)out = ot; out += sizeof(uint16_t);",
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
+           " int b = (in>>8)&0xf8u, g = (in>>3)&0xfcu, r = (in&0x1fu)<<3;",
+      "w": " uint32_t ot = ((b&0xf8u)<<8) | ((g&0xfcu)<<3) | ((r&0xf8u)>>3);\n" +
+           " *(uint16_t*)out = ot; out += sizeof(uint16_t)/sizeof(*out);",
     },
     "i16": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
-           " uint32_t b = in&0xf800u, g = (in<<5)&0xfc00u, r = (in<<11)&0xf800u;",
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
+           " int b = in&0xf800u, g = (in<<5)&0xfc00u, r = (in<<11)&0xf800u;",
       "w": " uint32_t ot = (b&0xf800u) | ((g>>5) & 0x07e0u) << 3) | (r>>11);\n" +
-           " *(uint16_t*)out = ot; out += sizeof(uint16_t);",
+           " *out++ = ot;",
     },
     "fp": {
-      "r": " uint16_t in = *(uint16_t*)inp;\n" +
+      "r": " uint32_t in = *(uint16_t*)inp;\n" +
            " float b = (in>>11)/31.f, g = ((in>>5)&0x3fu)/63.f, r = (in&0x1fu)/31.f;",
       "w": " uint32_t vb = 31*b+.5f, vg = 63*g+.5f, vr = 31*r+.5f;\n" +
            " *out++ = ((vb<<11)&0xf800u) | ((vg<<6)&0x03e0u) | (vr&0x001fu);",
@@ -103,12 +103,12 @@ base = {
   },
   "bgr888": {
     "i8": {
-      "r": " uint32_t b = *inp++, g = *inp++, r = *inp++;",
+      "r": " int b = *inp++, g = *inp++, r = *inp++;",
       "w": " *out++ = b; *out++ = g; *out++ = r;",
     },
     "i16": {
-      "r": " uint32_t b = *inp++*0x101u, g = *inp++*0x101u, r = *inp++*0x101u;",
-      "w": " *out++ = b>>8; *out++ = g>>8; *out++ = r>>8;",
+      "r": " int b = *inp++*0x101u, g = *inp++*0x101u, r = *inp++*0x101u;",
+      "w": " *out.16++ = b>>8; *out.16++ = g>>8; *out.16++ = r>>8;",
     },
     "fp": {
       "r": " float b = *inp++/255.f, g=*inp++/255.f, r = *inp++/255.f;",
@@ -117,11 +117,11 @@ base = {
   },
   "bgr8888": {
     "i8": {
-      "r": " uint32_t b = *inp++, g = *inp++, r = *inp++;",
+      "r": " int b = *inp++, g = *inp++, r = *inp++;",
       "w": " *out++ = b; *out++ = g; *out++ = r; ++out;",
     },
     "i16": {
-      "r": " uint32_t b = *inp++*0x101u, g = *inp++*0x101u, r = *inp++*0x101u;",
+      "r": " int b = *inp++*0x101u, g = *inp++*0x101u, r = *inp++*0x101u;",
       "w": " *out++ = b>>8; *out++ = g>>8; *out++ = r>>8; ++out;",
     },
     "fp": {
@@ -131,11 +131,11 @@ base = {
   },
   "bgr161616": {
     "i8": {
-      "r": " uint32_t b = *inp++>>8, g = *inp++>>8, r = *inp++>>8;",
+      "r": " int b = *inp++>>8, g = *inp++>>8, r = *inp++>>8;",
       "w": " *out++ = b*0x101u; *out++ = g*0x101u; *out++ = r*0x101u;",
     },
     "i16": {
-      "r": " uint32_t b = *inp++, g = *inp++, r = *inp++;",
+      "r": " int b = *inp++, g = *inp++, r = *inp++;",
       "w": " *out++ = b; *out++ = g; *out++ = r;",
     },
     "fp": {
@@ -145,11 +145,11 @@ base = {
   },
   "bgrfloat": {
     "i8": {
-      "r": " uint32_t b = *inp++*255+.5f, g = *inp++*255+.5f, r = *inp++*255+.5f;",
+      "r": " int b = *inp++*255+.5f, g = *inp++*255+.5f, r = *inp++*255+.5f;",
       "w": " *out++ = b/255.f; *out++ = g/255.f; *out++ = r/255.f;",
     },
     "i16": {
-      "r": " uint32_t b = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, r = *inp++*65535.f+.5f;",
+      "r": " int b = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, r = *inp++*65535.f+.5f;",
       "w": " *out++ = b/65535.f; *out++ = g/65535.f; *out++ = r/65535.f;",
     },
     "fp": {
@@ -194,16 +194,16 @@ base = {
 
   "yuv10101010": {
     "i8": {
-      "r": " int32_t it = (inp[0]<<0) | (inp[1]<<16);\n" +
+      "r": " uint32_t it = *(uint32_t*)inp;\n" +
            " int32_t y = ((it>>22)&0x3ffu)*0x4010u, u = (it>>14)&0xffu, v = (it>>4)&0xffu;",
       "w": " uint32_t ot = (y<<24) | (u<<14) | (v<<4);\n" +
-           " *out++ = (ot>>0); *out++ = (ot>>16);",
+           " *(uint32_t*)out = ot; out += sizeof(uint32_t)/sizeof(*out);",
     },
     "i16": {
-      "r": " int32_t it = (inp[0]<<0) | (inp[1]<<16);\n" +
+      "r": " uint32_t it = *(uint32_t*)inp;\n" +
            " int32_t y = ((it>>22)&0x3ffu)*0x4010u, u = (it>>6)&0xffc0u, v = (it<<4)&0xffc0u;",
       "w": " uint32_t ot = ((y&0xffc0u)<<16) | ((u&0xffc0u)<<6) | ((v&0xffc0u)>>4);\n" +
-           " *out++ = (ot>>0); *out++ = (ot>>16);",
+           " *(uint32_t*)out = ot; out += sizeof(uint32_t)/sizeof(*out);",
     },
   },
 
@@ -283,6 +283,22 @@ base = {
       "w": " yop[j] = y>>8;  uop[j/4] = u>>8;  vop[j/4] = v>>8;",
     },
   },
+
+  "rgbfltp": {
+    "i8": {
+      "r": " int r = *rip++*255+.5f, g = *gip++*255+.5f, b = *bip++*255+.5f;",
+      "w": " *rop++ = r/255.f; *gop++ = g/255.f; *bop++ = b/255.f;",
+    },
+    "i16": {
+      "r": " int r = *rip++*65535.f+.5f, g = *gip++*65535.f+.5f, b = *bip++*65535.f+.5f;",
+      "w": " *rop++ = r/65535.f; *gop++ = g/65535.f; *bop++ = b/65535.f;",
+    },
+    "fp": {
+      "r": " float r = *rip++, g = *gip++, b = *bip++;",
+      "w": " *rop++ = r; *gop++ = g; *bop++ = b;",
+    },
+  },
+
   # alpha component
   "a8": {
     "i8": {
@@ -326,6 +342,20 @@ base = {
       "w": " *out++ = fa;",
     },
   },
+  "afpp": {
+    "i8": {
+      "r": " z_int a = *aip++*255+.5f;",
+      "w": " *aop++ = a/255.f;",
+    },
+    "i16": {
+      "r": " z_int a = *aip++*65535.f+.5f;",
+      "w": " *aop++ = a/65535.f;",
+    },
+    "fp": {
+      "r": " z_float fa = *aip++;",
+      "w": " *aop++ = fa;",
+    },
+  },
   # alpha blend rgb/black, yuv/black, rgb/bg_color
   "brgb": {
     "i8": " r = r*a/0xffu; g = g*a/0xffu; b = b*a/0xffu;",
@@ -339,9 +369,9 @@ base = {
            " y = y*a/0xffffu; u = (u*a + 0x8000u*a1)/0xffffu; v = (v*a + 0x8000u*a1)/0xffffu;",
   },
   "bbg": {
-    "i8": " uint32_t a1 = 0xffu-a;\n" +
+    "i8": " int a1 = 0xffu-a;\n" +
         " r = (r*a + bg_r*a1)/0xffu; g = (g*a + bg_g*a1)/0xffu; b = (b*a + bg_b*a1)/0xffu;",
-    "i16": "uint32_t a1 = 0xffffu-a;\n" +
+    "i16": "int a1 = 0xffffu-a;\n" +
         " r = (r*a + bg_r*a1)/0xffffu; g = (g*a + bg_g*a1)/0xffffu; b = (b*a + bg_b*a1)/0xffffu;",
     "fp": " float a1 = 1-fa;\n" +
         " r = (r*fa + bg_r*a1); g = (g*fa + bg_g*a1); b = (b*fa + bg_b*a1);",
@@ -398,6 +428,8 @@ add_cmodel("bc_yuv422p", "i8", "yuv422p")
 add_cmodel("bc_yuv444p", "i8", "yuv444p")
 add_cmodel("bc_yuv411p", "i8", "yuv411p")
 add_cmodel("bc_yuv410p", "i8", "yuv410p")
+add_cmodel("bc_rgb_floatp", "fp", "rgbfltp")
+add_cmodel("bc_rgba_floatp", "fp", "rgbfltp", "afpp")
 
 specialize("bc_rgba8888", "bc_transparency", "XFER_rgba8888_to_transparency")
 
@@ -416,7 +448,7 @@ adata = {
 def has_alpha(nm):
   return nm in ["bc_rgba8888", "bc_argb8888", "bc_abgr8888", \
     "bc_rgba16161616", "bc_yuva8888", "bc_yuva16161616", \
-    "bc_uyva8888", "bc_rgba_float", ]
+    "bc_uyva8888", "bc_rgba_float", "bc_rgba_floatp",]
 
 def has_bgcolor(fr_cmdl,to_cmdl):
   return fr_cmdl in ["bc_rgba8888"] and \
@@ -431,45 +463,42 @@ def is_rgb(nm):
   return nm in [ "bc_rgb8", "bc_rgb565", "bc_bgr565", \
     "bc_bgr888", "bc_bgr8888", "bc_rgb888", "bc_rgba8888", \
     "bc_argb8888", "bc_abgr8888", "bc_rgb", "bc_rgb161616", \
-    "bc_rgba16161616", "bc_rgb_float", "bc_rgba_float", ]
+    "bc_rgba16161616", "bc_rgb_float", "bc_rgba_float", \
+    "bc_rgb_floatp", "bc_rgba_floatp", ]
 
 def is_yuv(nm):
   return nm in [ "bc_yuv888", "bc_yuva8888", "bc_yuv161616", \
     "bc_yuva16161616", "bc_yuv422", "bc_yuv101010", "bc_vyu888", \
     "bc_uyva8888", "bc_yuv420p", "bc_yuv422p", "bc_yuv444p", \
-    "bc_yuv411p", "bc_yuv410p"]
+    "bc_yuv411p", "bc_yuv410p", ]
 
 def is_planar(nm):
   return nm in [ "bc_yuv420p", "bc_yuv422p", "bc_yuv444p", \
-    "bc_yuv411p", "bc_yuv410p"]
+    "bc_yuv411p", "bc_yuv410p", "bc_rgb_floatp", "bc_rgba_floatp", ]
 
 def is_float(nm):
-  return nm in ["bc_rgb_float", "bc_rgba_float",]
+  return nm in ["bc_rgb_float", "bc_rgba_float", "bc_rgb_floatp", "bc_rgba_floatp", ]
 
 def gen_xfer_proto(pfx, cls, fr_cmdl, to_cmdl):
   global dtype, ctype
   print "%svoid %sxfer_%s_to_%s" % (pfx, cls, fr_cmdl[3:], to_cmdl[3:]),
   ityp = dtype[fr_cmdl];  fr_typ = ctype[ityp];
   otyp = dtype[to_cmdl];  to_typ = ctype[otyp];
-  print "(",
-  if( is_planar(fr_cmdl) ):
-    print "%s *yip, %s *uip, %s *vip, unsigned i," % (fr_typ, fr_typ, fr_typ),
-  else:
-    print "%s *inp, unsigned i," % (fr_typ),
-  if( is_planar(to_cmdl) ):
-    print "%s *yop, %s *uop, %s *vop, unsigned j" % (to_typ, to_typ, to_typ),
-  else:
-    print "%s *&out, unsigned j" % (to_typ),
-  print ")",
+  print "()",
 
 def gen_xfer_fn(fr_cmdl, to_cmdl):
   global layout, dtype, adata
   ityp = dtype[fr_cmdl];  otyp = dtype[to_cmdl]
   if( ityp is None or otyp is None ): return
   # xfr fn header
-  gen_xfer_proto("inline ", "BC_Xfer::", fr_cmdl, to_cmdl);
+  gen_xfer_proto("", class_qual, fr_cmdl, to_cmdl);
   # xfr fn body
   print "{"
+  # loops / pointer preload
+  in_cmdl = fr_cmdl[3:] if is_planar(fr_cmdl) else "flat";
+  out_cmdl = to_cmdl[3:] if is_planar(to_cmdl) else "flat";
+  print " xfer_%s_row_out(%s) xfer_%s_row_in(%s)" % \
+     (out_cmdl, ctype[otyp], in_cmdl, ctype[ityp],)
   # load inp
   if( is_float(to_cmdl) and is_yuv(fr_cmdl) ):
     for ic in layout[fr_cmdl]: print "%s" % (base[ic][ityp]['r']),
@@ -484,7 +513,6 @@ def gen_xfer_fn(fr_cmdl, to_cmdl):
         print " float fa = a/255.f;",
       elif( ityp == "i16" ):
         print " float fa = a/65535.f;",
-    fr_cmdl = "bc_rgba_float" if has_alpha(fr_cmdl) else "bc_rgb_float"
   else:
     for ic in layout[fr_cmdl]: print "%s" % (base[ic][otyp]['r']),
     if( has_alpha(to_cmdl) and not has_alpha(fr_cmdl) ):
@@ -517,53 +545,14 @@ def gen_xfer_fn(fr_cmdl, to_cmdl):
   # store out
   for oc in layout[to_cmdl]:
     print "%s" % (base[oc][otyp]['w']),
-  print ""
+  print "xfer_end"
   print "}"
   print ""
 
 # output code file
+class_qual = "BC_Xfer::"
 
 print "#include \"xfer.h\""
-print ""
-print "class BC_Xfer {"
-print "public:"
-print """  BC_Xfer(unsigned char **output_rows, unsigned char **input_rows,
-    unsigned char *out_y_plane, unsigned char *out_u_plane, unsigned char *out_v_plane,
-    unsigned char *in_y_plane, unsigned char *in_u_plane, unsigned char *in_v_plane,
-    int in_x, int in_y, int in_w, int in_h, int out_x, int out_y, int out_w, int out_h,
-    int in_colormodel, int out_colormodel, int bg_color, int in_rowspan, int out_rowspan);"""
-print "  ~BC_Xfer();"
-print ""
-print "  unsigned char **output_rows, **input_rows;"
-print "  unsigned char *out_y_plane, *out_u_plane, *out_v_plane;"
-print "  unsigned char *in_y_plane, *in_u_plane, *in_v_plane;"
-print "  int in_x, in_y; unsigned in_w, in_h;"
-print "  int out_x, out_y; unsigned out_w, out_h;"
-print "  int in_colormodel, out_colormodel;"
-print "  uint32_t bg_color, total_in_w, total_out_w;"
-print "  int scale;"
-print "  int out_pixelsize, in_pixelsize;"
-print "  int *row_table, *column_table;"
-print "  uint32_t bg_r, bg_g, bg_b;"
-print ""
-print "  void xfer();"
-print ""
-print "  static void init();"
-print "  static class Tables { public: Tables() { init(); } } tables;"
-print "  static int rtoy_tab[0x100], gtoy_tab[0x100], btoy_tab[0x100];"
-print "  static int rtou_tab[0x100], gtou_tab[0x100], btou_tab[0x100];"
-print "  static int rtov_tab[0x100], gtov_tab[0x100], btov_tab[0x100];"
-print "  static int vtor_tab[0x100], vtog_tab[0x100];"
-print "  static int utog_tab[0x100], utob_tab[0x100];"
-print "  static float vtor_float_tab[0x100], vtog_float_tab[0x100];"
-print "  static float utog_float_tab[0x100], utob_float_tab[0x100];"
-print "  static int rtoy_tab16[0x10000], gtoy_tab16[0x10000], btoy_tab16[0x10000];"
-print "  static int rtou_tab16[0x10000], gtou_tab16[0x10000], btou_tab16[0x10000];"
-print "  static int rtov_tab16[0x10000], gtov_tab16[0x10000], btov_tab16[0x10000];"
-print "  static int vtor_tab16[0x10000], vtog_tab16[0x10000];"
-print "  static int utog_tab16[0x10000], utob_tab16[0x10000];"
-print "  static float v16tor_float_tab[0x10000], v16tog_float_tab[0x10000];"
-print "  static float u16tog_float_tab[0x10000], u16tob_float_tab[0x10000];"
 print ""
 
 for fr_cmdl in cmodels:
@@ -576,18 +565,18 @@ for fr_cmdl in cmodels:
     if( ityp is None or otyp is None ): continue
     gen_xfer_proto("  ", "", fr_cmdl, to_cmdl);
     print ";"
+# end of class definition
 print "};"
 print ""
-print ""
 
+# xfer functions
 for fr_cmdl in cmodels:
   for to_cmdl in cmodels:
     gen_xfer_fn(fr_cmdl, to_cmdl)
 
-# add fix to round in_w/in_h/out_w/out_h down to macro pixel granularity
+# transfer switch
 print ""
-print ""
-print "void BC_Xfer::xfer()"
+print "void %sxfer()" % class_qual
 print "{"
 print "  switch(in_colormodel) {"
 for fr_cmdl in cmodels:
@@ -603,11 +592,7 @@ for fr_cmdl in cmodels:
     otyp = dtype[to_cmdl]
     if( ityp is None or otyp is None ): continue
     print "    case %s:" % (to_cmdl.upper()),
-    idat = "PLANAR" if is_planar(fr_cmdl) else "FLAT"
-    odat = "PLANAR" if is_planar(to_cmdl) else "FLAT"
-    print "XFER_%s_to_%s(%s,%s,%s,%s);" \
-        % (idat, odat, fr_cmdl[3:], ityp, to_cmdl[3:], otyp),
-    print "break;"
+    print "xfer_%s_to_%s();  break;" % (fr_cmdl[3:], to_cmdl[3:])
   print "    }"
   print "    break;"
 print "  }"

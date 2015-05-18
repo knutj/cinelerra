@@ -33,7 +33,6 @@
 #include "libdv.h"
 #include "libmjpeg.h"
 #include "mwindow.h"
-#include "picon_png.h"
 #include "picture.h"
 #include "pluginvclient.h"
 #include "pluginserver.h"
@@ -585,7 +584,6 @@ int LiveVideo::is_multichannel() { return 0; }
 int LiveVideo::is_synthesis() { return 1; }
 
 
-NEW_PICON_MACRO(LiveVideo) 
 
 NEW_WINDOW_MACRO(LiveVideo, LiveVideoWindow)
 

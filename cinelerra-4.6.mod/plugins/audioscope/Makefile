@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/audioscope.o
 
-OUTPUT = $(PLUGIN_DIR)/audioscope.plugin
+PLUGIN = audioscope
 
 include ../../plugin_config
 

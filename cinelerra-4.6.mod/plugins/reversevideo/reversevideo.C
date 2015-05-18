@@ -177,8 +177,6 @@ ReverseVideo::~ReverseVideo()
 const char* ReverseVideo::plugin_title() { return N_("Reverse video"); }
 int ReverseVideo::is_realtime() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(ReverseVideo)
 
 NEW_WINDOW_MACRO(ReverseVideo, ReverseVideoWindow)
 

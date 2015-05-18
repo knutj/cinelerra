@@ -41,7 +41,6 @@
 #include FT_STROKER_H
 #include "language.h"
 #include "mwindow.inc"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "title.h"
 #include "titlewindow.h"
@@ -1128,11 +1127,6 @@ TitleMain::~TitleMain()
 const char* TitleMain::plugin_title() { return N_("Title"); }
 int TitleMain::is_realtime() { return 1; }
 int TitleMain::is_synthesis() { return 1; }
-
-VFrame* TitleMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 NEW_WINDOW_MACRO(TitleMain, TitleWindow);
 

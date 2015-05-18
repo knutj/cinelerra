@@ -24,7 +24,6 @@
 #include "bcsignals.h"
 #include "language.h"
 #include "mainprogress.h"
-#include "picon_png.h"
 #include "../../cinelerra/resample.h"
 #include "resample.h"
 #include "samples.h"
@@ -127,11 +126,6 @@ ResampleEffect::~ResampleEffect()
 }
 
 const char* ResampleEffect::plugin_title() { return N_("Resample"); }
-
-VFrame* ResampleEffect::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 void ResampleEffect::reset()
 {

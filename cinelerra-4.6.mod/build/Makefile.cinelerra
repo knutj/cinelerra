@@ -1,5 +1,6 @@
 
 include global_config
+
 .NOTPARALLEL:
 
 ifeq (,$(filter -j,$(MAKEFLAGS)))
@@ -83,5 +84,4 @@ COMPILE = $(GCC) -c $(CFLAGS) $? -o $*.o
 
 $(OBJDIR)/soundtest.o: soundtest.c
 	$(COMPILE)
-
 

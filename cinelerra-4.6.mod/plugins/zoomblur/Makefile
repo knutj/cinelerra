@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/zoomblur.o
 
-OUTPUT = $(PLUGIN_DIR)/zoomblur.plugin
+PLUGIN = zoomblur
 
 include ../../plugin_config
 

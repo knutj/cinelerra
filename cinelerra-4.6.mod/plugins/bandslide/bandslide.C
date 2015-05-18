@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -187,12 +186,6 @@ int BandSlideMain::is_transition() { return 1; }
 int BandSlideMain::uses_gui() { return 1; }
 
 NEW_WINDOW_MACRO(BandSlideMain, BandSlideWindow);
-
-
-VFrame* BandSlideMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 
 void BandSlideMain::save_data(KeyFrame *keyframe)

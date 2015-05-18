@@ -25,7 +25,6 @@
 #include "errorbox.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "gain.h"
 #include "gainwindow.h"
 #include "samples.h"
@@ -88,7 +87,6 @@ int Gain::is_realtime() { return 1; }
 
 
 NEW_WINDOW_MACRO(Gain, GainWindow)
-NEW_PICON_MACRO(Gain)
 LOAD_CONFIGURATION_MACRO(Gain, GainConfig)
 
 int Gain::process_realtime(int64_t size, Samples *input_ptr, Samples *output_ptr)

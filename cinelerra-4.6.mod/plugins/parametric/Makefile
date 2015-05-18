@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/parametric.o
 
-OUTPUT = $(PLUGIN_DIR)/parametric.plugin
+PLUGIN = parametric
 
 include ../../plugin_config
 

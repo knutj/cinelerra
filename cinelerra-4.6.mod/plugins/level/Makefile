@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/leveleffect.o
 
-OUTPUT = $(PLUGIN_DIR)/leveleffect.plugin
+PLUGIN = leveleffect
 
 include ../../plugin_config
 

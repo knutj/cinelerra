@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -288,7 +287,6 @@ int PolarEffect::is_realtime() { return 1; }
 
 
 
-NEW_PICON_MACRO(PolarEffect)
 
 NEW_WINDOW_MACRO(PolarEffect, PolarWindow)
 

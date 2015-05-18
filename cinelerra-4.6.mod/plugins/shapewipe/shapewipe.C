@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "theme.h"
 #include "vframe.h"
 #include "shapewipe.h"
@@ -349,7 +348,6 @@ int ShapeWipeMain::uses_gui() { return 1; }
 NEW_WINDOW_MACRO(ShapeWipeMain, ShapeWipeWindow);
 
 
-NEW_PICON_MACRO(ShapeWipeMain)
 
 void ShapeWipeMain::save_data(KeyFrame *keyframe)
 {

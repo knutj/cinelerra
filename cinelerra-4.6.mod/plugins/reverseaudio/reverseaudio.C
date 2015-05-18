@@ -175,8 +175,6 @@ ReverseAudio::~ReverseAudio()
 const char* ReverseAudio::plugin_title() { return N_("Reverse audio"); }
 int ReverseAudio::is_realtime() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(ReverseAudio)
 
 NEW_WINDOW_MACRO(ReverseAudio, ReverseAudioWindow)
 

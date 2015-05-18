@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/reframe.o
 
-OUTPUT = $(PLUGIN_DIR)/reframe.plugin
+PLUGIN = reframe
 
 include ../../plugin_config
 

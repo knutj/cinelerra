@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -729,7 +728,6 @@ int Overlay::is_multichannel() { return 1; }
 int Overlay::is_synthesis() { return 1; }
 
 
-NEW_PICON_MACRO(Overlay)
 
 NEW_WINDOW_MACRO(Overlay, OverlayWindow)
 

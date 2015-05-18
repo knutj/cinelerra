@@ -26,7 +26,6 @@
 #include "holo.h"
 #include "holowindow.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 
 #include <stdint.h>
@@ -85,12 +84,6 @@ const char* HoloMain::plugin_title() { return N_("HolographicTV"); }
 int HoloMain::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(HoloMain, HoloWindow)
-
-VFrame* HoloMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
-
 
 int HoloMain::load_configuration()
 {

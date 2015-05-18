@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/dcoffset.o
 
-OUTPUT = $(PLUGIN_DIR)/dcoffset.plugin
+PLUGIN = dcoffset
 
 include ../../plugin_config
 

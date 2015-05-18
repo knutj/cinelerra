@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/seltempavg.o  \
 	$(OBJDIR)/seltempavgwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/seltempavg.plugin
+PLUGIN = seltempavg
 
 include ../../plugin_config
 

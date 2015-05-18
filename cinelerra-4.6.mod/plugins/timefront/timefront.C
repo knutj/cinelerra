@@ -31,7 +31,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -651,7 +650,6 @@ int TimeFrontMain::is_realtime() { return 1; }
 int TimeFrontMain::is_multichannel() { return 1; }
 
 
-NEW_PICON_MACRO(TimeFrontMain)
 
 NEW_WINDOW_MACRO(TimeFrontMain, TimeFrontWindow)
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/timestretchrt.o \
 	../timestretch/$(OBJDIR)/timestretchengine.o
 
-OUTPUT = $(PLUGIN_DIR)/timestretchrt.plugin
+PLUGIN = timestretchrt
 
 include ../../plugin_config
 

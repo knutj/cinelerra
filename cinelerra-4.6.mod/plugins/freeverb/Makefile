@@ -1,6 +1,6 @@
 include ../../global_config
 
-OUTPUT = $(PLUGIN_DIR)/freeverb.plugin
+PLUGIN = freeverb
 OBJS := $(OBJDIR)/freeverb.o
 DIRS := $(OBJDIR)/Components
 FREEVERBOBJS := \

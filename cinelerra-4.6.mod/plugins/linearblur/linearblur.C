@@ -30,7 +30,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -393,7 +392,6 @@ const char* LinearBlurMain::plugin_title() { return N_("Linear Blur"); }
 int LinearBlurMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(LinearBlurMain)
 NEW_WINDOW_MACRO(LinearBlurMain, LinearBlurWindow)
 LOAD_CONFIGURATION_MACRO(LinearBlurMain, LinearBlurConfig)
 

@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -476,7 +475,6 @@ int Reroute::is_multichannel() 	{ return 1; }
 
 
 
-NEW_PICON_MACRO(Reroute)
 NEW_WINDOW_MACRO(Reroute,RerouteWindow)
 
 int Reroute::load_configuration()

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/holo.o  \
 	$(OBJDIR)/holowindow.o \
 
-OUTPUT = $(PLUGIN_DIR)/holo.plugin
+PLUGIN = holo
 CFLAGS += -I../libeffecttv
 LFLAGS += ../libeffecttv/$(OBJDIR)/libeffecttv.a
 

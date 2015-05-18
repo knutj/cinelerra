@@ -20,7 +20,6 @@
  */
 
 #include "clip.h"
-#include "data/lad_picon_png.h"
 #include "bchash.h"
 #include "filexml.h"
 #include "language.h"
@@ -563,11 +562,6 @@ int PluginAClientLAD::uses_gui()
 int PluginAClientLAD::is_synthesis()
 {
 	return 1;
-}
-
-VFrame* PluginAClientLAD::new_picon()
-{
-	return new VFrame(lad_picon_png);
 }
 
 LOAD_CONFIGURATION_MACRO(PluginAClientLAD, PluginAClientConfig)

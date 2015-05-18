@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/huesaturation.o
 
-OUTPUT = $(PLUGIN_DIR)/huesaturation.plugin
+PLUGIN = huesaturation
 
 include ../../plugin_config
 

@@ -324,8 +324,6 @@ DiffKey::~DiffKey()
 }
 
 NEW_WINDOW_MACRO(DiffKey, DiffKeyGUI)
-#include "picon_png.h"
-NEW_PICON_MACRO(DiffKey)
 LOAD_CONFIGURATION_MACRO(DiffKey, DiffKeyConfig)
 
 const char* DiffKey::plugin_title() { return N_("Difference key"); }

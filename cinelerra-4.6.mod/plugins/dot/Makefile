@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/dot.o  \
 	$(OBJDIR)/dotwindow.o \
 
-OUTPUT = $(PLUGIN_DIR)/dot.plugin
+PLUGIN = dot
 CFLAGS += -I../libeffecttv
 LFLAGS += ../libeffecttv/$(OBJDIR)/libeffecttv.a
 

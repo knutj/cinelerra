@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/compressor.o
 
-OUTPUT = $(PLUGIN_DIR)/compressor.plugin
+PLUGIN = compressor
 
 include ../../plugin_config
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/deinterlace-cv.o  \
 	$(OBJDIR)/deinterwindow-cv.o
 
-OUTPUT = $(PLUGIN_DIR)/deinterlace-cv.plugin
+PLUGIN = deinterlace-cv
 
 include ../../plugin_config
 

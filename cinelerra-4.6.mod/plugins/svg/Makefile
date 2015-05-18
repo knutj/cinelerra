@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = 	$(OBJDIR)/svg.o  \
 	$(OBJDIR)/svgwin.o
 
-OUTPUT = $(PLUGIN_DIR)/svg.plugin
+PLUGIN = svg
 
 include ../../plugin_config
 

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/chromakey.o
 
-OUTPUT = $(PLUGIN_DIR)/chromakey.plugin
+PLUGIN = chromakey
 
 include ../../plugin_config
 

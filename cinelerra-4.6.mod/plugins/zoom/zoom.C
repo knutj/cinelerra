@@ -26,7 +26,6 @@
 #include "edl.inc"
 #include "overlayframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "theme.h"
 #include "vframe.h"
 
@@ -150,7 +149,6 @@ int ZoomMain::is_video() { return 1; }
 int ZoomMain::is_transition() { return 1; }
 int ZoomMain::uses_gui() { return 1; }
 
-NEW_PICON_MACRO(ZoomMain)
 
 
 

@@ -28,7 +28,6 @@
 #include "language.h"
 #include "unsharp.h"
 #include "unsharpwindow.h"
-#include "picon_png.h"
 
 
 #include <errno.h>
@@ -106,7 +105,6 @@ UnsharpMain::~UnsharpMain()
 const char* UnsharpMain::plugin_title() { return N_("Unsharp"); }
 int UnsharpMain::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(UnsharpMain)
 
 NEW_WINDOW_MACRO(UnsharpMain, UnsharpWindow)
 

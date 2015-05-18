@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -184,12 +183,6 @@ int BandWipeMain::is_transition() { return 1; }
 int BandWipeMain::uses_gui() { return 1; }
 
 NEW_WINDOW_MACRO(BandWipeMain, BandWipeWindow);
-
-
-VFrame* BandWipeMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 
 void BandWipeMain::save_data(KeyFrame *keyframe)

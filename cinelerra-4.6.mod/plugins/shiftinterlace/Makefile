@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/shiftinterlace.o
 
-OUTPUT = $(PLUGIN_DIR)/shiftinterlace.plugin
+PLUGIN = shiftinterlace
 
 include ../../plugin_config
 

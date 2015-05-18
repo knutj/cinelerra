@@ -37,8 +37,6 @@
 
 REGISTER_PLUGIN(Color3WayMain)
 
-#include "picon_png.h"
-NEW_PICON_MACRO(Color3WayMain);
 
 Color3WayConfig::Color3WayConfig()
 {

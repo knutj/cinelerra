@@ -26,7 +26,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "new.h"
-#include "picon_png.h"
 #include "theme.h"
 #include "vframe.h"
 
@@ -294,7 +293,6 @@ int PhotoScaleMain::is_realtime() { return 1; }
 
 
 NEW_WINDOW_MACRO(PhotoScaleMain, PhotoScaleWindow)
-NEW_PICON_MACRO(PhotoScaleMain)
 
 LOAD_CONFIGURATION_MACRO(PhotoScaleMain, PhotoScaleConfig)
 

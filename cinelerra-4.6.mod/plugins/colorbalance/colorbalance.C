@@ -24,7 +24,6 @@
 #include "colorbalance.h"
 #include "bchash.h"
 #include "language.h"
-#include "picon_png.h"
 #include "playback3d.h"
 
 #include "aggregated.h"
@@ -432,7 +431,6 @@ int ColorBalanceMain::synchronize_params(ColorBalanceSlider *slider, float diffe
 
 
 
-NEW_PICON_MACRO(ColorBalanceMain)
 LOAD_CONFIGURATION_MACRO(ColorBalanceMain, ColorBalanceConfig)
 NEW_WINDOW_MACRO(ColorBalanceMain, ColorBalanceWindow)
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/color3way.o  \
 	$(OBJDIR)/color3waywindow.o
 
-OUTPUT = $(PLUGIN_DIR)/color3way.plugin
+PLUGIN = color3way
 
 include ../../plugin_config
 

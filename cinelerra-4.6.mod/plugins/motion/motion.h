@@ -152,7 +152,6 @@ class MotionMain : public PluginVClient
 public:
 	MotionMain(PluginServer *server);
 	~MotionMain();
-	VFrame *new_picon();
 
 	int process_buffer(VFrame **frame,
 		int64_t start_position,

@@ -74,7 +74,6 @@ public:
 	int is_transition();
 	int is_video();
 	const char* plugin_title();
-	VFrame* new_picon();
 	int handle_opengl();
 
 	float magnification_x;

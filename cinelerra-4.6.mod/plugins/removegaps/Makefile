@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/removegaps.o
 
-OUTPUT = $(PLUGIN_DIR)/removegaps.plugin
+PLUGIN = removegaps
 
 include ../../plugin_config
 

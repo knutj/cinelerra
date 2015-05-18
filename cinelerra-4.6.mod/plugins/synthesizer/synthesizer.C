@@ -24,7 +24,6 @@
 #include "bchash.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "synthesizer.h"
 #include "theme.h"
@@ -54,11 +53,6 @@ Synth::Synth(PluginServer *server)
 Synth::~Synth()
 {
 	
-}
-
-VFrame* Synth::new_picon()
-{
-	return new VFrame(picon_png);
 }
 
 NEW_WINDOW_MACRO(Synth, SynthWindow);

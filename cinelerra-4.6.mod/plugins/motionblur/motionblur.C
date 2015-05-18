@@ -30,7 +30,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -317,7 +316,6 @@ const char* MotionBlurMain::plugin_title() { return N_("Motion Blur"); }
 int MotionBlurMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(MotionBlurMain)
 NEW_WINDOW_MACRO(MotionBlurMain, MotionBlurWindow)
 
 LOAD_CONFIGURATION_MACRO(MotionBlurMain, MotionBlurConfig)

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = 	$(OBJDIR)/scale.o  \
 	$(OBJDIR)/scalewin.o
 
-OUTPUT = $(PLUGIN_DIR)/scale.plugin
+PLUGIN = scale
 
 include ../../plugin_config
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/reverb.o  \
 	$(OBJDIR)/reverbwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/reverb.plugin
+PLUGIN = reverb
 
 include ../../plugin_config
 

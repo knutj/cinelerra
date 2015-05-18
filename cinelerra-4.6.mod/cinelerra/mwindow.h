@@ -185,6 +185,7 @@ public:
 // Find the plugin whose title matches title and return it
 	static PluginServer* scan_plugindb(char *title,
 		int data_type);
+	static int plugin_exists(char *plugin_path);
 	void dump_plugindb(FILE *fp);
 	void stop_playback(int wait=0);
 
@@ -595,15 +596,10 @@ public:
 	void init_gwindow();
 	void init_tipwindow();
 // Used by MWindow and RenderFarmClient
-	static void init_plugins(MWindow *mwindow, Preferences *preferences, 
-		SplashGUI *splash_window);
-	static void init_plugin_path(MWindow *mwindow, Preferences *preferences, 
-		char *path,
-		int is_lad);
-// 	static void init_plugin_path(MWindow *mwindow, Preferences *preferences, 
-// 		FileSystem *fs,
-// 		SplashGUI *splash_window,
-// 		int *counter);
+	static void init_plugins(MWindow *mwindow, Preferences *preferences);
+	static void init_plugin_index(MWindow *mwindow, Preferences *preferences,
+		FILE *fp, char *path, int &dir_id);
+	static void load_plugin_index(MWindow *mwindow, char *path);
 	void init_preferences();
 	void init_signals();
 	void init_theme();

@@ -4332,5 +4332,12 @@ int BC_WindowBase::get_id()
 }
 
 
+BC_Pixmap *BC_WindowBase::create_pixmap(VFrame *vframe)
+{
+	int w = vframe->get_w(), h = vframe->get_h();
+	BC_Pixmap *icon = new BC_Pixmap(this, w, h);
+	icon->draw_vframe(vframe, 0,0, w,h, 0,0);
+	return icon;
+}
 
 

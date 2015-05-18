@@ -25,7 +25,6 @@
 #include "bchash.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 #include <math.h>
@@ -134,7 +133,6 @@ int BlurMain::is_realtime() { return 1; }
 
 
 NEW_WINDOW_MACRO(BlurMain, BlurWindow)
-NEW_PICON_MACRO(BlurMain)
 
 LOAD_CONFIGURATION_MACRO(BlurMain, BlurConfig)
 

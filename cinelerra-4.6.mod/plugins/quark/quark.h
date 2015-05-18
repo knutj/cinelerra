@@ -127,7 +127,6 @@ public:
 	void load_configuration();
 	void save_data(KeyFrame *keyframe);
 	void read_data(KeyFrame *keyframe);
-	VFrame* new_picon();
 
 // parameters needed for sharpness
 	float sharpness; // Range from 0 to 100

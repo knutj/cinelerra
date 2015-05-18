@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/blur.o  \
 	$(OBJDIR)/blurwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/blur.plugin
+PLUGIN = blur
 
 include ../../plugin_config
 

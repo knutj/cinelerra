@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/bandslide.o
 
-OUTPUT = $(PLUGIN_DIR)/bandslide.plugin
+PLUGIN = bandslide
 
 include ../../plugin_config
 

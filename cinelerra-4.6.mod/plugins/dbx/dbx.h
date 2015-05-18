@@ -124,7 +124,6 @@ public:
 	DBXEffect(PluginServer *server);
 	~DBXEffect();
 
-	VFrame* new_picon();
 	char* plugin_title();
 	int is_multichannel();
 	int is_realtime();

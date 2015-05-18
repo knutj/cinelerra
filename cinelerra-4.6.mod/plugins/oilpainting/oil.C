@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -311,7 +310,6 @@ const char* OilEffect::plugin_title() { return N_("Oil painting"); }
 int OilEffect::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(OilEffect)
 
 NEW_WINDOW_MACRO(OilEffect, OilWindow)
 

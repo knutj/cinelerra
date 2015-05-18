@@ -24,7 +24,6 @@
 #include "filexml.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "seltempavg.h"
 #include "seltempavgwindow.h"
 #include "vframe.h"
@@ -122,7 +121,6 @@ const char* SelTempAvgMain::plugin_title() { return N_("Selective Temporal Avera
 int SelTempAvgMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(SelTempAvgMain)
 NEW_WINDOW_MACRO(SelTempAvgMain, SelTempAvgWindow);
 
 int SelTempAvgMain::process_buffer(VFrame *frame,

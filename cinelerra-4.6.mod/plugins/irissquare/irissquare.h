@@ -82,7 +82,6 @@ public:
 // required for all realtime plugins
 	int process_realtime(VFrame *incoming, VFrame *outgoing);
 	PluginClientWindow* new_window();
-	VFrame* new_picon();
 	int load_configuration();
 	void save_data(KeyFrame *keyframe);
 	void read_data(KeyFrame *keyframe);

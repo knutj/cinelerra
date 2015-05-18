@@ -20,7 +20,6 @@
  */
 
 #include "language.h"
-#include "picon_png.h"
 #include "pluginaclient.h"
 #include "samples.h"
 #include "vframe.h"
@@ -37,10 +36,6 @@ public:
 	{
 	};
 
-	VFrame* new_picon()
-	{
-		return new VFrame(picon_png);
-	};
 	const char* plugin_title()
 	{
 		return  N_("Invert Audio");

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/gain.o  \
 	$(OBJDIR)/gainwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/gain.plugin
+PLUGIN = gain
 
 include ../../plugin_config
 

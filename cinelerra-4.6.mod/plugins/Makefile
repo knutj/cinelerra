@@ -56,6 +56,7 @@ DIRS = \
 	gamma \
 	gradient \
 	graphic \
+	greycstoration \
 	histogram \
 	holo \
 	huesaturation \
@@ -136,36 +137,23 @@ ifeq ($(DO_STATIC), y)
 endif
 
 
-all: $(DIRS)
+all:	$(DIRS)
 
-.PHONY:	force
-force:
-
-# force parallel compilation of all directories
-$(DIRS): force
+# parallel compilation of all directories
+.PHONY:	$(DIRS)
+$(DIRS):
 	$(MAKE) -C $@
 
 clean:
-	find \( -name core \
-		-o -name '*.o' \
-		-o -name '*.plugin' \) -exec rm -rf {} \;
-
-wc:
-	cat *.C *.h | wc
-	$(LOOP_BEGIN) \
-		 $(MAKE) -C $$i wc; \
-	$(LOOP_END)
-
+	rm -rf $(foreach d,$(DIRS),$(d)/$(OBJDIR))
+	rm -rf ../bin/plugins
+	rm -f ../bin/mpeg2enc.plugin
 
 # Can't strip the themes so instead the plugins strip themselves
 install:
-#	strip ../bin/*.plugin
-#	rm -rf ../bin/*.plugin
-#	cp $(OBJDIR)/*.plugin ../bin/
-	mkdir -p ../bin/fonts
-	cp fonts/* ../bin/fonts
-	mkdir -p ../bin/shapes
-	cp shapes/* ../bin/shapes
+	mkdir -p ../bin/plugins
+	cp -a fonts ../bin/plugins/.
+	cp -a shapes ../bin/plugins/.
 	cp ../thirdparty/mjpegtools*/mpeg2enc/mpeg2enc ../bin/mpeg2enc.plugin
 
 # dependencies for parallel build

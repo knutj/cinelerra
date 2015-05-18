@@ -181,7 +181,6 @@ class Vocoder : public PluginAClient
 public:
 	Vocoder(PluginServer *server);
 	~Vocoder();
-	VFrame *new_picon();
 
 	int is_realtime();
 	int is_multichannel();

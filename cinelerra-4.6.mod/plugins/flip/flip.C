@@ -26,7 +26,6 @@
 #include "flip.h"
 #include "flipwindow.h"
 #include "language.h"
-#include "picon_png.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -206,7 +205,6 @@ int FlipMain::process_buffer(VFrame *frame,
 }
 
 
-NEW_PICON_MACRO(FlipMain)
 NEW_WINDOW_MACRO(FlipMain, FlipWindow)
 LOAD_CONFIGURATION_MACRO(FlipMain, FlipConfig)
 

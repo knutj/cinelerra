@@ -24,7 +24,6 @@
 #include "bchash.h"
 #include "language.h"
 #include "mainprogress.h"
-#include "picon_png.h"
 #include "resample.h"
 #include "samples.h"
 #include "theme.h"
@@ -362,12 +361,6 @@ int TimeStretch::get_parameters()
 	
 	return result;
 }
-
-VFrame* TimeStretch::new_picon()
-{
-	return new VFrame(picon_png);
-}
-
 
 int TimeStretch::start_loop()
 {

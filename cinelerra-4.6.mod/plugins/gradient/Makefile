@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/gradient.o
 
-OUTPUT = $(PLUGIN_DIR)/gradient.plugin
+PLUGIN = gradient
 
 include ../../plugin_config
 

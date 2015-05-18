@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/yuv.o
 
-OUTPUT = $(PLUGIN_DIR)/yuv.plugin
+PLUGIN = yuv
 
 include ../../plugin_config
 

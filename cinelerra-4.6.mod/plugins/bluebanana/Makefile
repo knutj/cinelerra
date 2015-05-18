@@ -7,7 +7,7 @@ OBJS += $(OBJDIR)/bluebananawindow.o
 OBJS += $(OBJDIR)/bluebananalookups.o
 OBJS += $(OBJDIR)/bluebananaengine.o
 
-OUTPUT = $(PLUGIN_DIR)/bluebanana.plugin
+PLUGIN = bluebanana
 
 include ../../plugin_config
 

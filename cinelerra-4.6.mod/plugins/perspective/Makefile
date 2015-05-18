@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/perspective.o
 
-OUTPUT = $(PLUGIN_DIR)/perspective.plugin
+PLUGIN = perspective
 
 include ../../plugin_config
 

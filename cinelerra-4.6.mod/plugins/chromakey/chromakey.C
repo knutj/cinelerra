@@ -29,7 +29,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "playback3d.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
@@ -576,7 +575,6 @@ const char* ChromaKey::plugin_title() { return N_("Chroma key"); }
 int ChromaKey::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(ChromaKey, ChromaKeyWindow)
-NEW_PICON_MACRO(ChromaKey)
 
 LOAD_CONFIGURATION_MACRO(ChromaKey, ChromaKeyConfig)
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/rotate.o
 
-OUTPUT = $(PLUGIN_DIR)/rotate.plugin
+PLUGIN = rotate
 
 include ../../plugin_config
 

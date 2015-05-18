@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/framefield.o
 
-OUTPUT = $(PLUGIN_DIR)/framefield.plugin
+PLUGIN = framefield
 
 include ../../plugin_config
 

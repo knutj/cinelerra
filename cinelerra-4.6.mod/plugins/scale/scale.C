@@ -23,7 +23,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "mwindow.h"
-#include "picon_png.h"
 #include "pluginserver.h"
 #include "scale.h"
 #include "scalewin.h"
@@ -91,7 +90,6 @@ ScaleMain::~ScaleMain()
 const char* ScaleMain::plugin_title() { return N_("Scale"); }
 int ScaleMain::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(ScaleMain)
 
 
 LOAD_CONFIGURATION_MACRO(ScaleMain, ScaleConfig)

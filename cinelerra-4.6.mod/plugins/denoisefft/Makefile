@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/denoisefft.o
 
-OUTPUT = $(PLUGIN_DIR)/denoisefft.plugin
+PLUGIN = denoisefft
 
 include ../../plugin_config
 

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/livevideo.o
 
-OUTPUT = $(PLUGIN_DIR)/livevideo.plugin
+PLUGIN = livevideo
 
 include ../../plugin_config
 

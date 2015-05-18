@@ -1598,44 +1598,19 @@ void TrackCanvas::draw_transitions()
 
 //	if(!mwindow->edl->session->show_assets) return;
 
-	for(Track *track = mwindow->edl->tracks->first;
-		track;
-		track = track->next)
-	{
-		for(Edit *edit = track->edits->first;
-			edit;
-			edit = edit->next)
-		{
-			if(edit->transition)
-			{
-				edit_dimensions(edit, x, y, w, h);
-				get_transition_coords(x, y, w, h);
-
-				if(MWindowGUI::visible(x, x + w, 0, get_w()) &&
-					MWindowGUI::visible(y, y + h, 0, get_h()))
-				{
-					PluginServer *server = mwindow->scan_plugindb(edit->transition->title,
+	for(Track *track = mwindow->edl->tracks->first; track; track = track->next) {
+		for(Edit *edit = track->edits->first; edit; edit = edit->next) {
+			if(!edit->transition) continue;
+			edit_dimensions(edit, x, y, w, h);
+			get_transition_coords(x, y, w, h);
+			if( !MWindowGUI::visible(x, x + w, 0, get_w()) ) continue;
+			if( !MWindowGUI::visible(y, y + h, 0, get_h()) ) continue;
+			PluginServer *server = mwindow->scan_plugindb(edit->transition->title,
 						track->data_type);
-					if(!server->picon)
-					{
-						server->open_plugin(1, mwindow->preferences, 0, 0, -1);
-						server->close_plugin();
-					}
-
-					if(server->picon)
-					{
-						draw_vframe(server->picon, 
-							x, 
-							y, 
-							w, 
-							h, 
-							0, 
-							0, 
-							server->picon->get_w(), 
-							server->picon->get_h());
-					}
-				}
-			}
+			if( !server ) continue;
+			VFrame *picon = server->get_picon();
+			if( !picon ) continue;
+			draw_vframe(picon, x, y, w, h, 0, 0, picon->get_w(), picon->get_h());
 		}
 	}
 }

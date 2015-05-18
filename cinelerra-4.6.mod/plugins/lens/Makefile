@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/lens.o
 
-OUTPUT = $(PLUGIN_DIR)/lens.plugin
+PLUGIN = lens
 
 include ../../plugin_config
 

@@ -97,7 +97,6 @@ public:
 
 // required for all non realtime plugins
 	const char* plugin_title();
-	VFrame* new_picon();
 	int get_parameters();
 	int start_loop();
 	int stop_loop();

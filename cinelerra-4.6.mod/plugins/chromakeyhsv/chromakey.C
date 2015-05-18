@@ -29,7 +29,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "playback3d.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
@@ -923,7 +922,6 @@ int ChromaKeyHSV::process_buffer(VFrame *frame,
 const char* ChromaKeyHSV::plugin_title() { return N_("Chroma key (HSV)"); }
 int ChromaKeyHSV::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(ChromaKeyHSV)
 
 LOAD_CONFIGURATION_MACRO(ChromaKeyHSV, ChromaKeyConfig)
 

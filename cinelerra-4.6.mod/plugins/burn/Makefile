@@ -5,7 +5,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/burn.o  \
 	$(OBJDIR)/burnwindow.o \
 
-OUTPUT = $(PLUGIN_DIR)/burn.plugin
+PLUGIN = burn
 CFLAGS += -I../libeffecttv
 LFLAGS += ../libeffecttv/$(OBJDIR)/libeffecttv.a
 

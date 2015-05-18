@@ -78,8 +78,6 @@ int IVTCMain::is_realtime() { return 1; }
 
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(IVTCMain)
 NEW_WINDOW_MACRO(IVTCMain, IVTCWindow)
 
 

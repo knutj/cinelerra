@@ -27,7 +27,6 @@
 #include "bchash.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "theme.h"
 #include "units.h"
@@ -198,7 +197,6 @@ void CompressorEffect::update_gui()
 }
 
 
-NEW_PICON_MACRO(CompressorEffect)
 LOAD_CONFIGURATION_MACRO(CompressorEffect, CompressorConfig)
 NEW_WINDOW_MACRO(CompressorEffect, CompressorWindow)
 

@@ -25,7 +25,6 @@
 #include "format.inc"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "timeavg.h"
 #include "timeavgwindow.h"
@@ -121,7 +120,6 @@ const char* TimeAvgMain::plugin_title() { return N_("Time Average"); }
 int TimeAvgMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(TimeAvgMain)
 
 NEW_WINDOW_MACRO(TimeAvgMain, TimeAvgWindow);
 

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/overlayaudio.o
 
-OUTPUT = $(PLUGIN_DIR)/overlayaudio.plugin
+PLUGIN = overlayaudio
 
 include ../../plugin_config
 

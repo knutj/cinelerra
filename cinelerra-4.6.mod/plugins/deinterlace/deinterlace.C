@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -547,7 +546,6 @@ void DeInterlaceMain::render_gui(void *data)
 }
 
 NEW_WINDOW_MACRO(DeInterlaceMain, DeInterlaceWindow)
-NEW_PICON_MACRO(DeInterlaceMain)
 LOAD_CONFIGURATION_MACRO(DeInterlaceMain, DeInterlaceConfig)
 
 

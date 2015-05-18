@@ -79,7 +79,6 @@ PluginClient* new_plugin(PluginServer *server) \
 // Prototypes for user to put in class header
 #define PLUGIN_CLASS_MEMBERS(config_name) \
 	int load_configuration(); \
-	VFrame* new_picon(); \
 	const char* plugin_title(); \
 	PluginClientWindow* new_window(); \
 	config_name config;
@@ -101,13 +100,6 @@ PluginClient* new_plugin(PluginServer *server) \
 PluginClientWindow* plugin_class::new_window() \
 { \
 	return new window_class(this); \
-}
-
-
-#define NEW_PICON_MACRO(plugin_class) \
-VFrame* plugin_class::new_picon() \
-{ \
-	return new VFrame(picon_png); \
 }
 
 // Not all plugins load configuration the same way.  Use this to define
@@ -232,7 +224,6 @@ public:
 	virtual int is_synthesis();
 	virtual int is_transition();
 	virtual const char* plugin_title();   // return the title of the plugin
-	virtual VFrame* new_picon();
 	virtual Theme* new_theme();
 // Get theme being used by Cinelerra currently.  Used by all plugins.
 	Theme* get_theme();

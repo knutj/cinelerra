@@ -41,7 +41,6 @@ public:
 	int uses_gui();
 	int is_transition();
 	const char* plugin_title();
-	VFrame* new_picon();
 };
 
 #endif

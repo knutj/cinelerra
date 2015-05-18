@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/spectrogram.o
 
-OUTPUT = $(PLUGIN_DIR)/spectrogram.plugin
+PLUGIN = spectrogram
 
 include ../../plugin_config
 

@@ -24,7 +24,6 @@
 #include "condition.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "sharpen.h"
 #include "sharpenwindow.h"
 
@@ -110,7 +109,6 @@ SharpenMain::~SharpenMain()
 
 NEW_WINDOW_MACRO(SharpenMain, SharpenWindow)
 
-NEW_PICON_MACRO(SharpenMain)
 
 LOAD_CONFIGURATION_MACRO(SharpenMain, SharpenConfig)
 

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/resamplert.o
 
-OUTPUT = $(PLUGIN_DIR)/resamplert.plugin
+PLUGIN = resamplert
 
 include ../../plugin_config
 

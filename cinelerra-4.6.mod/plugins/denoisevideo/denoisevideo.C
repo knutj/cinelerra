@@ -26,7 +26,6 @@
 #include "guicast.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -416,7 +415,6 @@ const char* DenoiseVideo::plugin_title() { return N_("Denoise video"); }
 int DenoiseVideo::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(DenoiseVideo)
 NEW_WINDOW_MACRO(DenoiseVideo, DenoiseVideoWindow)
 
 LOAD_CONFIGURATION_MACRO(DenoiseVideo, DenoiseVideoConfig)

@@ -19,9 +19,6 @@
 #ifndef BCCMODELS_H
 #define BCCMODELS_H
 
-
-
-
 // Colormodels
 // Must match colormodels.h in quicktime
 #ifndef BC_TRANSPARENCY
@@ -60,6 +57,8 @@
 #define BC_YUV444P      27
 #define BC_YUV411P      18
 #define BC_YUV410P      28
+#define BC_RGB_FLOATP   32
+#define BC_RGBA_FLOATP  33
 
 // Colormodels purely used by Quicktime are done in Quicktime.
 
@@ -113,6 +112,14 @@ public:
 		int bg_color,         /* When transfering BC_RGBA8888 to non-alpha this is the background color in 0xRRGGBB hex */
 		int in_rowspan,       /* For planar use the luma rowspan */
 		int out_rowspan);     /* For planar use the luma rowspan */
+
+// ptrs are either row pointers (colormodel flat) or plane pointers (colormodel planar)
+	static void transfer(
+		unsigned char **output_ptrs, int out_colormodel,
+			int out_x, int out_y, int out_w, int out_h, int out_rowspan,
+		unsigned char **input_ptrs, int in_colormodel,
+			int in_x, int in_y, int in_w, int in_h, int in_rowspan,
+		int bg_color);
 
 	static void init_yuv();
 	static int bc_to_x(int color_model);

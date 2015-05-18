@@ -26,7 +26,6 @@
 #include "guicast.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -747,7 +746,6 @@ int Decimate::process_buffer(VFrame *frame,
 const char* Decimate::plugin_title() { return N_("Decimate"); }
 int Decimate::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(Decimate)
 NEW_WINDOW_MACRO(Decimate, DecimateWindow)
 
 

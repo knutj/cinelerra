@@ -100,8 +100,6 @@ char* HistogramMain::plugin_title() { return N_("Histogram"); }
 int HistogramMain::is_realtime() { return 1; }
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(HistogramMain)
 
 SHOW_GUI_MACRO(HistogramMain, HistogramThread)
 

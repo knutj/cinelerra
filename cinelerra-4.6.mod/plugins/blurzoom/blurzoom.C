@@ -23,7 +23,6 @@
 #include "colormodels.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "blurzoom.h"
 #include "blurzoomwindow.h"
 
@@ -63,11 +62,6 @@ BlurZoomMain::~BlurZoomMain()
 
 char* BlurZoomMain::plugin_title() { return N_("RadioacTV"); }
 int BlurZoomMain::is_realtime() { return 1; }
-
-VFrame* BlurZoomMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 NEW_WINDOW_MACRO(BlurZoomMain, BlurZoomWindow)
 

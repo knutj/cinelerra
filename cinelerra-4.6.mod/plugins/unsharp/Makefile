@@ -4,7 +4,7 @@ OBJS := \
 	$(OBJDIR)/unsharp.o \
 	$(OBJDIR)/unsharpwindow.o
 
-OUTPUT := $(PLUGIN_DIR)/unsharp.plugin
+PLUGIN = unsharp
 
 include ../../plugin_config
 

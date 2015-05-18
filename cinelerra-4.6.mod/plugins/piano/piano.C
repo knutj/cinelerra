@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "piano.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 #include <string.h>
@@ -49,11 +48,6 @@ Piano::Piano(PluginServer *server)
 Piano::~Piano()
 {
 	if(dsp_buffer) delete [] dsp_buffer;
-}
-
-VFrame* Piano::new_picon()
-{
-	return new VFrame(picon_png);
 }
 
 

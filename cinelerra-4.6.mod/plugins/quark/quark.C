@@ -21,7 +21,6 @@
 
 #include "colormodels.h"
 #include "filexml.h"
-#include "picon_png.h"
 #include "sharpen.h"
 #include "sharpenwindow.h"
 
@@ -59,12 +58,6 @@ SharpenMain::~SharpenMain()
 
 char* SharpenMain::plugin_title() { return N_("Quark"); }
 int SharpenMain::is_realtime() { return 1; }
-
-VFrame* SharpenMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
-
 
 int SharpenMain::start_realtime()
 {

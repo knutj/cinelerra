@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -367,7 +366,6 @@ WhirlEffect::~WhirlEffect()
 const char* WhirlEffect::plugin_title() { return N_("Whirl"); }
 int WhirlEffect::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(WhirlEffect)
 
 
 NEW_WINDOW_MACRO(WhirlEffect, WhirlWindow)

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/zoom.o
 
-OUTPUT = $(PLUGIN_DIR)/zoom.plugin
+PLUGIN = zoom
 
 include ../../plugin_config
 

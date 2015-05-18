@@ -94,7 +94,6 @@ public:
 
 // required for all realtime plugins
 	int load_configuration();
-	VFrame* new_picon();
 	const char* plugin_title();
 	PluginClientWindow* new_window();
 	int process_realtime(VFrame *incoming, VFrame *outgoing);

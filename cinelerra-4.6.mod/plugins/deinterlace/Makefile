@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/deinterlace.o  \
 	$(OBJDIR)/deinterwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/deinterlace.plugin
+PLUGIN = deinterlace
 
 include ../../plugin_config
 

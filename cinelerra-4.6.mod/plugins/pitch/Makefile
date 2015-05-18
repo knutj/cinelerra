@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/pitch.o
 
 
-OUTPUT = $(PLUGIN_DIR)/pitch.plugin
+PLUGIN = pitch
 
 
 include ../../plugin_config

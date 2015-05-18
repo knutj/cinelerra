@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "vframe.h"
@@ -213,7 +212,6 @@ const char* RGBShiftEffect::plugin_title() { return N_("RGBShift"); }
 int RGBShiftEffect::is_realtime() { return 1; } 
 
 
-NEW_PICON_MACRO(RGBShiftEffect)
 NEW_WINDOW_MACRO(RGBShiftEffect, RGBShiftWindow)
 LOAD_CONFIGURATION_MACRO(RGBShiftEffect, RGBShiftConfig)
 

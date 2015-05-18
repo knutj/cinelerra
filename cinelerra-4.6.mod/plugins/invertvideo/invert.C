@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "vframe.h"
@@ -205,7 +204,6 @@ InvertVideoEffect::~InvertVideoEffect()
 const char* InvertVideoEffect::plugin_title() { return N_("Invert Video"); }
 int InvertVideoEffect::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(InvertVideoEffect)
 NEW_WINDOW_MACRO(InvertVideoEffect, InvertVideoWindow)
 LOAD_CONFIGURATION_MACRO(InvertVideoEffect, InvertVideoConfig)
 

@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/timeavg.o  \
 	$(OBJDIR)/timeavgwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/timeavg.plugin
+PLUGIN = timeavg
 
 include ../../plugin_config
 

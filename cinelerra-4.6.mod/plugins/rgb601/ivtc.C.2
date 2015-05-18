@@ -1,6 +1,5 @@
 #include "colormodels.h"
 #include "filexml.h"
-#include "picon_png.h"
 #include "rgb601.h"
 #include "rgb601window.h"
 
@@ -44,11 +43,6 @@ RGB601Main::~RGB601Main()
 
 char* RGB601Main::plugin_title() { return "Inverse Telecine"; }
 int RGB601Main::is_realtime() { return 1; }
-
-VFrame* RGB601Main::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 int RGB601Main::load_defaults()
 {

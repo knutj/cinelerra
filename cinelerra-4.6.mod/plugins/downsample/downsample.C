@@ -30,7 +30,6 @@
 #include "filexml.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -378,7 +377,6 @@ const char* DownSampleMain::plugin_title() { return N_("Downsample"); }
 int DownSampleMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(DownSampleMain)
 NEW_WINDOW_MACRO(DownSampleMain, DownSampleWindow)
 
 LOAD_CONFIGURATION_MACRO(DownSampleMain, DownSampleConfig)

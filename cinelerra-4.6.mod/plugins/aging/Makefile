@@ -4,7 +4,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/aging.o  \
 	$(OBJDIR)/agingwindow.o \
 
-OUTPUT = $(PLUGIN_DIR)/aging.plugin
+PLUGIN = aging
 CFLAGS += -I../libeffecttv
 LFLAGS += ../libeffecttv/$(OBJDIR)/libeffecttv.a
 

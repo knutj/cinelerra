@@ -24,7 +24,6 @@
 #include "mainprogress.h"
 #include "normalize.h"
 #include "normalizewindow.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "units.h"
 #include "vframe.h"
@@ -56,12 +55,6 @@ NormalizeMain::~NormalizeMain()
 const char* NormalizeMain::plugin_title() { return N_("Normalize"); }
 int NormalizeMain::is_realtime() { return 0; }
 int NormalizeMain::is_multichannel() { return 1; }
-
-
-VFrame* NormalizeMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 
 int NormalizeMain::load_defaults()

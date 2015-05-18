@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/rgb601.o  \
 	$(OBJDIR)/rgb601window.o
 
-OUTPUT = $(PLUGIN_DIR)/rgb601.plugin
+PLUGIN = rgb601
 
 include ../../plugin_config
 

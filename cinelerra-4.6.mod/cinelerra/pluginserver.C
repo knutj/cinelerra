@@ -58,9 +58,13 @@
 #include "vtrack.h"
 
 
+#include<stdio.h>
+#include<unistd.h>
+#include<fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <dlfcn.h>
+#include<sys/stat.h>
+#include <sys/mman.h>
 
 
 PluginServer::PluginServer()
@@ -110,7 +114,6 @@ PluginServer::PluginServer(PluginServer &that)
 	uses_gui = that.uses_gui;
 	mwindow = that.mwindow;
 	keyframe = that.keyframe;
-	plugin_fd = that.plugin_fd;
 	new_plugin = that.new_plugin;
 
 	is_lad = that.is_lad;
@@ -135,7 +138,6 @@ int PluginServer::reset_parameters()
 	keyframe = 0;
 	prompt = 0;
 	cleanup_plugin();
-	plugin_fd = 0;
 	autos = 0;
 	plugin = 0;
 	edl = 0;
@@ -156,7 +158,6 @@ int PluginServer::reset_parameters()
 	modules = 0;
 	nodes = 0;
 	picon = 0;
-	
 
 	is_lad = 0;
 	lad_descriptor_function = 0;
@@ -242,6 +243,7 @@ void PluginServer::generate_display_title(char *string)
 		strcpy(string, ltitle);
 }
 
+
 // Open plugin for signal processing
 int PluginServer::open_plugin(int master, 
 	Preferences *preferences,
@@ -256,84 +258,49 @@ int PluginServer::open_plugin(int master,
 	this->edl = edl;
 	this->lad_index = lad_index;
 
-
-	if(!new_plugin && !plugin_fd) plugin_fd = dlopen(path, RTLD_NOW);
-
-	if(!new_plugin && !plugin_fd)
-	{
-// If the dlopen failed it may still be an executable tool for a specific
+	if( !load_obj() && !load_obj(path) ) {
+// If the load failed it may still be an executable tool for a specific
 // file format, in which case we just store the path.
 		set_title(path);
 		char string[BCTEXTLEN];
-		strcpy(string, dlerror());
-
+		strcpy(string, load_error());
 		if(!strstr(string, "executable"))
 			printf("PluginServer::open_plugin: %s\n", string);
-		
 		return 0;
 	}
-
-
-	if(!new_plugin && !lad_descriptor)
-	{
-		new_plugin = (PluginClient* (*)(PluginServer*))dlsym(plugin_fd, "new_plugin");
-
-// Probably a LAD plugin but we're not going to instantiate it here anyway.
-		if(!new_plugin)
-		{
-			lad_descriptor_function = (LADSPA_Descriptor_Function)dlsym(
-				plugin_fd,
-				"ladspa_descriptor");
-
-			if(!lad_descriptor_function)
-			{
-// Not a recognized plugin
-				fprintf(stderr, 
-					"PluginServer::open_plugin %d: new_plugin undefined in %s\n", 
-					__LINE__,
-					path);
-				dlclose(plugin_fd);
-				plugin_fd = 0;
+	if( !new_plugin && !lad_descriptor ) {
+		new_plugin =
+			(PluginClient* (*)(PluginServer*)) load_sym("new_plugin");
+		if( !new_plugin ) {
+			lad_descriptor_function =
+				(LADSPA_Descriptor_Function) load_sym("ladspa_descriptor");
+			if(!lad_descriptor_function) {
+				fprintf(stderr, "PluginServer::open_plugin "
+					" %d: new_plugin undefined in %s\n", __LINE__, path);
+				unload_obj();
 				return PLUGINSERVER_NOT_RECOGNIZED;
 			}
-			else
-			{
-// LAD plugin,  Load the descriptor and get parameters.
-				is_lad = 1;
-				if(lad_index >= 0)
-				{
-					lad_descriptor = lad_descriptor_function(lad_index);
-				}
-
-// make plugin initializer handle the subplugins in the LAD plugin or stop
-// trying subplugins.
-				if(!lad_descriptor)
-				{
-					dlclose(plugin_fd);
-					plugin_fd = 0;
-					return PLUGINSERVER_IS_LAD;
-				}
+			if( lad_index < 0 ) {
+				unload_obj();
+				return PLUGINSERVER_IS_LAD;
 			}
+			lad_descriptor = lad_descriptor_function(lad_index);
+			if(!lad_descriptor) {
+				unload_obj();
+				return PLUGINSERVER_NOT_RECOGNIZED;
+			}
+			is_lad = 1;
 		}
 	}
 
-
-	if(is_lad)
-	{
-		client = new PluginAClientLAD(this);
-	}
-	else
-	{
-		client = new_plugin(this);
-	}
-
-
+	client = is_lad ?
+		(PluginClient *) new PluginAClientLAD(this) :
+		new_plugin(this);
 
 // Run initialization functions
 	realtime = client->is_realtime();
 // Don't load defaults when probing the directory.
-	if(!master)
-	{
+	if(!master) {
 		if(realtime)
 			client->load_defaults_xml();
 		else
@@ -348,12 +315,6 @@ int PluginServer::open_plugin(int master,
 	synthesis = client->is_synthesis();
 	transition = client->is_transition();
 	set_title(client->plugin_title());
-
-	if(master && (realtime || transition))
-	{
-// This adds 50ms to initialization on a 1Ghz laptop
-		picon = client->new_picon();
-	}
 
 //printf("PluginServer::open_plugin 2\n");
 	plugin_open = 1;
@@ -372,11 +333,8 @@ int PluginServer::close_plugin()
 	}
 
 // shared object is persistent since plugin deletion would unlink its own object
-//	dlclose(plugin_fd);
 	plugin_open = 0;
-
 	cleanup_plugin();
-
 	return 0;
 }
 
@@ -400,94 +358,35 @@ void PluginServer::render_stop()
 		client->render_stop();
 }
 
-void PluginServer::write_table(FILE *fd)
+void PluginServer::write_table(FILE *fp, int idx)
 {
-	if(!fd) return;
-
-	char new_path[BCTEXTLEN];
-	strcpy(new_path, path);
-	char *ptr = strrchr(new_path, '/');
-	if(ptr) ptr++;
-	if(!ptr) ptr = new_path;
-	fprintf(fd, "\"%s\" \"%s\" %d %d %d %d %d %d %d %d %d %d\n", // %d\n", 
-		ptr, title, audio, video, theme, realtime, fileio,
+	if(!fp) return;
+	fprintf(fp, "\"%s\" \"%s\" %d %d %d %d %d %d %d %d %d %d %d\n", // %d\n", 
+		path, title, idx, audio, video, theme, realtime, fileio,
 		uses_gui, multichannel, synthesis, transition, is_lad /* ,
 		lad_index */);
 }
 
+char *PluginServer::table_quoted_field(char *&sp)
+{
+	char *cp = sp;
+	while( *cp && (*cp == ' ' || *cp == '\t') ) ++cp;
+	if( *cp++ != '"' ) return 0;
+	char *bp = cp;
+	while( *cp && *cp != '"' ) ++cp;
+	if( *cp != '"' ) return 0;
+	*cp++ = 0;  sp = cp;
+	return bp;
+}
+
 int PluginServer::read_table(char *text)
 {
-	char string[BCTEXTLEN];
-	char string2[BCTEXTLEN];
-	int result = 0;
+	int n = sscanf(text, "%d %d %d %d %d %d %d %d %d %d %d", // %d",
+		&dir_idx, &audio, &video, &theme, &realtime, &fileio, &uses_gui,
+		&multichannel, &synthesis, &transition, &is_lad /* ,
+		&lad_index */);
 
-// path
-	char *ptr = text;
-	char *ptr2 = 0;
-	while(*ptr != '\"' && *ptr != 0) ptr++;
-	
-	if(*ptr != 0)
-	{
-		ptr++;
-		ptr2 = ptr;
-		while(*ptr2 != '\"' && *ptr2 != 0) ptr2++;
-		
-		if(*ptr2 != 0)
-		{
-			memcpy(string, ptr, ptr2 - ptr);
-			string[ptr2 - ptr] = 0;
-			sprintf(string2, "%s/%s", this->path, string);
-			set_path(string2);
-//printf("PluginServer::read_table %d path=%s\n", __LINE__, string2);
-		}
-		else
-			result = 1;
-	}
-	else
-		result = 1;
-
-// title
-	if(ptr2 && *ptr2 != 0)
-	{
-		ptr2++;
-		ptr = ptr2;
-		while(*ptr != 0 && *ptr != '\"') ptr++;
-		
-		if(*ptr != 0)
-		{
-			ptr++;
-			ptr2 = ptr;
-			while(*ptr2 != '\"' && *ptr2 != 0) ptr2++;
-			
-			if(*ptr2 != 0)
-			{
-				memcpy(string, ptr, ptr2 - ptr);
-				string[ptr2 - ptr] = 0;
-				set_title(string);
-//printf("PluginServer::read_table %d this=%p title=%s\n", __LINE__, this, string);
-			}
-			else
-				result = 1;
-		}
-		else
-			result = 1;
-	}
-	else
-		result = 1;
-
-// Toggles
-	if(ptr2 && *ptr2 != 0)
-	{
-		ptr2++;
-		sscanf(ptr2,
-			"%d %d %d %d %d %d %d %d %d %d", // %d",
-			&audio, &video, &theme, &realtime, &fileio, &uses_gui,
-			&multichannel, &synthesis, &transition, &is_lad /* ,
-			&lad_index */);
-//write_table(stdout);
-	}
-
-	return result;
+	return n == 11 ? 0 : 1;
 }
 
 int PluginServer::init_realtime(int realtime_sched,
@@ -1238,6 +1137,50 @@ Theme* PluginServer::get_theme()
 	return 0;
 }
 
+
+VFrame *PluginServer::get_plugin_images()
+{
+	char plugin_path[BCTEXTLEN];
+	strcpy(plugin_path, path);
+	char *bp = strrchr(plugin_path, '/');
+	if( !bp ) bp = plugin_path; else ++bp;
+	char *sp = strrchr(bp,'.');
+	if( !sp || ( strcmp(sp, ".plugin") && strcmp(sp,".so") ) ) return 0;
+	char png_path[BCTEXTLEN], *cp = png_path;
+	cp += sprintf(cp,"%s/picons/", mwindow->preferences->plugin_dir);
+	while( bp < sp ) *cp++ = *bp++;
+	strcpy(cp, ".png");
+	struct stat st;
+	if( stat(png_path, &st) ) return 0;
+	if( !S_ISREG(st.st_mode) ) return 0;
+	if( st.st_size == 0 ) return 0;
+	unsigned len = st.st_size;
+	int ret = 0, w = 0, h = 0;
+	uint8_t *bfr = 0;
+	int fd = ::open(png_path, O_RDONLY);
+	if( fd < 0 ) ret = 1;
+	if( !ret ) {
+		bfr = (uint8_t*) ::mmap (NULL, len, PROT_READ, MAP_SHARED, fd, 0); 
+		if( bfr == MAP_FAILED ) ret = 1;
+	}
+	VFrame *vframe = 0;
+	if( !ret ) {
+		vframe = new VFrame(bfr, st.st_size);
+		if( (w=vframe->get_w()) <= 0 || (h=vframe->get_h()) <= 0 ||
+		    vframe->get_data() == 0 ) ret = 1;
+	}
+	if( bfr && bfr != MAP_FAILED ) ::munmap(bfr, len);
+	if( fd >= 0 ) ::close(fd);
+	if( ret ) { delete vframe;  vframe = 0; }
+	return vframe;
+}
+
+VFrame *PluginServer::get_picon()
+{
+	if( !picon )
+		picon = get_plugin_images();
+	return picon;
+}
 
 // Called when plugin interface is tweeked
 void PluginServer::sync_parameters()

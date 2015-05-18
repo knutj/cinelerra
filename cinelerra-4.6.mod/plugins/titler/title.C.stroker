@@ -12,7 +12,6 @@
 #include "freetype/ftoutln.h"
 #include "freetype/ftstroker.h"
 #include "language.h"
-#include "picon_png.h"
 #include "plugincolors.h"
 #include "title.h"
 #include "titlewindow.h"
@@ -1013,12 +1012,6 @@ TitleMain::~TitleMain()
 char* TitleMain::plugin_title() { return _("Title"); }
 int TitleMain::is_realtime() { return 1; }
 int TitleMain::is_synthesis() { return 1; }
-
-VFrame* TitleMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
-
 
 void TitleMain::build_fonts()
 {

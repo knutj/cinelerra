@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/liveaudio.o
 
-OUTPUT = $(PLUGIN_DIR)/liveaudio.plugin
+PLUGIN = liveaudio
 
 include ../../plugin_config
 

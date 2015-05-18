@@ -100,8 +100,6 @@ const char* HistogramMain::plugin_title() { return N_("Histogram"); }
 int HistogramMain::is_realtime() { return 1; }
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(HistogramMain)
 
 NEW_WINDOW_MACRO(HistogramMain, HistogramWindow)
 

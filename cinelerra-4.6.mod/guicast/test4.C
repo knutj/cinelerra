@@ -1,7 +1,7 @@
 
-// c++ -g -I../guicast testwindow.C ../guicast/x86_64/libguicast.a \
-//  -DHAVE_GL -DHAVE_XFT -I/usr/include/freetype2 -lGL -lX11 -lXext \
-//  -lXinerama -lXv -lpng  -lfontconfig -lfreetype -lXft -pthread
+//c++ -g -I../guicast testwindow.C ../guicast/x86_64/libguicast.a \
+// -DHAVE_GL -DHAVE_XFT -I/usr/include/freetype2 -lGL -lX11 -lXext \
+// -lXinerama -lXv -lpng  -lfontconfig -lfreetype -lXft -pthread
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -81,6 +81,7 @@ const char *cmdl[] = {
  "none", "rgb888", "rgba8888", "rgb161616", "rgba16161616", "yuv888", "yuva8888", "yuv161616",
  "yuva16161616", "yuv422p", "yuv411p", "yuv422", "argb8888", "abgr8888", "a8", "a16",
  "yuv101010", "vyu888", "uyva8888", "yuv444p", "yuv410p", "rgb_float", "rgba_float", "a_float",
+ "rgb_floatp",
 };
 
 void write_pbm(uint8_t *tp, int w, int h, const char *fmt, ...)
@@ -123,13 +124,13 @@ int main(int ac, char **av)
 	close(fd);
 	int w = ifrm.get_w(), h = ifrm.get_h();
 	TestWindow test_window(100, 100, w, h);
-	for( int fr_cmdl=1; fr_cmdl<=31; ++fr_cmdl ) {
+	for( int fr_cmdl=1; fr_cmdl<=32; ++fr_cmdl ) {
 		if( fr_cmdl == BC_TRANSPARENCY || fr_cmdl == BC_COMPRESSED ) continue;
 		if( fr_cmdl == BC_A8 || fr_cmdl == BC_A16 ) continue;
 		if( fr_cmdl == BC_A_FLOAT || fr_cmdl == 8 ) continue;
 		VFrame afrm(w, h, fr_cmdl, -1);
 		afrm.transfer_from(&ifrm, 0);
-		for( int to_cmdl=1; to_cmdl<=31; ++to_cmdl ) {
+		for( int to_cmdl=1; to_cmdl<=32; ++to_cmdl ) {
 			if( to_cmdl == BC_TRANSPARENCY || to_cmdl == BC_COMPRESSED ) continue;
 			if( to_cmdl == BC_A8 || to_cmdl == BC_A16 ) continue;
 			if( to_cmdl == BC_A_FLOAT || to_cmdl == 8 ) continue;

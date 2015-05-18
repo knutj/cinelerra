@@ -28,7 +28,6 @@
 #include "graphic.h"
 #include "keys.h"
 #include "language.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "theme.h"
 #include "units.h"
@@ -1048,7 +1047,6 @@ int GraphicEQ::is_realtime() { return 1; }
 
 const char* GraphicEQ::plugin_title() { return N_("EQ Graphic"); }
 
-NEW_PICON_MACRO(GraphicEQ)
 NEW_WINDOW_MACRO(GraphicEQ, GraphicGUI)
 
 LOAD_CONFIGURATION_MACRO(GraphicEQ, GraphicConfig)

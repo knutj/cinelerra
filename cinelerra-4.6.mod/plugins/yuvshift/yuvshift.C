@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "vframe.h"
@@ -213,7 +212,6 @@ const char* YUVShiftEffect::plugin_title() { return N_("YUVShift"); }
 int YUVShiftEffect::is_realtime() { return 1; } 
 
 
-NEW_PICON_MACRO(YUVShiftEffect)
 NEW_WINDOW_MACRO(YUVShiftEffect, YUVShiftWindow)
 LOAD_CONFIGURATION_MACRO(YUVShiftEffect, YUVShiftConfig)
 

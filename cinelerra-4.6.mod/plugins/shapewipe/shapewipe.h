@@ -142,7 +142,6 @@ public:
 	int uses_gui();
 	int is_transition();
 	const char* plugin_title();
-	VFrame* new_picon();
 	int read_pattern_image(int new_frame_width, int new_frame_height);
 	void reset_pattern_image();
 	void init_shapes();

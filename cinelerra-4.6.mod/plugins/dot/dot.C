@@ -22,7 +22,6 @@
 #include "clip.h"
 #include "colormodels.h"
 #include "filexml.h"
-#include "picon_png.h"
 #include "dot.h"
 #include "dotwindow.h"
 #include "effecttv.h"
@@ -83,7 +82,6 @@ DotMain::~DotMain()
 const char* DotMain::plugin_title() { return N_("DotTV"); }
 int DotMain::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(DotMain)
 NEW_WINDOW_MACRO(DotMain, DotWindow)
 
 

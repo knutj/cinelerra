@@ -24,7 +24,7 @@ CFLAGS += -I$(OPENCV_DIR)/modules/core/include/ \
 	-I$(OPENCV_DIR)/modules/objdetect/include/ \
 	-I$(OPENCV_DIR)/modules/video/include/
 
-OUTPUT = $(PLUGIN_DIR)/findobject.plugin
+PLUGIN = findobject
 
 include ../../plugin_config
 

@@ -21,7 +21,6 @@
 
 #include "clip.h"
 #include "filexml.h"
-#include "picon_png.h"
 #include "svg.h"
 #include "svgwin.h"
 #include <sys/types.h>
@@ -126,7 +125,6 @@ const char* SvgMain::plugin_title() { return N_("SVG via Inkscape"); }
 int SvgMain::is_realtime() { return 1; }
 int SvgMain::is_synthesis() { return 1; }
 
-NEW_PICON_MACRO(SvgMain)
 
 LOAD_CONFIGURATION_MACRO(SvgMain, SvgConfig)
 

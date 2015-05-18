@@ -56,8 +56,6 @@
 #include<stdio.h>
 #include<unistd.h>
 #include<fcntl.h>
-#include<sys/stat.h>
-#include <sys/mman.h>
 
 AssetPicon::AssetPicon(MWindow *mwindow, 
 	AWindowGUI *gui, 
@@ -269,9 +267,12 @@ void AssetPicon::create_objects()
 	{
 		strcpy(name, _(plugin->title));
 		set_text(name);
-		gui->get_plugin_images(plugin, &icon, &icon_vframe);
-		set_icon(icon);
-		set_icon_vframe(icon_vframe);
+		icon_vframe = plugin->get_picon();
+		if( icon_vframe ) {
+			set_icon_vframe(icon_vframe);
+			BC_Pixmap *icon = gui->create_pixmap(icon_vframe);
+			if( icon ) set_icon(icon);
+		}
 	}
 
 	if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
@@ -316,6 +317,7 @@ AWindowGUI::AWindowGUI(MWindow *mwindow, AWindow *awindow)
 	folderlist_menu = 0;
 	temp_picon = 0;
 	remove_plugin = 0;
+	plugin_visibility = ~0;
 }
 
 AWindowGUI::~AWindowGUI()
@@ -423,14 +425,9 @@ SET_TRACE
 		this,
 		VTRANSITION_FOLDER));
 	picon->persistent = 1;
-
 SET_TRACE
 
-	create_persistent_folder(&aeffects, 1, 0, 1, 0);
-	create_persistent_folder(&veffects, 0, 1, 1, 0);
-	create_persistent_folder(&atransitions, 1, 0, 0, 1);
-	create_persistent_folder(&vtransitions, 0, 1, 0, 1);
-
+	update_effects();
 SET_TRACE
 
 	mwindow->theme->get_awindow_sizes(this);
@@ -439,9 +436,9 @@ SET_TRACE
 	add_subwindow(asset_list = new AWindowAssets(mwindow,
 		this,
  		mwindow->theme->alist_x, 
-    	mwindow->theme->alist_y, 
-    	mwindow->theme->alist_w, 
-    	mwindow->theme->alist_h));
+	    	mwindow->theme->alist_y, 
+    		mwindow->theme->alist_w, 
+    		mwindow->theme->alist_h));
 
 SET_TRACE
 	add_subwindow(divider = new AWindowDivider(mwindow,
@@ -455,13 +452,14 @@ SET_TRACE
 	divider->set_cursor(HSEPARATE_CURSOR, 0, 0);
 
 SET_TRACE
+	int fx = mwindow->theme->afolders_x, fy = mwindow->theme->afolders_y; 
+	int fw = mwindow->theme->afolders_w, fh = mwindow->theme->afolders_h; 
+	add_subwindow(add_tools = new AddTools(mwindow, this, fx, fy, fw));
+	add_tools->create_objects();
+	fy += add_tools->get_h();  fh -= add_tools->get_h();
+SET_TRACE
 	add_subwindow(folder_list = new AWindowFolders(mwindow,
-		this,
- 		mwindow->theme->afolders_x, 
-    	mwindow->theme->afolders_y, 
-    	mwindow->theme->afolders_w, 
-    	mwindow->theme->afolders_h));
-	
+		this, fx, fy, fw, fh));
 SET_TRACE
 
 	//int x = mwindow->theme->abuttons_x;
@@ -580,90 +578,6 @@ int AWindowGUI::close_event()
 	return 1;
 }
 
-int AWindowGUI::get_custom_icon(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep)
-{
-	char png_path[BCTEXTLEN];
-	strncpy(&png_path[0], plugin->path, sizeof(png_path)-10);
-	char *sfx = strrchr(&png_path[0], '.');
-	if( !sfx ) return 1;
-	if( strcmp(sfx, ".plugin") && strcmp(sfx,".so") ) return 1;
-	strcpy(sfx, ".png");
-	struct stat st;
-	if( stat(png_path, &st) ) return 1;
-	if( !S_ISREG(st.st_mode) ) return 1;
-	if( st.st_size == 0 ) return 1;
-	unsigned len = st.st_size;
-	VFrame *vframe = 0;
-	int ret = 0, w = 0, h = 0;
-	uint8_t *bfr = 0;
-	int fd = ::open(png_path, O_RDONLY);
-	if( fd < 0 ) ret = 1;
-	if( !ret ) {
-		bfr = (uint8_t*) ::mmap (NULL, len, PROT_READ, MAP_SHARED, fd, 0); 
-		if( bfr == MAP_FAILED ) ret = 1;
-	}
-	if( !ret ) {
-		vframe = new VFrame(bfr, st.st_size);
-		if( (w=vframe->get_w()) <= 0 ||
-		    (h=vframe->get_h()) <= 0 ||
-		    vframe->get_data() == 0 ) ret = 1;
-	}
-	if( !ret ) {
-		BC_Pixmap *icon = new BC_Pixmap(this, w, h);
-	       	icon->draw_vframe(vframe, 0,0, w,h, 0,0);
-		*iconp = icon;
-		if( vframep ) { *vframep = vframe;  vframe = 0; }
-	}
-	if( bfr && bfr != MAP_FAILED ) ::munmap(bfr, len);
-	if( fd >= 0 ) ::close(fd);
-	if( vframe ) delete vframe;
-	return ret;
-}
-
-int AWindowGUI::get_plugin_icon(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep)
-{
-	BC_Pixmap *icon = 0;
-	VFrame *vframe = 0;
-	VFrame *picon = plugin->picon;
-	if( picon ) {
-		int w = picon->get_w(), h = picon->get_h();
-		if( picon->get_color_model() == BC_RGB888) {
-			icon = new BC_Pixmap(this, w, h);
-			icon->draw_vframe(picon, 0,0, w,h, 0,0);
-		}
-		else
-			icon = new BC_Pixmap(this, picon, PIXMAP_ALPHA);
-		if( vframep )
-			vframe = new VFrame(*picon);
-	}
-	else if( plugin->audio ) {
-		icon = plugin->transition ? atransition_icon : aeffect_icon;
-		if( vframep ) vframe = mwindow->theme->get_image(
-			 plugin->transition ? "atransition_icon" : "aeffect_icon");
-	}
-	else if( plugin->video ) {
-		icon = plugin->transition ? vtransition_icon : veffect_icon;
-		if( vframep ) vframe = mwindow->theme->get_image(
-			 plugin->transition ? "vtransition_icon" : "veffect_icon");
-	}
-	else {
-		icon = file_icon;
-		if( vframep )
-			vframe = BC_WindowBase::get_resources()->type_to_icon[ICON_UNKNOWN];
-	}
-	*iconp = icon;
-	if( vframep )
-		*vframep = vframe;
-	return 0;
-}
-
-int AWindowGUI::get_plugin_images(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep)
-{
-	if( !get_custom_icon(plugin, iconp, vframep) ) return 0;
-	if( !get_plugin_icon(plugin, iconp, vframep) ) return 0;
-	return 1;
-}
-
 AWindowRemovePluginGUI::
 AWindowRemovePluginGUI(AWindow *awindow, AWindowRemovePlugin *thread,
 	int x, int y, PluginServer *plugin)
@@ -672,7 +586,8 @@ AWindowRemovePluginGUI(AWindow *awindow, AWindowRemovePlugin *thread,
 	this->awindow = awindow;
 	this->thread = thread;
 	this->plugin = plugin;
-	awindow->gui->get_plugin_images(plugin, &icon, 0);
+	VFrame *vframe = plugin->get_picon();
+	icon = vframe ? create_pixmap(vframe) : 0;
 	plugin_list.append(new BC_ListBoxItem(plugin->title, icon));
 }
 
@@ -838,33 +753,21 @@ void AWindowGUI::update_folder_list()
 }
 
 void AWindowGUI::create_persistent_folder(ArrayList<BC_ListBoxItem*> *output, 
-	int do_audio, 
-	int do_video, 
-	int is_realtime, 
-	int is_transition)
+	int do_audio, int do_video, int is_realtime, int is_transition)
 {
 	ArrayList<PluginServer*> plugin_list;
-
 // Get pointers to plugindb entries
-	mwindow->search_plugindb(do_audio, 
-			do_video, 
-			is_realtime, 
-			is_transition,
-			0,
-			plugin_list);
+	mwindow->search_plugindb(do_audio, do_video, is_realtime, is_transition,
+			0, plugin_list);
 
-	for(int i = 0; i < plugin_list.total; i++)
-	{
+	for(int i = 0; i < plugin_list.total; i++) {
 		PluginServer *server = plugin_list.values[i];
-		int exists = 0;
-
+		int visible = plugin_visibility & (1<<server->dir_idx);
+		if(!visible) continue;
 // Create new listitem
-		if(!exists)
-		{
-			AssetPicon *picon = new AssetPicon(mwindow, this, server);
-			picon->create_objects();
-			output->append(picon);
-		}
+		AssetPicon *picon = new AssetPicon(mwindow, this, server);
+		picon->create_objects();
+		output->append(picon);
 	}
 }
 
@@ -1193,6 +1096,18 @@ void AWindowGUI::update_assets()
 	flush();
 //printf("AWindowGUI::update_assets 8\n");
 	return;
+}
+
+void AWindowGUI::update_effects()
+{
+	aeffects.remove_all_objects();
+	create_persistent_folder(&aeffects, 1, 0, 1, 0);
+	veffects.remove_all_objects();
+	create_persistent_folder(&veffects, 0, 1, 1, 0);
+	atransitions.remove_all_objects();
+	create_persistent_folder(&atransitions, 1, 0, 0, 1);
+	vtransitions.remove_all_objects();
+	create_persistent_folder(&vtransitions, 0, 1, 0, 1);
 }
 
 int AWindowGUI::current_folder_number()
@@ -1778,3 +1693,66 @@ int AWindowView::handle_event()
 {
 	return 1;
 }
+
+AddTools::AddTools(MWindow *mwindow, AWindowGUI *gui, int x, int y, int w)
+ : BC_MenuBar(x, y, w)
+{
+	this->mwindow = mwindow;
+	this->gui = gui;
+}
+
+void AddTools::create_objects()
+{
+	add_menu(add_plugins = new AddPluginsMenu(mwindow, gui));
+	add_plugins->create_objects();
+}
+
+AddPluginsMenu::AddPluginsMenu(MWindow *mwindow, AWindowGUI *gui)
+ : BC_Menu("Add Tools")
+{
+	this->mwindow = mwindow;
+	this->gui = gui;
+}
+
+void AddPluginsMenu::create_objects()
+{
+	uint32_t vis = 0;
+	for( int i=0; i<MWindow::plugindb->size(); ++i ) {
+		PluginServer *plugin = MWindow::plugindb->get(i);
+		if( !plugin->audio && !plugin->video ) continue;
+		int idx = plugin->dir_idx;
+		uint32_t msk = 1 << idx;
+		if( (msk & vis) != 0 ) continue;
+		vis |= msk;
+		char parent[BCTEXTLEN];
+		strcpy(parent, plugin->path);
+		char *cp = strrchr(parent, '/');
+		if( !cp ) continue;
+		*cp = 0;
+		char *bp = strrchr(parent, '/');
+		if( !bp ) continue;
+		add_item(new AddPluginItem(this, bp+1, idx));
+	}
+}
+
+AddPluginItem::AddPluginItem(AddPluginsMenu *menu, char const *text, int idx)
+ : BC_MenuItem(text)
+{
+	this->menu = menu;
+	this->idx = idx;
+	uint32_t msk = 1 << idx, vis = menu->gui->plugin_visibility;
+	int chk = (msk & vis) ? 1 : 0;
+        set_checked(chk);
+}
+
+int AddPluginItem::handle_event()
+{
+        int chk = get_checked() ^ 1;
+        set_checked(chk);
+	uint32_t msk = 1 << idx, vis = menu->gui->plugin_visibility;
+	menu->gui->plugin_visibility = chk ? vis | msk : vis & ~msk;
+	menu->gui->update_effects();
+	menu->gui->update_assets();
+	return 1;
+}
+

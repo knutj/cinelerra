@@ -23,7 +23,6 @@
 #include "bchash.h"
 #include "language.h"
 #include "mainprogress.h"
-#include "picon_png.h"
 #include "reframe.h"
 
 
@@ -53,7 +52,6 @@ ReFrame::~ReFrame()
 
 const char* ReFrame::plugin_title() { return N_("Reframe"); }
 
-NEW_PICON_MACRO(ReFrame) 
 
 
 int ReFrame::load_defaults()

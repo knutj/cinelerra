@@ -33,8 +33,6 @@
 
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(InterpolateVideo)
 
 
 

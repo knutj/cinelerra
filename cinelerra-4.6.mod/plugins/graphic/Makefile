@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/graphic.o
 
-OUTPUT = $(PLUGIN_DIR)/graphic.plugin
+PLUGIN = graphic
 
 include ../../plugin_config
 

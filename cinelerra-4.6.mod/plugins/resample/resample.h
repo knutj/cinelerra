@@ -70,7 +70,6 @@ public:
 
 	const char* plugin_title();
 	int get_parameters();
-	VFrame* new_picon();
 	int start_loop();
 	int process_loop(Samples *buffer, int64_t &write_length);
 	int stop_loop();

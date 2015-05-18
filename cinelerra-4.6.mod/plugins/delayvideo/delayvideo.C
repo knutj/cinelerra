@@ -25,7 +25,6 @@
 #include "delayvideo.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "vframe.h"
 
 
@@ -253,7 +252,6 @@ int DelayVideo::is_realtime()
 
 const char* DelayVideo::plugin_title() { return N_("Delay Video"); }
 
-NEW_PICON_MACRO(DelayVideo)
 LOAD_CONFIGURATION_MACRO(DelayVideo, DelayVideoConfig)
 NEW_WINDOW_MACRO(DelayVideo, DelayVideoWindow)
 

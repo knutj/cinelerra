@@ -23,7 +23,6 @@
 #include "edl.inc"
 #include "overlayframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "vframe.h"
 #include <stdint.h>
 
@@ -48,7 +47,6 @@ int FlashMain::is_video() { return 1; }
 int FlashMain::is_transition() { return 1; }
 int FlashMain::uses_gui() { return 0; }
 
-NEW_PICON_MACRO(FlashMain)
 
 
 #define FLASH(type, temp_type, components, max, chroma_offset) \

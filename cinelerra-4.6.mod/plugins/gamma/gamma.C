@@ -25,7 +25,6 @@
 #include "gamma.h"
 #include "bchash.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "../interpolate/aggregated.h"
 #include "playback3d.h"
@@ -403,7 +402,6 @@ int GammaMain::is_realtime() { return 1; }
 
 
 
-NEW_PICON_MACRO(GammaMain)
 NEW_WINDOW_MACRO(GammaMain, GammaWindow)
 LOAD_CONFIGURATION_MACRO(GammaMain, GammaConfig)
 

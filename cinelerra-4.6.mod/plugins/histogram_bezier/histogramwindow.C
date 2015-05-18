@@ -54,9 +54,6 @@ HistogramWindow::~HistogramWindow()
 {
 }
 
-#include "max_picon_png.h"
-#include "mid_picon_png.h"
-#include "min_picon_png.h"
 static VFrame max_picon_image(max_picon_png);
 static VFrame mid_picon_image(mid_picon_png);
 static VFrame min_picon_image(min_picon_png);

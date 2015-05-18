@@ -4,7 +4,7 @@ OBJS = \
 	$(OBJDIR)/downsample.o \
 	$(OBJDIR)/downsampleengine.o
 
-OUTPUT = $(PLUGIN_DIR)/downsample.plugin
+PLUGIN = downsample
 
 include ../../plugin_config
 

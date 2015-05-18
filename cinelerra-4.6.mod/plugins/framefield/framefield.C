@@ -26,7 +26,6 @@
 #include "guicast.h"
 #include "keyframe.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "transportque.inc"
 #include "vframe.h"
@@ -567,7 +566,6 @@ void FrameField::average_rows(int offset, VFrame *frame)
 const char* FrameField::plugin_title() { return N_("Frames to fields"); }
 int FrameField::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(FrameField) 
 NEW_WINDOW_MACRO(FrameField, FrameFieldWindow)
 
 int FrameField::load_configuration()

@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "leveleffect.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "units.h"
 #include "vframe.h"
@@ -180,7 +179,6 @@ SoundLevelEffect::~SoundLevelEffect()
 	
 }
 
-NEW_PICON_MACRO(SoundLevelEffect)
 
 LOAD_CONFIGURATION_MACRO(SoundLevelEffect, SoundLevelConfig)
 

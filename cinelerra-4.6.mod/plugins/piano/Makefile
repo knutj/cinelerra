@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/piano.o
 
-OUTPUT = $(PLUGIN_DIR)/piano.plugin
+PLUGIN = piano
 
 include ../../plugin_config
 

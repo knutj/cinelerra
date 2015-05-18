@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/wave.o
 
-OUTPUT = $(PLUGIN_DIR)/wave.plugin
+PLUGIN = wave
 
 include ../../plugin_config
 

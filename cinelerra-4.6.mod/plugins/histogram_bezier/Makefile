@@ -5,7 +5,7 @@ OBJS = \
 	$(OBJDIR)/histogramconfig.o \
 	$(OBJDIR)/histogramwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/histogram.plugin
+PLUGIN = histogram
 
 include ../../plugin_config
 

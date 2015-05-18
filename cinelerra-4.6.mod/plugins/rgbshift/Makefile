@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/rgbshift.o
 
-OUTPUT = $(PLUGIN_DIR)/rgbshift.plugin
+PLUGIN = rgbshift
 
 include ../../plugin_config
 

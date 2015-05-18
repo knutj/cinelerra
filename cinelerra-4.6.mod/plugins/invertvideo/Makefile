@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/invert.o
 
-OUTPUT = $(PLUGIN_DIR)/invertvideo.plugin
+PLUGIN = invertvideo
 
 include ../../plugin_config
 

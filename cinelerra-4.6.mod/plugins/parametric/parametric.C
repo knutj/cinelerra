@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "parametric.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "theme.h"
 #include "units.h"
@@ -813,7 +812,6 @@ ParametricEQ::~ParametricEQ()
 }
 
 NEW_WINDOW_MACRO(ParametricEQ, ParametricWindow)
-NEW_PICON_MACRO(ParametricEQ)
 
 LOAD_CONFIGURATION_MACRO(ParametricEQ, ParametricConfig)
 

@@ -187,8 +187,6 @@ const char* ResampleRT::plugin_title() { return N_("ResampleRT"); }
 int ResampleRT::is_realtime() { return 1; }
 int ResampleRT::is_synthesis() { return 1; }
 
-#include "picon_png.h"
-NEW_PICON_MACRO(ResampleRT)
 
 NEW_WINDOW_MACRO(ResampleRT, ResampleRTWindow)
 

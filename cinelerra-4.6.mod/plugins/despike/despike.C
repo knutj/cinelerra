@@ -25,7 +25,6 @@
 #include "errorbox.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "despike.h"
 #include "despikewindow.h"
 #include "samples.h"
@@ -55,7 +54,6 @@ Despike::~Despike()
 const char* Despike::plugin_title() { return N_("Despike"); }
 int Despike::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(Despike)
 NEW_WINDOW_MACRO(Despike, DespikeWindow)
 
 LOAD_CONFIGURATION_MACRO(Despike, DespikeConfig)

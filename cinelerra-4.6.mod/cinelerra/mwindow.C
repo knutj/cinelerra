@@ -353,9 +353,7 @@ void MWindow::create_defaults_path(char *string, const char *config_file)
 	sprintf(string, "%s", BCASTDIR);
 	fs.complete_path(string);
 	if(!fs.is_dir(string)) 
-	{
 		fs.create_dir(string); 
-	}
 
 // load the defaults
 	strcat(string, config_file);
@@ -366,405 +364,120 @@ void MWindow::init_defaults(BC_Hash* &defaults, char *config_path)
 	char path[BCTEXTLEN];
 // Use user supplied path
 	if(config_path[0])
-	{
 		strcpy(path, config_path);
-	}
 	else
-	{
 		create_defaults_path(path, CONFIG_FILE);
-	}
 
 	defaults = new BC_Hash(path);
 	defaults->load();
 }
 
-
-
-// init plugins with splash screen
-// void MWindow::init_plugin_path(Preferences *preferences, 
-// 	FileSystem *fs,
-// 	SplashGUI *splash_window,
-// 	int *counter)
-// {
-// 	const int debug = 0;
-// 	int result = 0;
-// 	PluginServer *newplugin;
-// 	Timer total_time;
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// 	if(!result)
-// 	{
-// 		for(int i = 0; i < fs->dir_list.total; i++)
-// 		{
-// 			char path[BCTEXTLEN];
-// 			strcpy(path, fs->dir_list.values[i]->path);
-// 
-// // File is a directory
-// 			if(fs->is_dir(path))
-// 			{
-// 				continue;
-// 			}
-// 			else
-// 			{
-// // Try to query the plugin
-// 				Timer timer;
-// 				fs->complete_path(path);
-// //				if(debug) printf("MWindow::init_plugin_path %d %s\n", __LINE__, path);
-// 				PluginServer *new_plugin = new PluginServer(path);
-// 				int result = new_plugin->open_plugin(1, preferences, 0, 0, -1);
-// 
-// 				if(!result)
-// 				{
-// 					plugindb->append(new_plugin);
-// 					new_plugin->close_plugin();
-// //					if(splash_window)
-// //						splash_window->operation->update(_(new_plugin->title));
-// 				}
-// 				else
-// 				if(result == PLUGINSERVER_IS_LAD)
-// 				{
-// 					delete new_plugin;
-// // Open LAD subplugins
-// 					int id = 0;
-// 					do
-// 					{
-// 						new_plugin = new PluginServer(path);
-// 						result = new_plugin->open_plugin(1,
-// 							preferences,
-// 							0,
-// 							0,
-// 							id);
-// 						id++;
-// 						if(!result)
-// 						{
-// 							plugindb->append(new_plugin);
-// 							new_plugin->close_plugin();
-// //							if(splash_window)
-// //								splash_window->operation->update(_(new_plugin->title));
-// //							else
-// //							{
-// //							}
-// 						}
-// 					}while(!result);
-// 				}
-// 				else
-// 				{
-// // Plugin failed to open
-// 					delete new_plugin;
-// 				}
-// 				
-// //				if(debug) printf("MWindow::init_plugin_path %d %d\n", __LINE__, (int)timer.get_difference());
-// 			}
-// 
-// 			if(splash_window) splash_window->progress->update((*counter)++);
-// 		}
-// 	}
-// 	
-// 	if(debug) printf("MWindow::init_plugin_path %d total_time=%d\n", __LINE__, (int)total_time.get_difference());
-// 
-// }
-
-
-// init plugins with index
-void MWindow::init_plugin_path(MWindow *mwindow, Preferences *preferences,
-	char *path,
-	int is_lad)
+void MWindow::load_plugin_index(MWindow *mwindow, char *path)
 {
-	int result = 0;
-	const int debug = 0;
-	Timer total_time;
-	FileSystem fs;
-	char index_path[BCTEXTLEN];
-	FILE *index_fd = 0;
-	
-	sprintf(index_path, "%s/%s", path, PLUGIN_FILE);
-//printf("MWindow::init_plugin_path %d %s plugindb=%p\n", __LINE__, index_path, plugindb);
+// load index
+	FILE *fp = fopen(path, "r");
+	if( !fp ) return;
+	char index_line[BCTEXTLEN];  int index_version = -1;
+	if( !fgets(index_line, BCTEXTLEN, fp) ||
+	     sscanf(index_line, "%d", &index_version) != 1 ||
+	     index_version != PLUGIN_FILE_VERSION ) return;
 
-
-// Try loading index
-//   BUG: causes picon data to be not loaded,
-//        so skip read_table and rebuild to load picons
-	index_fd = 0; // fopen(index_path, "r");
-	int index_version = -1;
-	if(index_fd)
-	{
-// Get version
-		(void)fscanf(index_fd, "%d", &index_version);
-	}
-
-	if(index_fd && index_version == PLUGIN_FILE_VERSION)
-	{
-		while(!feof(index_fd))
-		{
-			char index_line[BCTEXTLEN];
-			char *result2 = fgets(index_line, BCTEXTLEN, index_fd);
-
-			if(result2)
-			{
+	while(!feof(fp)) {
+		char *sp = index_line, *plugin_path = 0, *plugin_title = 0;
+		if( fgets(sp, BCTEXTLEN, fp) ) {
+			plugin_path = PluginServer::table_quoted_field(sp);
+			if( plugin_exists(plugin_path) ) continue;
+			plugin_title = PluginServer::table_quoted_field(sp);
+		}
+		if( plugin_path && plugin_title ) {
 // Create plugin server from index entry
-				PluginServer *new_plugin = new PluginServer(path, mwindow);
-				result = new_plugin->read_table(index_line);
-//printf("%p new_plugin=%p %s", result2, new_plugin, index_line);
-				if(!result)
-				{
-					plugindb->append(new_plugin);
-				}
-				else
-				{
-					delete new_plugin;
-				}
+			PluginServer *new_plugin = new PluginServer(path, mwindow);
+			new_plugin->set_path(plugin_path);
+			new_plugin->set_title(plugin_title);
+			if( new_plugin->read_table(sp) ) {
+				delete new_plugin;
+				continue;
 			}
+			plugindb->append(new_plugin);
 		}
 	}
-	else
-	{
-		index_fd = fopen(index_path, "w");
-		if( !index_fd ) return;
 
-// Version of the index file
-		fprintf(index_fd, "%d\n", PLUGIN_FILE_VERSION);
-
-
-// Get directories
-		if(is_lad)
-			fs.set_filter("*.so");
-		else
-			fs.set_filter("[*.plugin][*.so]");
-
-		result = fs.update(path);
-
-		if(debug) PRINT_TRACE
-
-		if(!result)
-		{
-			for(int i = 0; i < fs.dir_list.total; i++)
-			{
-				char path[BCTEXTLEN];
-				strcpy(path, fs.dir_list.values[i]->path);
-
-// File is a directory
-				if(fs.is_dir(path))
-				{
-					continue;
-				}
-				else
-				{
-// Try to query the plugin
-					Timer timer;
-					fs.complete_path(path);
-					PluginServer *new_plugin = new PluginServer(path, mwindow);
-					result = new_plugin->open_plugin(1, preferences, 0, 0, -1);
-
-					if(!result)
-					{
-						new_plugin->write_table(index_fd);
-						plugindb->append(new_plugin);
-						new_plugin->close_plugin();
-					}
-					else
-					if(result == PLUGINSERVER_IS_LAD)
-					{
-						delete new_plugin;
-// Open LAD subplugins
-						int id = 0;
-						do
-						{
-							new_plugin = new PluginServer(path, mwindow);
-							result = new_plugin->open_plugin(1,
-								preferences,
-								0,
-								0,
-								id);
-							id++;
-							if(!result)
-							{
-								new_plugin->write_table(index_fd);
-								plugindb->append(new_plugin);
-								new_plugin->close_plugin();
-							}
-						}while(!result);
-					}
-					else
-					{
-// Plugin failed to open
-						delete new_plugin;
-					}
-				}
-			}
-		}
-	}
-	
-	fclose(index_fd);
-	if(debug) printf("MWindow::init_plugin_path %d total_time=%d\n", __LINE__, (int)total_time.get_difference());
-
+	fclose(fp);
 }
 
-void MWindow::init_plugins(MWindow *mwindow, Preferences *preferences, 
-	SplashGUI *splash_window)
+void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
+	FILE *fp, char *path, int &idx)
 {
-	if(!plugindb) plugindb = new ArrayList<PluginServer*>;
+	FileSystem fs;
+	fs.set_filter( "[*.plugin][*.so]" );
+	int result = fs.update(path);
+	if( result || !fs.dir_list.total ) return;
+	int vis_id = ++idx;
 
-
-	init_plugin_path(mwindow, preferences, preferences->plugin_dir, 0);
-
-// Parse LAD environment variable
-	char *env = getenv("LADSPA_PATH");
-	if(env)
-	{
-		char string[BCTEXTLEN];
-		char *ptr1 = env;
-		while(ptr1)
-		{
-			char *ptr = strchr(ptr1, ':');
-			char *end;
-			if(ptr)
-			{
-				end = ptr;
+	for( int i=0; i<fs.dir_list.total; ++i ) {
+		char plugin_path[BCTEXTLEN];
+		strcpy(plugin_path, fs.dir_list.values[i]->path);
+		if( fs.is_dir(plugin_path) ) {
+			init_plugin_index(mwindow, preferences, fp, plugin_path, idx);
+			continue;
+		}
+		if( plugin_exists(plugin_path) ) continue;
+		int lad_index = -1;
+		while( !result ) {
+			PluginServer *new_plugin = new PluginServer(plugin_path, mwindow);
+			result = new_plugin->open_plugin(1, preferences, 0, 0, lad_index);
+			if( result ) {
+				if( lad_index >= 0 || result != PLUGINSERVER_IS_LAD ) break;
+				delete new_plugin;
+				lad_index = 0;  result = 0;
+				continue;
 			}
-			else
-			{
-				end = env + strlen(env);
-			}
-
-			if(end > ptr1)
-			{
-				int len = end - ptr1;
-				memcpy(string, ptr1, len);
-				string[len] = 0;
-
-				init_plugin_path(mwindow, preferences, string, 1);
-			}
-
-			if(ptr)
-				ptr1 = ptr + 1;
-			else
-				ptr1 = ptr;
-		};
+			new_plugin->write_table(fp,vis_id);
+			new_plugin->close_plugin();
+			void *dlobj = new_plugin->load_obj();
+			delete new_plugin;
+			PluginObj::unload_obj(dlobj);
+			if( lad_index < 0 ) break;
+			++lad_index;
+		}
 	}
+}
 
-
-// the rest was for the splash dialog
-
-
-
-
-//	const int debug = 0;
-// 	FileSystem cinelerra_fs;
-// 	ArrayList<FileSystem*> lad_fs;
-// 	int result = 0;
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// // Get directories
-// 	cinelerra_fs.set_filter("[*.plugin][*.so]");
-// 	result = cinelerra_fs.update(preferences->plugin_dir);
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// 	if(result)
-// 	{
-// 		fprintf(stderr, 
-// 			_("MWindow::init_plugins: couldn't open %s directory\n"),
-// 			preferences->plugin_dir);
-// 	}
-// 
-// 	if(debug) PRINT_TRACE
-// 	
-// 	
-// 	
-// 	
-// 	
-// 	
-// 	
-// 	
-// 	
-// 	
-// 
-// // Parse LAD environment variable
-// 	char *env = getenv("LADSPA_PATH");
-// 	if(env)
-// 	{
-// 		char string[BCTEXTLEN];
-// 		char *ptr1 = env;
-// 		while(ptr1)
-// 		{
-// 			char *ptr = strchr(ptr1, ':');
-// 			char *end;
-// 			if(ptr)
-// 			{
-// 				end = ptr;
-// 			}
-// 			else
-// 			{
-// 				end = env + strlen(env);
-// 			}
-// 
-// 			if(end > ptr1)
-// 			{
-// 				int len = end - ptr1;
-// 				memcpy(string, ptr1, len);
-// 				string[len] = 0;
-// 
-// 
-// 				FileSystem *fs = new FileSystem;
-// 				lad_fs.append(fs);
-// 				fs->set_filter("*.so");
-// 				result = fs->update(string);
-// 
-// 				if(result)
-// 				{
-// 					fprintf(stderr, 
-// 						_("MWindow::init_plugins: couldn't open %s directory\n"),
-// 						string);
-// 				}
-// 			}
-// 
-// 			if(ptr)
-// 				ptr1 = ptr + 1;
-// 			else
-// 				ptr1 = ptr;
-// 		};
-// 	}
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// 	int total = cinelerra_fs.total_files();
-// 	int counter = 0;
-// 	for(int i = 0; i < lad_fs.total; i++)
-// 		total += lad_fs.values[i]->total_files();
-// 	if(splash_window) splash_window->progress->update_length(total);
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// 
-// // Cinelerra
-// 	init_plugin_path(preferences,
-// 		&cinelerra_fs,
-// 		splash_window,
-// 		&counter);
-// 
-// // LAD
-// 	for(int i = 0; i < lad_fs.total; i++)
-// 		init_plugin_path(preferences,
-// 			lad_fs.values[i],
-// 			splash_window,
-// 			&counter);
-// 
-// 	if(debug) PRINT_TRACE
-// 
-// 	lad_fs.remove_all_objects();
-// 	if(debug) PRINT_TRACE
-
-
+void MWindow::init_plugins(MWindow *mwindow, Preferences *preferences)
+{
+	if( !plugindb ) plugindb = new ArrayList<PluginServer*>;
+	char index_path[BCTEXTLEN];
+	sprintf(index_path, "%s/%s", preferences->plugin_dir, PLUGIN_FILE);
+	if( access(index_path, R_OK) ) {
+		FILE *fp = fopen(index_path,"w");
+		if( !fp ) {
+			fprintf(stderr," MWindow::init_plugins: "
+			 	"can't create plugin index: %s\n", index_path);
+			return;
+		}
+		fprintf(fp, "%d\n", PLUGIN_FILE_VERSION);
+		char dir_path[BCTEXTLEN];
+		strcpy(dir_path, preferences->plugin_dir);
+		int dir_id = 0;
+		init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
+// Parse LAD environment variable
+		char *env = getenv("LADSPA_PATH");
+		if( env ) {
+			for( char *cp=env; *cp; ++cp ) {
+				char *sp = dir_path;
+				while( *cp && *cp!=':' ) *sp++ = *cp++;
+				*sp = 0;
+				init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
+			}
+		}
+		fclose(fp);
+	}
+	load_plugin_index(mwindow, index_path);
 }
 
 void MWindow::delete_plugins()
 {
-	for(int i = 0; i < plugindb->total; i++)
-	{
-		delete plugindb->values[i];
-	}
+	plugindb->remove_all_objects();
 	delete plugindb;
 	plugindb = 0;
 }
@@ -827,6 +540,15 @@ PluginServer* MWindow::scan_plugindb(char *title,
 				(data_type == TRACK_AUDIO && server->audio) ||
 				(data_type == TRACK_VIDEO && server->video))) 
 			return plugindb->values[i];
+	}
+	return 0;
+}
+
+int MWindow::plugin_exists(char *plugin_path)
+{
+	for( int i=0; i<plugindb->total; ++i ) {
+		PluginServer *server = plugindb->values[i];
+		if( !strcmp(plugin_path, server->get_path()) ) return 1;
 	}
 	return 0;
 }
@@ -959,6 +681,7 @@ void MWindow::init_theme()
 			theme->mwindow = this;
 			strcpy(theme->path, plugin.path);
 			plugin.close_plugin();
+			break;
 		}
 	}
 
@@ -1873,7 +1596,7 @@ void MWindow::create_objects(int want_gui,
 	if(debug) PRINT_TRACE
 	init_defaults(defaults, config_path);
 	init_preferences();
-	init_plugins(this, preferences, splash_window);
+	init_plugins(this, preferences);
 	if(debug) PRINT_TRACE
 	if(splash_window) splash_window->operation->update(_("Initializing GUI"));
 	if(debug) PRINT_TRACE

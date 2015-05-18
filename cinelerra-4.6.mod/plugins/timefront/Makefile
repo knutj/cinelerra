@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/timefront.o
 
-OUTPUT = $(PLUGIN_DIR)/timefront.plugin
+PLUGIN = timefront
 
 include ../../plugin_config
 

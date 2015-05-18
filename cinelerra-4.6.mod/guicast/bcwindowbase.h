@@ -378,6 +378,8 @@ public:
 // Recursive part of hourglass commands.
 	void start_hourglass_recursive();
 	void stop_hourglass_recursive();
+// images, picons...
+	BC_Pixmap *create_pixmap(VFrame *vframe);
 
 // Drawing
 	void copy_area(int x1, int y1, int x2, int y2, int w, int h, BC_Pixmap *pixmap = 0);

@@ -52,7 +52,6 @@ public:
 		int64_t start_position,
 		int sample_rate);
 
-	VFrame* new_picon();
 	const char* plugin_title();
 	int is_realtime();
 

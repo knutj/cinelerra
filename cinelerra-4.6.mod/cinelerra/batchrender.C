@@ -556,7 +556,7 @@ void BatchRenderThread::start_rendering(char *config_path,
 	load_defaults(boot_defaults);
 	preferences = new Preferences;
 	preferences->load_defaults(boot_defaults);
-	MWindow::init_plugins(0, preferences, 0);
+	MWindow::init_plugins(0, preferences);
 	char font_path[BCTEXTLEN];
 	strcpy(font_path, preferences->plugin_dir);
 	strcat(font_path, "/fonts");

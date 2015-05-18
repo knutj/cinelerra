@@ -49,7 +49,9 @@ class AWindowRedrawIndex;
 class AWindowPaste;
 class AWindowAppend;
 class AWindowView;
-
+class AddTools;
+class AddPluginsMenu;
+class AddPluginItem;
 
 class AWindowGUI;
 
@@ -128,6 +130,7 @@ public:
 	int close_event();
 	int keypress_event();
 	void update_assets();
+	void update_effects();
 	void sort_assets();
 	void reposition_objects();
 	int current_folder_number();
@@ -152,16 +155,13 @@ public:
 	AssetPicon* selected_folder();
 	bool protected_pixmap(BC_Pixmap *pixmap);
 
-	int get_custom_icon(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep);
-	int get_plugin_icon(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep);
-	int get_plugin_images(PluginServer *plugin, BC_Pixmap **iconp, VFrame **vframep);
-
 	MWindow *mwindow;
 	AWindow *awindow;
 
 	AWindowAssets *asset_list;
 	AWindowFolders *folder_list;
 	AWindowDivider *divider;
+	uint32_t plugin_visibility;
 
 // Store data to speed up responses
 // Persistant data for listboxes
@@ -195,6 +195,7 @@ public:
 	AssetPopup *asset_menu;
 	AssetListMenu *assetlist_menu;
 	FolderListMenu *folderlist_menu;
+	AddTools *add_tools;
 // Temporary for reading picons from files
 	VFrame *temp_picon;
 
@@ -349,6 +350,37 @@ public:
 	MWindow *mwindow;
 	AWindowGUI *gui;
 	int x, y;
+};
+
+class AddTools : public BC_MenuBar
+{
+public:
+	AddTools(MWindow *mwindow, AWindowGUI *gui, int x, int y, int w);
+	void create_objects();
+
+	MWindow *mwindow;
+	AWindowGUI *gui;
+	AddPluginsMenu *add_plugins;
+};
+
+class AddPluginsMenu : public BC_Menu
+{
+public:
+	AddPluginsMenu(MWindow *mwindow, AWindowGUI *gui);
+	void create_objects();
+
+	MWindow *mwindow;
+	AWindowGUI *gui;
+};
+
+class AddPluginItem : public BC_MenuItem
+{
+public:
+	AddPluginItem(AddPluginsMenu *menu, const char *text, int idx);
+	int handle_event();
+
+	AddPluginsMenu *menu;
+	int idx;
 };
 
 #endif

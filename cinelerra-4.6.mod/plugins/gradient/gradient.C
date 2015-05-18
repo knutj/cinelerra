@@ -31,7 +31,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "theme.h"
 #include "vframe.h"
 
@@ -633,7 +632,6 @@ const char* GradientMain::plugin_title() { return N_("Gradient"); }
 int GradientMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(GradientMain)
 NEW_WINDOW_MACRO(GradientMain, GradientWindow)
 
 LOAD_CONFIGURATION_MACRO(GradientMain, GradientConfig)

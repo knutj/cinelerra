@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "pitch.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "theme.h"
 #include "units.h"
@@ -107,7 +106,6 @@ LOAD_CONFIGURATION_MACRO(PitchEffect, PitchConfig)
 
 NEW_WINDOW_MACRO(PitchEffect, PitchWindow)
 
-NEW_PICON_MACRO(PitchEffect)
 
 
 void PitchEffect::reset()

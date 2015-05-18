@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/oil.o
 
-OUTPUT = $(PLUGIN_DIR)/oil.plugin
+PLUGIN = oil
 
 include ../../plugin_config
 

@@ -27,7 +27,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -452,7 +451,6 @@ WaveEffect::~WaveEffect()
 const char* WaveEffect::plugin_title() { return N_("Wave"); }
 int WaveEffect::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(WaveEffect)
 
 NEW_WINDOW_MACRO(WaveEffect, WaveWindow)
 

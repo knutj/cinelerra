@@ -30,7 +30,6 @@
 #include "guicast.h"
 #include "language.h"
 #include "mwindow.h"
-#include "picon_png.h"
 #include "pluginaclient.h"
 #include "pluginserver.h"
 #include "recordconfig.h"
@@ -381,7 +380,6 @@ int LiveAudio::is_multichannel() { return 1; }
 int LiveAudio::is_synthesis() { return 1; }
 
 
-NEW_PICON_MACRO(LiveAudio) 
 
 NEW_WINDOW_MACRO(LiveAudio, LiveAudioWindow)
 

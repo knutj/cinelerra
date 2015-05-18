@@ -92,7 +92,6 @@ public:
 	~BandSlideMain();
 
 	int load_configuration();
-	VFrame* new_picon();
 	const char* plugin_title();
 	PluginClientWindow* new_window();
 // required for all realtime plugins

@@ -23,7 +23,6 @@
 #include "colormodels.h"
 #include "filexml.h"
 #include "language.h"
-#include "picon_png.h"
 #include "rgb601.h"
 #include "rgb601window.h"
 
@@ -58,7 +57,6 @@ int RGB601Main::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(RGB601Main, RGB601Window)
 
-NEW_PICON_MACRO(RGB601Main)
 
 void RGB601Main::update_gui()
 {

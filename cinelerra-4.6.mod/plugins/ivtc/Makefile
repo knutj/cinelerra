@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/ivtc.o  \
 	$(OBJDIR)/ivtcwindow.o
 
-OUTPUT = $(PLUGIN_DIR)/ivtc.plugin
+PLUGIN = ivtc
 
 include ../../plugin_config
 

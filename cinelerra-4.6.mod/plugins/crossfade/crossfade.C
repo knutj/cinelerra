@@ -23,7 +23,6 @@
 #include "edl.inc"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "samples.h"
 #include "vframe.h"
 
@@ -48,7 +47,6 @@ const char* CrossfadeMain::plugin_title() { return N_("Crossfade"); }
 int CrossfadeMain::is_transition() { return 1; }
 int CrossfadeMain::uses_gui() { return 0; }
 
-NEW_PICON_MACRO(CrossfadeMain)
 
 
 int CrossfadeMain::process_realtime(int64_t size, 

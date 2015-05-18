@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "language.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "vframe.h"
 #include "irissquare.h"
 
@@ -149,11 +148,6 @@ int IrisSquareMain::uses_gui() { return 1; }
 
 NEW_WINDOW_MACRO(IrisSquareMain, IrisSquareWindow)
 
-
-VFrame* IrisSquareMain::new_picon()
-{
-	return new VFrame(picon_png);
-}
 
 void IrisSquareMain::save_data(KeyFrame *keyframe)
 {

@@ -12,7 +12,7 @@ OBJDIR := $(shell uname --machine)
 
 HVIRTUAL_CONFIG := $(lastword $(wildcard ./hvirtual_config.h ../hvirtual_config.h ../../hvirtual_config.h))
 TOPDIR := $(dir $(HVIRTUAL_CONFIG))
-PLUGIN_DIR := $(TOPDIR)/bin/
+PLUGIN_DIR := $(TOPDIR)/bin/plugins
 # abs path
 THIRDPARTY := $(shell cd $(TOPDIR)/thirdparty; pwd)
 

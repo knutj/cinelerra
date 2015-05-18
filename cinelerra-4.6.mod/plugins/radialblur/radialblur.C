@@ -32,7 +32,6 @@
 #include "keyframe.h"
 #include "language.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 
@@ -385,7 +384,6 @@ const char* RadialBlurMain::plugin_title() { return N_("Radial Blur"); }
 int RadialBlurMain::is_realtime() { return 1; }
 
 
-NEW_PICON_MACRO(RadialBlurMain)
 
 NEW_WINDOW_MACRO(RadialBlurMain, RadialBlurWindow)
 

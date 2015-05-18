@@ -49,7 +49,6 @@ public:
 	InterpolateAudioEffect(PluginServer *server);
 	~InterpolateAudioEffect();
 
-	VFrame* new_picon();
 	const char* plugin_title();
 
 	int process_buffer(int64_t size, 
@@ -106,8 +105,6 @@ int InterpolateAudioEffect::is_realtime()
 }
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(InterpolateAudioEffect)
 
 
 

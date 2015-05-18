@@ -133,9 +133,9 @@ public:
 
 //	long set_shm_offset(long offset);
 //	long get_shm_offset();
-	int get_shmid();
-	void set_use_shm(int value);
-	int get_use_shm();
+	int get_shmid() { return shmid; }
+	void set_use_shm(int value) { use_shm = value; }
+	int get_use_shm() { return use_shm; }
 
 // direct copy with no alpha
 	int copy_from(VFrame *frame);
@@ -148,33 +148,40 @@ public:
 // Sequence number. -1 means invalid.  Passing frames to the encoder is
 // asynchronous.  The sequence number must be preserved in the image itself
 // to encode discontinuous frames.
-	long get_number();
-	void set_number(long number);
+	long get_number() { return sequence_number; }
+	void set_number(long number) { sequence_number = number; }
 
-	double get_timestamp();
-	void set_timestamp(double time);
-
-	int get_memory_usage();
-	long get_compressed_allocated();
-	long get_compressed_size();
-	long set_compressed_size(long size);
-	int get_color_model();
+	int get_color_model() { return color_model; }
 // Get the data pointer
-	unsigned char* get_data();
+	unsigned char* get_data() { return data; }
+	long get_compressed_allocated() { return compressed_allocated; }
+	long get_compressed_size() { return compressed_size; }
+	void set_compressed_size(long size) { compressed_size = size; }
+	double get_timestamp() { return timestamp; } 
+	void set_timestamp(double time) { timestamp = time; }
+
 // return an array of pointers to rows
-	unsigned char** get_rows();
+	unsigned char** get_rows() { return rows; }
+	int get_memory_usage();
+// accessors
+	int get_w() { return w; }
+	int get_h() { return h; }
+	int get_w_fixed() { return w - 1; }
+	int get_h_fixed() { return h - 1; }
+	unsigned char *get_y() { return y; }
+	unsigned char *get_u() { return u; }
+	unsigned char *get_v() { return v; }
+// return rgba planes
+	unsigned char *get_r() { return y; }
+	unsigned char *get_g() { return u; }
+	unsigned char *get_b() { return v; }
+	unsigned char *get_a() { return a; }
+	void set_a(unsigned char *ap) { a = ap; }
 // return yuv planes
-	unsigned char* get_y();
-	unsigned char* get_u();
-	unsigned char* get_v();
-	int get_w();
-	int get_h();
-	int get_w_fixed();
-	int get_h_fixed();
 	static int get_scale_tables(int *column_table, int *row_table,
 			int in_x1, int in_y1, int in_x2, int in_y2,
 			int out_x1, int out_y1, int out_x2, int out_y2);
-	int get_bytes_per_pixel();
+	int get_bytes_per_pixel() { return bytes_per_pixel; }
 	long get_bytes_per_line();
 	int get_memory_type();
 
@@ -182,10 +189,8 @@ public:
 
 	static int calculate_bytes_per_pixel(int colormodel);
 // Get size + 4 for assembly language
-	static long calculate_data_size(int w,
-		int h,
-		int bytes_per_line = -1,
-		int color_model = BC_RGB888);
+	static long calculate_data_size(int w, int h,
+		int bytes_per_line = -1, int color_model = BC_RGB888);
 // Get size of uncompressed frame buffer without extra 4 bytes
 	long get_data_size();
 
@@ -203,9 +208,7 @@ public:
 	int get_keyframe();
 // Overlay src onto this with blending and translation of input.
 // Source and this must have alpha
-	void overlay(VFrame *src,
-		int out_x1,
-		int out_y1);
+	void overlay(VFrame *src, int out_x1, int out_y1);
 
 // If the opengl state is RAM, transfer image from RAM to the texture
 // referenced by this frame.
@@ -225,10 +228,7 @@ public:
 // Transfer contents of current pbuffer to texture,
 // creating a new texture if necessary.
 // Coordinates are the coordinates in the drawable to copy.
-	void screen_to_texture(int x = -1,
-		int y = -1,
-		int w = -1,
-		int h = -1);
+	void screen_to_texture(int x = -1, int y = -1, int w = -1, int h = -1);
 
 // Transfer contents of texture to the current drawable.
 // Just calls the vertex functions but doesn't initialize.
@@ -237,14 +237,8 @@ public:
 // The default coordinates are the size of the VFrame.
 // flip_y flips the texture in the vertical direction and only used when
 // writing to the final surface.
-	void draw_texture(float in_x1,
-		float in_y1,
-		float in_x2,
-		float in_y2,
-		float out_x1,
-		float out_y1,
-		float out_x2,
-		float out_y2,
+	void draw_texture(float in_x1, float in_y1, float in_x2, float in_y2,
+		float out_x1, float out_y1, float out_x2, float out_y2,
 		int flip_y = 0);
 // Draw the texture using the frame's size as the input and output coordinates.
 	void draw_texture(int flip_y = 0);
@@ -353,28 +347,15 @@ public:
 // This clears the stacks and the param table
 	void clear_stacks();
 
-
-
-
 // 3D scene graphs
 // Not integrated with shmem because that only affects codecs
 	VFrameScene* get_scene();
-
-
-
-
 
 // Debugging
 	void dump_stacks();
 	void dump();
 
 	void dump_params();
-
-
-
-
-
-
 
 // Shared memory utils
 	static int filefork_size();
@@ -383,14 +364,7 @@ public:
 
 	void from_filefork(unsigned char *buffer);
 
-
-
-
-
-
-
 private:
-
 
 // 3D scene graphs
 // Not integrated with shmem because that only affects codecs
@@ -404,8 +378,6 @@ private:
 // rendering chain without requiring the user to manage a lot of objects.
 // Must be called from a synchronous opengl thread after enable_opengl.
 	void create_pbuffer();
-
-
 
 	int clear_objects(int do_opengl);
 	int reset_parameters(int do_opengl);
@@ -450,11 +422,13 @@ private:
 	long compressed_allocated;
 // Size of stored compressed image
 	long compressed_size;
-// Pointers to yuv planes
+// Pointers to yuv / rgb planes
 	unsigned char *y, *u, *v;
 	long y_offset;
 	long u_offset;
 	long v_offset;
+// Pointer to alpha plane
+	unsigned char *a;
 // Dimensions of frame
 	int w, h;
 // Info for reading png images

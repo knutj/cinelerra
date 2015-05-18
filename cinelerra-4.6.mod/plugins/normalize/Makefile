@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = $(OBJDIR)/normalize.o  \
 	$(OBJDIR)/normalizewindow.o
 
-OUTPUT = $(PLUGIN_DIR)/normalize.plugin
+PLUGIN = normalize
 
 include ../../plugin_config
 

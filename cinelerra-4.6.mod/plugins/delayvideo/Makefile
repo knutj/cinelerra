@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/delayvideo.o
 
-OUTPUT = $(PLUGIN_DIR)/delayvideo.plugin
+PLUGIN = delayvideo
 
 
 include ../../plugin_config

@@ -344,7 +344,6 @@ class EchoCancel : public PluginAClient
 public:
 	EchoCancel(PluginServer *server);
 	~EchoCancel();
-	VFrame *new_picon();
 	
 	PLUGIN_CLASS_MEMBERS2(EchoCancelConfig)
 	int is_realtime();

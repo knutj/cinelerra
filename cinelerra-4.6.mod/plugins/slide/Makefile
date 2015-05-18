@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/slide.o
 
-OUTPUT = $(PLUGIN_DIR)/slide.plugin
+PLUGIN = slide
 
 include ../../plugin_config
 

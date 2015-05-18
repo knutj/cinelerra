@@ -24,7 +24,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "vframe.h"
@@ -383,7 +382,6 @@ int C41Effect::is_realtime() { return 1; }
 
 LOAD_CONFIGURATION_MACRO(C41Effect, C41Config)
 
-NEW_PICON_MACRO(C41Effect)
 
 NEW_WINDOW_MACRO(C41Effect, C41Window)
 

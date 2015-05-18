@@ -3,7 +3,7 @@ include ../../global_config
 OBJS = \
 	$(OBJDIR)/echocancel.o
 
-OUTPUT = $(PLUGIN_DIR)/echocancel.plugin
+PLUGIN = echocancel
 
 include ../../plugin_config
 

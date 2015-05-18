@@ -162,7 +162,7 @@ test3:	$(OBJDIR)/test3.o $(STATICOUTPUT)
 
 clean:
 	rm -rf $(OBJDIR)
-	rm bcxfer.C
+	rm -f bcxfer.C
 	find \( -name core \
 		-o -name '*.o' -o -name '*.a' \
 		-o -name '*.so' \) -exec rm -f {} \;

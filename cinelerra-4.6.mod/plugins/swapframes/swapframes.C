@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "swapframes.h"
@@ -217,7 +216,6 @@ SwapFrames::~SwapFrames()
 const char* SwapFrames::plugin_title() { return N_("Swap Frames"); }
 int SwapFrames::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(SwapFrames)
 NEW_WINDOW_MACRO(SwapFrames, SwapFramesWindow)
 LOAD_CONFIGURATION_MACRO(SwapFrames, SwapFramesConfig)
 

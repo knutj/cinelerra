@@ -114,7 +114,6 @@ public:
 	int uses_gui();
 	int is_transition();
 	int is_video();
-	VFrame* new_picon();
 	const char* plugin_title();
 	PluginClientWindow* new_window();
 

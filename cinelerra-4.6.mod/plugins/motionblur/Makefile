@@ -1,7 +1,7 @@
 include ../../global_config
 
 OBJS = $(OBJDIR)/motionblur.o
-OUTPUT = $(PLUGIN_DIR)/motionblur.plugin
+PLUGIN = motionblur
 
 include ../../plugin_config
 

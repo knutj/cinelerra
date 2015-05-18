@@ -183,8 +183,6 @@ int LoopAudio::is_realtime() { return 1; }
 int LoopAudio::is_synthesis() { return 1; }
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(LoopAudio)
 
 NEW_WINDOW_MACRO(LoopAudio, LoopAudioWindow)
 

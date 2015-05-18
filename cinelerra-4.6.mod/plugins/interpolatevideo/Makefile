@@ -5,7 +5,7 @@ OBJS = $(OBJDIR)/interpolatevideo.o \
 	$(OBJDIR)/opticflow.o \
 	$(OBJDIR)/motionscan.o
 
-OUTPUT = $(PLUGIN_DIR)/interpolatevideo.plugin
+PLUGIN = interpolatevideo
 
 include ../../plugin_config
 

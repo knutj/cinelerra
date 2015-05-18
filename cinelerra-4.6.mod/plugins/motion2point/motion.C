@@ -33,7 +33,6 @@
 #include "motionwindow.h"
 #include "mutex.h"
 #include "overlayframe.h"
-#include "picon_png.h"
 #include "rotateframe.h"
 #include "transportque.h"
 
@@ -248,7 +247,6 @@ const char* MotionMain2::plugin_title() { return N_("Motion 2 Point"); }
 int MotionMain2::is_realtime() { return 1; }
 int MotionMain2::is_multichannel() { return 1; }
 
-NEW_PICON_MACRO(MotionMain2)
 
 NEW_WINDOW_MACRO(MotionMain2, MotionWindow)
 

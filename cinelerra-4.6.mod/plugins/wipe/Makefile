@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/wipe.o
 
-OUTPUT = $(PLUGIN_DIR)/wipe.plugin
+PLUGIN = wipe
 
 include ../../plugin_config
 

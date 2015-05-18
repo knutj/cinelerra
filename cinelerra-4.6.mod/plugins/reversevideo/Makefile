@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/reversevideo.o
 
-OUTPUT = $(PLUGIN_DIR)/reversevideo.plugin
+PLUGIN = reversevideo
 
 include ../../plugin_config
 

@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/videoscope.o
 
-OUTPUT = $(PLUGIN_DIR)/videoscope.plugin
+PLUGIN = videoscope
 
 include ../../plugin_config
 

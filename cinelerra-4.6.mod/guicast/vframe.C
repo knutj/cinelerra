@@ -234,7 +234,7 @@ int VFrame::reset_parameters(int do_opengl)
 	compressed_size = 0;   // Size of current image
 	w = 0;
 	h = 0;
-	y = u = v = 0;
+	y = u = v = a = 0;
 	y_offset = 0;
 	u_offset = 0;
 	v_offset = 0;
@@ -305,6 +305,8 @@ int VFrame::clear_objects(int do_opengl)
 		case BC_YUV420P:
 		case BC_YUV422P:
 		case BC_YUV444P:
+		case BC_RGB_FLOATP:
+		case BC_RGBA_FLOATP:
 			break;
 
 		default:
@@ -366,64 +368,54 @@ long VFrame::calculate_data_size(int w, int h, int bytes_per_line, int color_mod
 
 void VFrame::create_row_pointers()
 {
-	switch(color_model)
-	{
-		case BC_YUV410P:
-			if(!this->v_offset)
-			{
-				this->y_offset = 0;
-				this->u_offset = w * h;
-				this->v_offset = w * h + w / 4 * h / 4;
-			}
-			y = this->data + this->y_offset;
-			u = this->data + this->u_offset;
-			v = this->data + this->v_offset;
-			break;
+	int sz = w * h;
+	switch(color_model) {
+	case BC_YUV410P:
+		if( this->v_offset ) break;
+		this->y_offset = 0;
+		this->u_offset = sz;
+		this->v_offset = sz + w / 4 * h / 4;
+		break;
 
-		case BC_YUV420P:
-		case BC_YUV411P:
-			if(!this->v_offset)
-			{
-				this->y_offset = 0;
-				this->u_offset = w * h;
-				this->v_offset = w * h + w * h / 4;
-			}
-			y = this->data + this->y_offset;
-			u = this->data + this->u_offset;
-			v = this->data + this->v_offset;
-			break;
+	case BC_YUV420P:
+	case BC_YUV411P:
+		if( this->v_offset ) break;
+		this->y_offset = 0;
+		this->u_offset = sz;
+		this->v_offset = sz + sz / 4;
+		break;
 
-		case BC_YUV422P:
-			if(!this->v_offset)
-			{
-				this->y_offset = 0;
-				this->u_offset = w * h;
-				this->v_offset = w * h + w * h / 2;
-			}
-			y = this->data + this->y_offset;
-			u = this->data + this->u_offset;
-			v = this->data + this->v_offset;
-			break;
-		case BC_YUV444P:
-			if(!this->v_offset)
-			{
-				this->y_offset = 0;
-				this->u_offset = w * h;
-				this->v_offset = w * h + w * h;
-			}
-			y = this->data + this->y_offset;
-			u = this->data + this->u_offset;
-			v = this->data + this->v_offset;
-			break;
+	case BC_YUV422P:
+		if( this->v_offset ) break;
+		this->y_offset = 0;
+		this->u_offset = sz;
+		this->v_offset = sz + sz / 2;
+		break;
+	case BC_YUV444P:
+		if( this->v_offset ) break;
+		this->y_offset = 0;
+		this->u_offset = sz;
+		this->v_offset = sz + sz;
+		break;
+	case BC_RGBA_FLOATP:
+		if( this->v_offset || a ) break;
+		a = this->data + 3 * sz * sizeof(float);
+	case BC_RGB_FLOATP:
+		if( this->v_offset ) break;
+		this->y_offset = 0;
+		this->u_offset = sz * sizeof(float);
+		this->v_offset = 2 * sz * sizeof(float);
+		break;
 
-		default:
-			rows = new unsigned char*[h];
-			for(int i = 0; i < h; i++)
-			{
-				rows[i] = &this->data[i * this->bytes_per_line];
-			}
-			break;
+	default:
+		rows = new unsigned char*[h];
+		for(int i = 0; i < h; i++)
+			rows[i] = &this->data[i * this->bytes_per_line];
+		return;
 	}
+	y = this->data + this->y_offset;
+	u = this->data + this->u_offset;
+	v = this->data + this->v_offset;
 }
 
 int VFrame::allocate_data(unsigned char *data, int shmid,
@@ -816,66 +808,6 @@ int VFrame::write_png(const char *path)
 }
 
 
-
-int VFrame::get_shmid()
-{
-	return shmid;
-}
-
-void VFrame::set_use_shm(int value)
-{
-	this->use_shm = value;
-}
-
-int VFrame::get_use_shm()
-{
-	return use_shm;
-}
-
-unsigned char* VFrame::get_data()
-{
-	return data;
-}
-
-long VFrame::get_compressed_allocated()
-{
-	return compressed_allocated;
-}
-
-long VFrame::get_compressed_size()
-{
-	return compressed_size;
-}
-
-long VFrame::set_compressed_size(long size)
-{
-	compressed_size = size;
-	return 0;
-}
-
-int VFrame::get_color_model()
-{
-	return color_model;
-}
-
-double VFrame::get_timestamp()
-{
-	return timestamp;
-}
-
-void VFrame::set_timestamp(double time)
-{
-	timestamp = time;
-}
-
-int VFrame::equals(VFrame *frame)
-{
-	if(frame->data == data)
-		return 1;
-	else
-		return 0;
-}
-
 #define ZERO_YUV(components, type, max) \
 { \
 	for(int i = 0; i < h; i++) \
@@ -893,56 +825,67 @@ int VFrame::equals(VFrame *frame)
 
 int VFrame::clear_frame()
 {
+	int sz = w * h;
 //printf("VFrame::clear_frame %d\n", __LINE__);
-	switch(color_model)
-	{
-		case BC_COMPRESSED:
-			break;
+	switch(color_model) {
+	case BC_COMPRESSED:
+		break;
 
-		case BC_YUV410P:
-			bzero(get_y(), w*h);
-			bzero(get_u(), w / 4 * h / 4);
-			bzero(get_v(), w / 4 * h / 4);
-			break;
+	case BC_YUV410P:
+		bzero(get_y(), sz);
+		bzero(get_u(), w / 4 * h / 4);
+		bzero(get_v(), w / 4 * h / 4);
+		break;
 
-		case BC_YUV411P:
-		case BC_YUV420P:
-			bzero(get_y(), w*h);
-			bzero(get_u(), w*h / 4);
-			bzero(get_v(), w*h / 4);
-			break;
+	case BC_YUV411P:
+	case BC_YUV420P:
+		bzero(get_y(), sz);
+		bzero(get_u(), sz / 4);
+		bzero(get_v(), sz / 4);
+		break;
 
-		case BC_YUV422P:
-			bzero(get_y(), w*h);
-			bzero(get_u(), w*h / 2);
-			bzero(get_v(), w*h / 2);
-			break;
+	case BC_YUV422P:
+		bzero(get_y(), sz);
+		bzero(get_u(), sz / 2);
+		bzero(get_v(), sz / 2);
+		break;
 
-		case BC_YUV444P:
-			bzero(get_y(), w*h);
-			bzero(get_u(), w*h);
-			bzero(get_v(), w*h);
-			break;
+	case BC_RGBA_FLOATP: if( a ) {
+		float *ap = (float *)a;
+		for( int i=sz; --i>=0; ++ap ) *ap = 1.f; }
+	case BC_RGB_FLOATP: {
+		float *rp = (float *)y;
+		for( int i=sz; --i>=0; ++rp ) *rp = 0.f;
+		float *gp = (float *)u;
+		for( int i=sz; --i>=0; ++gp ) *gp = 0.f;
+		float *bp = (float *)v;
+		for( int i=sz; --i>=0; ++bp ) *bp = 0.f;
+		break; }
+	case BC_YUV444P:
+		bzero(get_y(), sz);
+		bzero(get_u(), sz);
+		bzero(get_v(), sz);
+		break;
 
-		case BC_YUV888:
-			ZERO_YUV(3, unsigned char, 0xff);
-			break;
+	case BC_YUV888:
+		ZERO_YUV(3, unsigned char, 0xff);
+		break;
 
-		case BC_YUVA8888:
-			ZERO_YUV(4, unsigned char, 0xff);
-			break;
+	case BC_YUVA8888:
+		ZERO_YUV(4, unsigned char, 0xff);
+		break;
 
-		case BC_YUV161616:
-			ZERO_YUV(3, uint16_t, 0xffff);
-			break;
+	case BC_YUV161616:
+		ZERO_YUV(3, uint16_t, 0xffff);
+		break;
 
-		case BC_YUVA16161616:
-			ZERO_YUV(4, uint16_t, 0xffff);
-			break;
+	case BC_YUVA16161616:
+		ZERO_YUV(4, uint16_t, 0xffff);
+		break;
 
-		default:
-			bzero(data, calculate_data_size(w, h, bytes_per_line, color_model));
-			break;
+	default:
+		bzero(data, calculate_data_size(w, h, bytes_per_line, color_model));
+		break;
 	}
 	return 0;
 }
@@ -1187,65 +1130,6 @@ int VFrame::get_scale_tables(int *column_table, int *row_table,
 		row_table[i] = (int)(vscale * i) + in_y1;
 	}
 	return 0;
-}
-
-int VFrame::get_bytes_per_pixel()
-{
-	return bytes_per_pixel;
-}
-
-unsigned char** VFrame::get_rows()
-{
-	if(rows)
-	{
-		return rows;
-	}
-	return 0;
-}
-
-int VFrame::get_w()
-{
-	return w;
-}
-
-int VFrame::get_h()
-{
-	return h;
-}
-
-int VFrame::get_w_fixed()
-{
-	return w - 1;
-}
-
-int VFrame::get_h_fixed()
-{
-	return h - 1;
-}
-
-unsigned char* VFrame::get_y()
-{
-	return y;
-}
-
-unsigned char* VFrame::get_u()
-{
-	return u;
-}
-
-unsigned char* VFrame::get_v()
-{
-	return v;
-}
-
-void VFrame::set_number(long number)
-{
-	sequence_number = number;
-}
-
-long VFrame::get_number()
-{
-	return sequence_number;
 }
 
 void VFrame::push_prev_effect(const char *name)

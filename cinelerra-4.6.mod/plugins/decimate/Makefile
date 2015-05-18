@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/decimate.o
 
-OUTPUT = $(PLUGIN_DIR)/decimate.plugin
+PLUGIN = decimate
 
 include ../../plugin_config
 

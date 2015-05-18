@@ -459,7 +459,7 @@ all:	$(OUTPUT) $(CUTADS)
 $(OUTPUT): $(OBJS) $(DCRAW) $(FILEEXR) $(FFMPEG_OBJS) $(FILEFLAC) $(LIBRARIES)
 	$(LINKER) `cat $(OBJDIR)/objs`
 	$(if $(findstring -g,$(CFLAGS)),objcopy --only-keep-debug $(OUTPUT) $(OUTPUT_G))
-	strip $(OUTPUT)
+	$(if $(findstring -ggdb,$(CFLAGS)),,strip $(OUTPUT))
 
 $(CUTADS):	$(CUTOBJS) $(CUTLIBS)
 	g++ -pthread -o $(OBJDIR)/cutads $(CUTOBJS) $(CUTLIBS)

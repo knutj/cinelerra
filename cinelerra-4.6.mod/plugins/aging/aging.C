@@ -22,7 +22,6 @@
 #include "clip.h"
 #include "colormodels.h"
 #include "filexml.h"
-#include "picon_png.h"
 #include "aging.h"
 #include "agingwindow.h"
 #include "effecttv.h"
@@ -78,7 +77,6 @@ const char* AgingMain::plugin_title() { return N_("AgingTV"); }
 int AgingMain::is_realtime() { return 1; }
 
 NEW_WINDOW_MACRO(AgingMain, AgingWindow)
-NEW_PICON_MACRO(AgingMain)
 
 int AgingMain::load_defaults()
 {

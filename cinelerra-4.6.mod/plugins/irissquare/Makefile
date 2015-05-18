@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/irissquare.o
 
-OUTPUT = $(PLUGIN_DIR)/irissquare.plugin
+PLUGIN = irissquare
 
 include ../../plugin_config
 

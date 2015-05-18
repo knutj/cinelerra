@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/polar.o
 
-OUTPUT = $(PLUGIN_DIR)/polar.plugin
+PLUGIN = polar
 
 include ../../plugin_config
 

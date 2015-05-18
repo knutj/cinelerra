@@ -692,8 +692,6 @@ LensMain::~LensMain()
 }
 
 NEW_WINDOW_MACRO(LensMain, LensGUI)
-#include "picon_png.h"
-NEW_PICON_MACRO(LensMain)
 LOAD_CONFIGURATION_MACRO(LensMain, LensConfig)
 int LensMain::is_realtime() { return 1; }
 const char* LensMain::plugin_title() { return N_("Lens"); }

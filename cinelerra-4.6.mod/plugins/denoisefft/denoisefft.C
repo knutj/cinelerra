@@ -28,7 +28,6 @@
 #include "language.h"
 #include "mutex.h"
 #include "fourier.h"
-#include "picon_png.h"
 #include "pluginaclient.h"
 #include "transportque.inc"
 #include "units.h"
@@ -296,7 +295,6 @@ DenoiseFFTEffect::~DenoiseFFTEffect()
 	if(collect_engine) delete collect_engine;
 }
 
-NEW_PICON_MACRO(DenoiseFFTEffect)
 NEW_WINDOW_MACRO(DenoiseFFTEffect, DenoiseFFTWindow)
 
 

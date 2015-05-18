@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/diffkey.o
 
-OUTPUT = $(PLUGIN_DIR)/diffkey.plugin
+PLUGIN = diffkey
 
 include ../../plugin_config
 

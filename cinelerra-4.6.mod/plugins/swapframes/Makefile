@@ -2,7 +2,7 @@ include ../../global_config
 
 OBJS = $(OBJDIR)/swapframes.o
 
-OUTPUT = $(PLUGIN_DIR)/swapframes.plugin
+PLUGIN = swapframes
 
 include ../../plugin_config
 

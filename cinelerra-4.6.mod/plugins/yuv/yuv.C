@@ -25,7 +25,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "cicolors.h"
 #include "pluginvclient.h"
 #include "vframe.h"
@@ -211,7 +210,6 @@ const char* YUVEffect::plugin_title() { return N_("YUV"); }
 int YUVEffect::is_realtime() { return 1; } 
 
 
-NEW_PICON_MACRO(YUVEffect)
 NEW_WINDOW_MACRO(YUVEffect, YUVWindow)
 LOAD_CONFIGURATION_MACRO(YUVEffect, YUVConfig)
 

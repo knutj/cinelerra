@@ -26,7 +26,6 @@
 #include "filexml.h"
 #include "guicast.h"
 #include "language.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "rotateframe.h"
 #include "vframe.h"
@@ -611,7 +610,6 @@ RotateEffect::~RotateEffect()
 const char* RotateEffect::plugin_title() { return N_("Rotate"); }
 int RotateEffect::is_realtime() { return 1; }
 
-NEW_PICON_MACRO(RotateEffect)
 
 NEW_WINDOW_MACRO(RotateEffect, RotateWindow)
 

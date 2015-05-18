@@ -336,12 +336,6 @@ int PluginClient::is_fileio() { return 0; }
 int PluginClient::delete_buffer_ptrs() { return 0; }
 const char* PluginClient::plugin_title() { return _("Untitled"); }
 
-// This is no longer used
-VFrame* PluginClient::new_picon() 
-{ 
-//	printf("PluginClient::new_picon not defined in %s\n", plugin_title());
-	return 0; 
-}
 Theme* PluginClient::new_theme() { return 0; }
 
 int PluginClient::load_configuration()

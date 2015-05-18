@@ -6,7 +6,7 @@ OBJS := \
 	$(OBJDIR)/motion.o \
 	$(OBJDIR)/motionwindow.o
 
-OUTPUT := $(PLUGIN_DIR)/motion2.plugin
+PLUGIN = motion2
 
 include ../../plugin_config
 

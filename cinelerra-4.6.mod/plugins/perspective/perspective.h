@@ -29,7 +29,6 @@
 #include "filexml.h"
 #include "keyframe.h"
 #include "loadbalance.h"
-#include "picon_png.h"
 #include "pluginvclient.h"
 #include "vframe.h"
 

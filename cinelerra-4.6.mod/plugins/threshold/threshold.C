@@ -138,8 +138,6 @@ const char* ThresholdMain::plugin_title()
 }
 
 
-#include "picon_png.h"
-NEW_PICON_MACRO(ThresholdMain)
 
 LOAD_CONFIGURATION_MACRO(ThresholdMain, ThresholdConfig)
 

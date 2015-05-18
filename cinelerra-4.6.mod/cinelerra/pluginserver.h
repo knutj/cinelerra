@@ -55,12 +55,45 @@
 #include "videodevice.inc"
 #include "virtualnode.inc"
 
+#include <dlfcn.h>
 
 
 
-
-class PluginServer
+class PluginObj
 {
+	void *dlobj;
+public:
+	PluginObj() { dlobj = 0; }
+	~PluginObj() {}
+	PluginObj(PluginObj &that) { dlobj = 0; }
+// dl interface
+	void *load_obj() { return dlobj; }
+	void *load_obj(const char *path) { return dlobj = dlopen(path, RTLD_NOW); }
+	static void unload_obj(void *dlp) { dlclose(dlp); }
+	void unload_obj() { unload_obj(dlobj); }
+	void *load_sym(const char *sym) { return dlsym(dlobj, sym); }
+	const char *load_error() { return dlerror(); }
+};
+
+class PluginServer : public PluginObj
+{
+	int reset_parameters();
+	int cleanup_plugin();
+
+// Base class created by client
+	PluginClient *client;
+// If no path, this is going to be set to a function which 
+// instantiates the plugin.
+	PluginClient* (*new_plugin)(PluginServer*);
+
+// LAD support
+	int is_lad;
+	int lad_index;
+	LADSPA_Descriptor_Function lad_descriptor_function;
+	const LADSPA_Descriptor *lad_descriptor;
+	int use_opengl;
+// Driver for opengl calls.
+	VideoDevice *vdevice;
 public:
 	PluginServer();
 	PluginServer(char *path, MWindow *mwindow=0);
@@ -88,9 +121,9 @@ public:
 // Release any objects which are required after playback stops.
 	void render_stop();
 // Write entry into plugin table
-	void write_table(FILE *fd);
+	void write_table(FILE *fp, int idx);
+	static char *table_quoted_field(char *&sp);
 	int read_table(char *text);
-
 // queries
 	void set_title(const char *string);
 // Generate title for display
@@ -116,9 +149,9 @@ public:
 	Theme* new_theme();
 // Get theme being used by Cinelerra currently.  Used by all plugins.
 	Theme* get_theme();
-
-
-
+// Get picon image
+	VFrame *get_plugin_images();
+	VFrame *get_picon();
 
 // =============================== for realtime plugins
 // save configuration of plugin
@@ -148,7 +181,6 @@ public:
 // Returns 1 if a GUI is open so OpenGL routines can determine if
 // they can run.
 	int gui_open();
-
 // Called by plugin client to request synchronous routine.
 	void run_opengl(PluginClient *plugin_client);
 
@@ -217,11 +249,6 @@ public:
 	int detach_buffers();
 
 	int send_buffer_info();
-
-
-
-
-
 
 
 // ============================ for non realtime plugins
@@ -343,7 +370,8 @@ public:
 	char *data_text;      // pointer to the data that was requested by a save_data command
 	char *args[4];
 	int total_args;
-	int error_flag;      // send plugin an error code on next request
+	int error_flag;       // send plugin an error code on next request
+	int dir_idx;          // directory id, for icon visibility grouping
 // Pointers to tracks affected by this plugin during a non realtime operation.
 // Allows read functions to read data.
 	ArrayList<Module*> *modules;
@@ -366,30 +394,8 @@ public:
 
 	VFrame *temp_frame;
 
-// Icon for Asset Window
+// Icon for tracking update
 	VFrame *picon;
-
-private:
-	int reset_parameters();
-	int cleanup_plugin();
-
-// Base class created by client
-	PluginClient *client;
-// Handle from dlopen.  Plugins are opened once at startup and stored in the master
-// plugindb.
-	void *plugin_fd;
-// If no path, this is going to be set to a function which 
-// instantiates the plugin.
-	PluginClient* (*new_plugin)(PluginServer*);
-
-// LAD support
-	int is_lad;
-	int lad_index;
-	LADSPA_Descriptor_Function lad_descriptor_function;
-	const LADSPA_Descriptor *lad_descriptor;
-	int use_opengl;
-// Driver for opengl calls.
-	VideoDevice *vdevice;
 };
 
 
