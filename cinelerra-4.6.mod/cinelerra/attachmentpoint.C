@@ -98,8 +98,7 @@ int AttachmentPoint::render_init()
 					plugin_servers.values[i]->open_plugin(0, 
 						renderengine->preferences,
 						renderengine->get_edl(), 
-						plugin,
-						-1);
+						plugin);
 					plugin_servers.values[i]->init_realtime(
 						renderengine->get_edl()->session->real_time_playback &&
 							renderengine->command->realtime,

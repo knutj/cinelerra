@@ -152,6 +152,7 @@ lame.mak_params= ; cd $(call bld_path,lame,include); ln -sf . lame
 mjpegtools.cflags="$(call inc_path,libjpeg) $(call ld_path,libjpeg,.libs)"
 mjpegtools.mak_params=; ln -s . $(call bld_path,mjpegtools,utils)/mjpegtools 
 mjpegtools.cfg_params= --enable-shared=no
+ladspa.mak_params=; make -C ladspa* install DESTDIR=$(call bld_path,ladspa)
 libavc1394.cfg_vars=PKG_CONFIG_PATH=$(bld_path libraw1394)
 libavc1394.cflags="$(inc_path libraw1394)"
 libavc1394.ldflags="$(ld_path libraw1394,src/.libs)"
@@ -209,6 +210,7 @@ $(call rules,$(call std-build,fftw))
 $(call rules,$(call std-build,flac,libogg))
 $(call rules,$(call std-build,giflib))
 $(call rules,$(call std-build,ilmbase))
+$(call rules,$(call std-build,ladspa))
 $(call rules,$(call std-build,lame))
 $(call rules,$(call std-build,libavc1394))
 $(call rules,$(call std-build,libdv))

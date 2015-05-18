@@ -316,8 +316,7 @@ void Module::update_transition(int64_t current_position,
 			transition_server->open_plugin(0, 
 				get_preferences(), 
 				get_edl(), 
-				transition,
-				-1);
+				transition);
 			transition_server->init_realtime(
 				get_edl()->session->real_time_playback &&
 				renderengine->command->realtime,
@@ -333,8 +332,7 @@ void Module::update_transition(int64_t current_position,
 			transition_server->open_plugin(0, 
 				get_preferences(),
 				get_edl(), 
-				transition,
-				-1);
+				transition);
 			transition_server->init_realtime(
 				0,
 				1,

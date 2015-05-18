@@ -184,11 +184,12 @@ public:
 	BC_Pixmap *file_icon;
 	BC_Pixmap *audio_icon;
 	BC_Pixmap *video_icon;
-	BC_Pixmap *clip_icon;
-	BC_Pixmap *atransition_icon;
-	BC_Pixmap *vtransition_icon;
-	BC_Pixmap *aeffect_icon;
-	BC_Pixmap *veffect_icon;
+	BC_Pixmap *clip_icon;         VFrame *clip_vframe;
+	BC_Pixmap *atransition_icon;  VFrame *atransition_vframe;
+	BC_Pixmap *vtransition_icon;  VFrame *vtransition_vframe;
+	BC_Pixmap *aeffect_icon;      VFrame *aeffect_vframe;
+	BC_Pixmap *ladspa_icon;       VFrame *ladspa_vframe;
+	BC_Pixmap *veffect_icon;      VFrame *veffect_vframe;
 	NewFolderThread *newfolder_thread;
 
 // Popup menus

@@ -907,7 +907,7 @@ void MWindow::insert_effect(char *title,
 		default_keyframe = new KeyFrame;
 		server = new PluginServer(*scan_plugindb(title, track->data_type));
 
-		server->open_plugin(0, preferences, edl, 0, -1);
+		server->open_plugin(0, preferences, edl, 0);
 		server->save_data(default_keyframe);
 	}
 

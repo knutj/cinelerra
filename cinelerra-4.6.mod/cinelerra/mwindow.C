@@ -423,9 +423,9 @@ void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
 		}
 		if( plugin_exists(plugin_path) ) continue;
 		int lad_index = -1;
-		while( !result ) {
+		for(;;) {
 			PluginServer *new_plugin = new PluginServer(plugin_path, mwindow);
-			result = new_plugin->open_plugin(1, preferences, 0, 0, lad_index);
+			result = new_plugin->open_plugin(1, preferences, 0, 0);
 			if( result ) {
 				if( lad_index >= 0 || result != PLUGINSERVER_IS_LAD ) break;
 				delete new_plugin;
@@ -438,7 +438,7 @@ void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
 			delete new_plugin;
 			PluginObj::unload_obj(dlobj);
 			if( lad_index < 0 ) break;
-			++lad_index;
+			new_plugin->set_lad_index(lad_index++);
 		}
 	}
 }
@@ -676,7 +676,7 @@ void MWindow::init_theme()
 			!strcasecmp(preferences->theme, plugindb->values[i]->title))
 		{
 			PluginServer plugin = *plugindb->values[i];
-			plugin.open_plugin(0, preferences, 0, 0, -1);
+			plugin.open_plugin(0, preferences, 0, 0);
 			theme = plugin.new_theme();
 			theme->mwindow = this;
 			strcpy(theme->path, plugin.path);
@@ -2121,7 +2121,7 @@ SET_TRACE
 			PluginServer *gui = plugin_guis->append(new PluginServer(*server));
 // Needs mwindow to do GUI
 			gui->set_mwindow(this);
-			gui->open_plugin(0, preferences, edl, plugin, -1);
+			gui->open_plugin(0, preferences, edl, plugin);
 			gui->show_gui();
 			plugin->show = 1;
 		}

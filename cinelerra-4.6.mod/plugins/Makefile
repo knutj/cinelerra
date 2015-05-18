@@ -131,13 +131,23 @@ DIRS = \
 
 #	findobject \
 
-# Make static table of all plugins
-ifeq ($(DO_STATIC), y)
+DATA = $(PLUGIN_DIR)/fonts $(PLUGIN_DIR)/shapes
+MPEG2ENC = $(BINDIR)/mpeg2enc.plugin
+LADSPA = $(PLUGIN_DIR)/ladspa
 
-endif
+all:	$(DIRS) $(DATA) $(MPEG2ENC) $(LADSPA)
 
+$(DATA):
+	cp -a $(notdir $@) $(PLUGIN_DIR)/.
 
-all:	$(DIRS)
+$(MPEG2ENC):
+	cp ../thirdparty/mjpegtools*/mpeg2enc/mpeg2enc $@
+
+$(LADSPA):
+	mkdir -p $@
+	if [ -d $(THIRDPARTY)/ladspa-*/usr/local/lib/ladspa ]; then \
+		cp -a $(THIRDPARTY)/ladspa-*/usr/local/lib/ladspa/. $@/. ; \
+	fi
 
 # parallel compilation of all directories
 .PHONY:	$(DIRS)
@@ -146,15 +156,10 @@ $(DIRS):
 
 clean:
 	rm -rf $(foreach d,$(DIRS),$(d)/$(OBJDIR))
-	rm -rf ../bin/plugins
-	rm -f ../bin/mpeg2enc.plugin
+	rm -rf $(PLUGIN_DIR)
+	rm -f $(MPEG2ENC)
 
-# Can't strip the themes so instead the plugins strip themselves
 install:
-	mkdir -p ../bin/plugins
-	cp -a fonts ../bin/plugins/.
-	cp -a shapes ../bin/plugins/.
-	cp ../thirdparty/mjpegtools*/mpeg2enc/mpeg2enc ../bin/mpeg2enc.plugin
 
 # dependencies for parallel build
 aging:		libeffecttv

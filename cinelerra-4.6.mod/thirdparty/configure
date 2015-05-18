@@ -113,6 +113,8 @@ add_library ilmbase \
 	Half/.libs/libHalf.a \
 	Imath/.libs/libImath.a \
 	IlmThread/.libs/libIlmThread.a
+inc_ladspa=""
+add_library ladspa
 inc_lame="include"
 add_library lame \
 	libmp3lame/.libs/libmp3lame.a \

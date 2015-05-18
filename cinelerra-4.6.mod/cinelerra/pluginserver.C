@@ -119,6 +119,7 @@ PluginServer::PluginServer(PluginServer &that)
 	is_lad = that.is_lad;
 	lad_descriptor = that.lad_descriptor;
 	lad_descriptor_function = that.lad_descriptor_function;
+	lad_index = that.lad_index;
 }
 
 PluginServer::~PluginServer()
@@ -202,6 +203,20 @@ void PluginServer::set_prompt(MenuEffectPrompt *prompt)
 	this->prompt = prompt;
 }
 
+void PluginServer::set_lad_index(int i)
+{
+	this->lad_index = i;
+}
+
+int PluginServer::get_lad_index()
+{
+	return this->lad_index;
+}
+
+int PluginServer::is_ladspa()
+{
+	return is_lad;
+}
 
 int PluginServer::set_path(char *path)
 {
@@ -248,15 +263,13 @@ void PluginServer::generate_display_title(char *string)
 int PluginServer::open_plugin(int master, 
 	Preferences *preferences,
 	EDL *edl, 
-	Plugin *plugin,
-	int lad_index)
+	Plugin *plugin)
 {
 	if(plugin_open) return 0;
 
 	this->preferences = preferences;
 	this->plugin = plugin;
 	this->edl = edl;
-	this->lad_index = lad_index;
 
 	if( !load_obj() && !load_obj(path) ) {
 // If the load failed it may still be an executable tool for a specific
@@ -361,10 +374,9 @@ void PluginServer::render_stop()
 void PluginServer::write_table(FILE *fp, int idx)
 {
 	if(!fp) return;
-	fprintf(fp, "\"%s\" \"%s\" %d %d %d %d %d %d %d %d %d %d %d\n", // %d\n", 
+	fprintf(fp, "\"%s\" \"%s\" %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		path, title, idx, audio, video, theme, realtime, fileio,
-		uses_gui, multichannel, synthesis, transition, is_lad /* ,
-		lad_index */);
+		uses_gui, multichannel, synthesis, transition, is_lad, lad_index);
 }
 
 char *PluginServer::table_quoted_field(char *&sp)
@@ -381,12 +393,11 @@ char *PluginServer::table_quoted_field(char *&sp)
 
 int PluginServer::read_table(char *text)
 {
-	int n = sscanf(text, "%d %d %d %d %d %d %d %d %d %d %d", // %d",
+	int n = sscanf(text, "%d %d %d %d %d %d %d %d %d %d %d %d",
 		&dir_idx, &audio, &video, &theme, &realtime, &fileio, &uses_gui,
-		&multichannel, &synthesis, &transition, &is_lad /* ,
-		&lad_index */);
+		&multichannel, &synthesis, &transition, &is_lad, &lad_index);
 
-	return n == 11 ? 0 : 1;
+	return n == 12 ? 0 : 1;
 }
 
 int PluginServer::init_realtime(int realtime_sched,

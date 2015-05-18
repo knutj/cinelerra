@@ -53,6 +53,8 @@
 #include "vwindowgui.h"
 #include "vwindow.h"
 
+#include "data/lad_picon_png.h"
+
 #include<stdio.h>
 #include<unistd.h>
 #include<fcntl.h>
@@ -267,12 +269,40 @@ void AssetPicon::create_objects()
 	{
 		strcpy(name, _(plugin->title));
 		set_text(name);
-		icon_vframe = plugin->get_picon();
-		if( icon_vframe ) {
-			set_icon_vframe(icon_vframe);
-			BC_Pixmap *icon = gui->create_pixmap(icon_vframe);
-			if( icon ) set_icon(icon);
+		VFrame *vframe = plugin->get_picon();
+		BC_Pixmap *icon = 0;
+		if( vframe )
+			icon = gui->create_pixmap(vframe);
+		else if( plugin->audio ) {
+			if( plugin->transition ) {
+				vframe = gui->atransition_vframe;
+				icon = gui->atransition_icon;
+			}
+			else if( !plugin->is_ladspa() ) {
+				vframe = gui->aeffect_vframe;
+				icon = gui->aeffect_icon;
+			}
+			else {
+				vframe = gui->ladspa_vframe;
+				icon = gui->ladspa_icon;
+			}
 		}
+		else if( plugin->video ) {
+			if( plugin->transition ) {
+				vframe = gui->vtransition_vframe;
+				icon = gui->vtransition_icon;
+			}
+			else {
+				vframe = gui->veffect_vframe;
+				icon = gui->veffect_icon;
+			}
+		}
+		else {		
+			vframe = BC_WindowBase::get_resources()->type_to_icon[ICON_UNKNOWN];
+			icon = gui->file_icon;
+		}
+		set_icon_vframe(vframe);
+		set_icon(icon);
 	}
 
 	if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
@@ -307,10 +337,11 @@ AWindowGUI::AWindowGUI(MWindow *mwindow, AWindow *awindow)
 	video_icon = 0;
 	folder_icon = 0;
 	clip_icon = 0;
-	atransition_icon = 0;
-	vtransition_icon = 0;
-	aeffect_icon = 0;
-	veffect_icon = 0;
+	atransition_icon = 0;  atransition_vframe = 0;
+	vtransition_icon = 0;  vtransition_vframe = 0;
+	aeffect_icon = 0;      aeffect_vframe = 0;
+	ladspa_icon = 0;       ladspa_vframe = 0;
+	veffect_icon = 0;      veffect_vframe = 0;
 	newfolder_thread = 0;
 	asset_menu = 0;
 	assetlist_menu = 0;
@@ -337,6 +368,8 @@ AWindowGUI::~AWindowGUI()
 	delete atransition_icon;
 	delete vtransition_icon;
 	delete aeffect_icon;
+	delete ladspa_icon;
+	delete ladspa_vframe;
 	delete veffect_icon;
 	delete newfolder_thread;
 	delete asset_menu;
@@ -356,6 +389,7 @@ bool AWindowGUI::protected_pixmap(BC_Pixmap *icon)
 		icon == veffect_icon ||
 		icon == vtransition_icon ||
 		icon == aeffect_icon ||
+		icon == ladspa_icon ||
 		icon == atransition_icon; 
 }
 
@@ -390,21 +424,18 @@ SET_TRACE
 
 SET_TRACE
 
-	clip_icon = new BC_Pixmap(this, 
-		mwindow->theme->get_image("clip_icon"),
-		PIXMAP_ALPHA);
-	atransition_icon = new BC_Pixmap(this, 
-		mwindow->theme->get_image("atransition_icon"),
-		PIXMAP_ALPHA);
-	vtransition_icon = new BC_Pixmap(this, 
-		mwindow->theme->get_image("vtransition_icon"),
-		PIXMAP_ALPHA);
-	aeffect_icon = new BC_Pixmap(this, 
-		mwindow->theme->get_image("aeffect_icon"),
-		PIXMAP_ALPHA);
-	veffect_icon = new BC_Pixmap(this, 
-		mwindow->theme->get_image("veffect_icon"),
-		PIXMAP_ALPHA);
+	clip_vframe = mwindow->theme->get_image("clip_icon");
+	clip_icon = new BC_Pixmap(this, clip_vframe, PIXMAP_ALPHA);
+	atransition_vframe = mwindow->theme->get_image("atransition_icon");
+	atransition_icon = new BC_Pixmap(this, atransition_vframe, PIXMAP_ALPHA);
+	vtransition_vframe = mwindow->theme->get_image("vtransition_icon");
+	vtransition_icon = new BC_Pixmap(this, vtransition_vframe, PIXMAP_ALPHA);
+	aeffect_vframe = mwindow->theme->get_image("aeffect_icon");
+	aeffect_icon = new BC_Pixmap(this, aeffect_vframe, PIXMAP_ALPHA);
+	ladspa_vframe = new VFrame(lad_picon_png);
+	ladspa_icon = new BC_Pixmap(this, ladspa_vframe, PIXMAP_ALPHA);
+	veffect_vframe = mwindow->theme->get_image("veffect_icon");
+	veffect_icon = new BC_Pixmap(this, veffect_vframe, PIXMAP_ALPHA);
 
 SET_TRACE
 
@@ -425,9 +456,6 @@ SET_TRACE
 		this,
 		VTRANSITION_FOLDER));
 	picon->persistent = 1;
-SET_TRACE
-
-	update_effects();
 SET_TRACE
 
 	mwindow->theme->get_awindow_sizes(this);
@@ -460,6 +488,8 @@ SET_TRACE
 SET_TRACE
 	add_subwindow(folder_list = new AWindowFolders(mwindow,
 		this, fx, fy, fw, fh));
+SET_TRACE
+	update_effects();
 SET_TRACE
 
 	//int x = mwindow->theme->abuttons_x;
@@ -1731,8 +1761,11 @@ void AddPluginsMenu::create_objects()
 		*cp = 0;
 		char *bp = strrchr(parent, '/');
 		if( !bp ) continue;
-		add_item(new AddPluginItem(this, bp+1, idx));
+		if( !strcmp(++bp, "ladspa") )
+			gui->plugin_visibility &= ~(1 << idx);
+		add_item(new AddPluginItem(this, bp, idx));
 	}
+		
 }
 
 AddPluginItem::AddPluginItem(AddPluginsMenu *menu, char const *text, int idx)

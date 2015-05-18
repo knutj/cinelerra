@@ -110,11 +110,8 @@ public:
 #define PLUGINSERVER_IS_LAD 2
 #define PLUGINSERVER_NOT_RECOGNIZED 1
 #define PLUGINSERVER_OK 0
-	int open_plugin(int master, 
-		Preferences *preferences,
-		EDL *edl, 
-		Plugin *plugin,
-		int lad_index /* = -1 */);
+	int open_plugin(int master, Preferences *preferences,
+			EDL *edl, Plugin *plugin);
 // close the plugin
 	int close_plugin();    
 	void dump(FILE *fp=stdout);
@@ -152,7 +149,10 @@ public:
 // Get picon image
 	VFrame *get_plugin_images();
 	VFrame *get_picon();
-
+// ladspa
+	void set_lad_index(int i);
+	int get_lad_index();
+	int is_ladspa();
 // =============================== for realtime plugins
 // save configuration of plugin
 	void save_data(KeyFrame *keyframe);          

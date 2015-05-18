@@ -327,7 +327,7 @@ void MenuEffectThread::run()
 			plugin->set_mwindow(mwindow);
 			plugin->set_keyframe(&plugin_data);
 			plugin->set_prompt(&prompt);
-			plugin->open_plugin(0, mwindow->preferences, mwindow->edl, 0, -1);
+			plugin->open_plugin(0, mwindow->preferences, mwindow->edl, 0);
 // Must set parameters since there is no plugin object to draw from.
 			plugin->get_parameters((int64_t)total_start,
 				(int64_t)total_end,
@@ -351,7 +351,7 @@ void MenuEffectThread::run()
 // ============================non realtime plugin 
 		{
 			plugin->set_mwindow(mwindow);
-			plugin->open_plugin(0, mwindow->preferences, mwindow->edl, 0, -1);
+			plugin->open_plugin(0, mwindow->preferences, mwindow->edl, 0);
 			result = plugin->get_parameters((int64_t)total_start, 
 				(int64_t)total_end, 
 				get_recordable_tracks(default_asset));
