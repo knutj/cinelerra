@@ -537,10 +537,12 @@ int AWindowGUI::resize_event(int w, int h)
 		mwindow->theme->adivider_y,
 		mwindow->theme->adivider_w,
 		mwindow->theme->adivider_h);
-	folder_list->reposition_window(mwindow->theme->afolders_x, 
-    	mwindow->theme->afolders_y, 
-    	mwindow->theme->afolders_w, 
-    	mwindow->theme->afolders_h);
+
+	int fx = mwindow->theme->afolders_x, fy = mwindow->theme->afolders_y; 
+	int fw = mwindow->theme->afolders_w, fh = mwindow->theme->afolders_h; 
+	add_tools->reposition_window(fx, fy, fw, add_tools->get_h());
+	fy += add_tools->get_h();  fh -= add_tools->get_h();
+	folder_list->reposition_window(fx, fy, fw, fh);
 	
 //	int x = mwindow->theme->abuttons_x;
 //	int y = mwindow->theme->abuttons_y;
