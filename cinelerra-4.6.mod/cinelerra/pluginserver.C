@@ -31,6 +31,7 @@
 #include "floatautos.h"
 #include "keyframes.h"
 #include "localsession.h"
+#include "mainerror.h"
 #include "mainprogress.h"
 #include "menueffects.h"
 #include "mwindow.h"
@@ -258,6 +259,12 @@ void PluginServer::generate_display_title(char *string)
 		strcpy(string, ltitle);
 }
 
+void PluginServer::delete_this()
+{
+	void *dlp = load_obj();
+	delete this;
+	unload_obj(dlp);
+}
 
 // Open plugin for signal processing
 int PluginServer::open_plugin(int master, 
@@ -278,8 +285,8 @@ int PluginServer::open_plugin(int master,
 		char string[BCTEXTLEN];
 		strcpy(string, load_error());
 		if(!strstr(string, "executable"))
-			printf("PluginServer::open_plugin: %s\n", string);
-		return 0;
+			eprintf("PluginServer::open_plugin: load_obj failure = %s\n", string);
+		return PLUGINSERVER_NOT_RECOGNIZED;
 	}
 	if( !new_plugin && !lad_descriptor ) {
 		new_plugin =
@@ -1149,18 +1156,22 @@ Theme* PluginServer::get_theme()
 }
 
 
-VFrame *PluginServer::get_plugin_images()
+char *PluginServer::get_plugin_png_path(char *png_path)
 {
-	char plugin_path[BCTEXTLEN];
-	strcpy(plugin_path, path);
-	char *bp = strrchr(plugin_path, '/');
-	if( !bp ) bp = plugin_path; else ++bp;
+	char *bp = strrchr(path, '/'), *cp = png_path;
+	if( !bp ) bp = path; else ++bp;
 	char *sp = strrchr(bp,'.');
 	if( !sp || ( strcmp(sp, ".plugin") && strcmp(sp,".so") ) ) return 0;
-	char png_path[BCTEXTLEN], *cp = png_path;
 	cp += sprintf(cp,"%s/picons/", mwindow->preferences->plugin_dir);
 	while( bp < sp ) *cp++ = *bp++;
 	strcpy(cp, ".png");
+	return png_path;
+}
+
+VFrame *PluginServer::get_plugin_images()
+{
+	char png_path[BCTEXTLEN];
+	if( !get_plugin_png_path(png_path) ) return 0;
 	struct stat st;
 	if( stat(png_path, &st) ) return 0;
 	if( !S_ISREG(st.st_mode) ) return 0;

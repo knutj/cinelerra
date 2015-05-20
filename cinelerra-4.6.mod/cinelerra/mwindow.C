@@ -372,17 +372,18 @@ void MWindow::init_defaults(BC_Hash* &defaults, char *config_path)
 	defaults->load();
 }
 
-void MWindow::load_plugin_index(MWindow *mwindow, char *path)
+int MWindow::load_plugin_index(MWindow *mwindow, char *path)
 {
 // load index
 	FILE *fp = fopen(path, "r");
-	if( !fp ) return;
-	char index_line[BCTEXTLEN];  int index_version = -1;
+	if( !fp ) return 1;
+	char index_line[BCTEXTLEN];
+	int index_version = -1, ret = 0;
 	if( !fgets(index_line, BCTEXTLEN, fp) ||
-	     sscanf(index_line, "%d", &index_version) != 1 ||
-	     index_version != PLUGIN_FILE_VERSION ) return;
+	    sscanf(index_line, "%d", &index_version) != 1 ||
+	    index_version != PLUGIN_FILE_VERSION ) ret = 1;
 
-	while(!feof(fp)) {
+	while( !ret && !feof(fp)) {
 		char *sp = index_line, *plugin_path = 0, *plugin_title = 0;
 		if( fgets(sp, BCTEXTLEN, fp) ) {
 			plugin_path = PluginServer::table_quoted_field(sp);
@@ -396,13 +397,14 @@ void MWindow::load_plugin_index(MWindow *mwindow, char *path)
 			new_plugin->set_title(plugin_title);
 			if( new_plugin->read_table(sp) ) {
 				delete new_plugin;
-				continue;
+				ret = 1;  break;
 			}
 			plugindb->append(new_plugin);
 		}
 	}
 
 	fclose(fp);
+	return ret;
 }
 
 void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
@@ -434,45 +436,42 @@ void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
 			}
 			new_plugin->write_table(fp,vis_id);
 			new_plugin->close_plugin();
-			void *dlobj = new_plugin->load_obj();
-			delete new_plugin;
-			PluginObj::unload_obj(dlobj);
+			new_plugin->delete_this();
 			if( lad_index < 0 ) break;
 			new_plugin->set_lad_index(lad_index++);
 		}
 	}
 }
 
-void MWindow::init_plugins(MWindow *mwindow, Preferences *preferences)
+int MWindow::init_plugins(MWindow *mwindow, Preferences *preferences)
 {
 	if( !plugindb ) plugindb = new ArrayList<PluginServer*>;
 	char index_path[BCTEXTLEN];
 	sprintf(index_path, "%s/%s", preferences->plugin_dir, PLUGIN_FILE);
-	if( access(index_path, R_OK) ) {
-		FILE *fp = fopen(index_path,"w");
-		if( !fp ) {
-			fprintf(stderr," MWindow::init_plugins: "
-			 	"can't create plugin index: %s\n", index_path);
-			return;
-		}
-		fprintf(fp, "%d\n", PLUGIN_FILE_VERSION);
-		char dir_path[BCTEXTLEN];
-		strcpy(dir_path, preferences->plugin_dir);
-		int dir_id = 0;
-		init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
-// Parse LAD environment variable
-		char *env = getenv("LADSPA_PATH");
-		if( env ) {
-			for( char *cp=env; *cp; ++cp ) {
-				char *sp = dir_path;
-				while( *cp && *cp!=':' ) *sp++ = *cp++;
-				*sp = 0;
-				init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
-			}
-		}
-		fclose(fp);
+	if( !load_plugin_index(mwindow, index_path) ) return 1;
+	FILE *fp = fopen(index_path,"w");
+	if( !fp ) {
+		fprintf(stderr," MWindow::init_plugins: "
+		 	"can't create plugin index: %s\n", index_path);
+		return 1;
 	}
-	load_plugin_index(mwindow, index_path);
+	fprintf(fp, "%d\n", PLUGIN_FILE_VERSION);
+	char dir_path[BCTEXTLEN];
+	strcpy(dir_path, preferences->plugin_dir);
+	int dir_id = 0;
+	init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
+// Parse LAD environment variable
+	char *env = getenv("LADSPA_PATH");
+	if( env ) {
+		for( char *cp=env; *cp; ++cp ) {
+			char *sp = dir_path;
+			while( *cp && *cp!=':' ) *sp++ = *cp++;
+			*sp = 0;
+			init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
+		}
+	}
+	fclose(fp);
+	return load_plugin_index(mwindow, index_path);
 }
 
 void MWindow::delete_plugins()

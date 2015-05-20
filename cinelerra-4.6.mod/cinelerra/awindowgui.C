@@ -113,7 +113,6 @@ AssetPicon::~AssetPicon()
 	if(edl) edl->remove_user();
 	if( icon && !gui->protected_pixmap(icon) ) {
 		delete icon;
-		delete icon_vframe;
 	}
 }
 
@@ -178,38 +177,22 @@ void AssetPicon::create_objects()
 
 					if(!gui->temp_picon)
 					{
-						gui->temp_picon = new VFrame(0, 
-							-1,
-							asset->width, 
-							asset->height, 
-							BC_RGB888,
-							-1);
+						gui->temp_picon = new VFrame(0, -1,
+							asset->width, asset->height, 
+							BC_RGB888, -1);
 					}
 
 					file->read_frame(gui->temp_picon);
 					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 					mwindow->video_cache->check_in(asset);
-					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
-					gui->lock_window("AssetPicon::create_objects 1");
-					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 
-					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
+					gui->lock_window("AssetPicon::create_objects 1");
 					icon = new BC_Pixmap(gui, pixmap_w, pixmap_h);
-					if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 					icon->draw_vframe(gui->temp_picon,
-						0, 
-						0, 
-						pixmap_w, 
-						pixmap_h,
-						0,
-						0);
+						0, 0, pixmap_w, pixmap_h, 0, 0);
 //printf("%d %d\n", gui->temp_picon->get_w(), gui->temp_picon->get_h());
-					icon_vframe = new VFrame(0, 
-						-1,
-						pixmap_w, 
-						pixmap_h, 
-						BC_RGB888,
-						-1);
+					icon_vframe = new VFrame(0,
+						-1, pixmap_w, pixmap_h, BC_RGB888, -1);
 					BC_CModels::transfer(
 						icon_vframe->get_rows(),
 						gui->temp_picon->get_rows(),
@@ -244,66 +227,61 @@ void AssetPicon::create_objects()
 		}
 //printf("AssetPicon::create_objects 2\n");
 
-		set_icon(icon);
-		set_icon_vframe(icon_vframe);
 		if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 	}
 	else
 	if(indexable && !indexable->is_asset)
 	{
-		set_icon(gui->video_icon);
-		set_icon_vframe(BC_WindowBase::get_resources()->type_to_icon[ICON_FILM]);
-		
+		icon = gui->video_icon;
+		icon_vframe = BC_WindowBase::get_resources()->type_to_icon[ICON_FILM];
 	}
 	else
 	if(edl)
 	{
 //printf("AssetPicon::create_objects 4 %s\n", edl->local_session->clip_title);
-		strcpy(name, edl->local_session->clip_title);
-		set_text(name);
-		set_icon(gui->clip_icon);
-		set_icon_vframe(mwindow->theme->get_image("clip_icon"));
+		set_text(strcpy(name, edl->local_session->clip_title));
+		icon = gui->clip_icon;
+		icon_vframe = mwindow->theme->get_image("clip_icon");
 	}
 	else
 	if(plugin)
 	{
 		strcpy(name, _(plugin->title));
 		set_text(name);
-		VFrame *vframe = plugin->get_picon();
-		BC_Pixmap *icon = 0;
-		if( vframe )
-			icon = gui->create_pixmap(vframe);
+		icon_vframe = plugin->get_picon();
+		if( icon_vframe )
+			icon = gui->create_pixmap(icon_vframe);
 		else if( plugin->audio ) {
 			if( plugin->transition ) {
-				vframe = gui->atransition_vframe;
 				icon = gui->atransition_icon;
+				icon_vframe = gui->atransition_vframe;
 			}
 			else if( !plugin->is_ladspa() ) {
-				vframe = gui->aeffect_vframe;
 				icon = gui->aeffect_icon;
+				icon_vframe = gui->aeffect_vframe;
 			}
 			else {
-				vframe = gui->ladspa_vframe;
 				icon = gui->ladspa_icon;
+				icon_vframe = gui->ladspa_vframe;
 			}
 		}
 		else if( plugin->video ) {
 			if( plugin->transition ) {
-				vframe = gui->vtransition_vframe;
 				icon = gui->vtransition_icon;
+				icon_vframe = gui->vtransition_vframe;
 			}
 			else {
-				vframe = gui->veffect_vframe;
 				icon = gui->veffect_icon;
+				icon_vframe = gui->veffect_vframe;
 			}
 		}
-		else {		
-			vframe = BC_WindowBase::get_resources()->type_to_icon[ICON_UNKNOWN];
-			icon = gui->file_icon;
-		}
-		set_icon_vframe(vframe);
-		set_icon(icon);
 	}
+	if( !icon ) {
+		icon = gui->file_icon;
+		icon_vframe = BC_WindowBase::get_resources()->type_to_icon[ICON_UNKNOWN];
+	}
+	set_icon(icon);
+	set_icon_vframe(icon_vframe);
 
 	if(debug) printf("AssetPicon::create_objects %d\n", __LINE__);
 }
@@ -654,8 +632,8 @@ int AWindowRemovePlugin::remove_plugin(PluginServer *plugin, ArrayList<BC_ListBo
 	for( int i=0; i<folder.size(); ) {
 		AssetPicon *picon = (AssetPicon *)folder[i];
 		if( picon->plugin == plugin ) {
-			folder.remove_number(i);
-			delete picon;  ++ret;
+			folder.remove_object_number(i);
+			++ret;
 			continue;
 		}
 		++i;
@@ -667,21 +645,26 @@ void AWindowRemovePlugin::handle_close_event(int result)
 {
 	if( !result ) {
 		printf("remove %s\n", plugin->path);
-		remove(plugin->path);
-		awindow->mwindow->plugindb->remove(plugin);
-		if( plugin->audio ) {
-			if( plugin->transition )
-				remove_plugin(plugin, awindow->gui->atransitions);
-			else
-				remove_plugin(plugin, awindow->gui->aeffects);
-		}
-		else if( plugin->video ) {
-			if( plugin->transition )
-				remove_plugin(plugin, awindow->gui->vtransitions);
-			else
-				remove_plugin(plugin, awindow->gui->veffects);
-		}
+		ArrayList<BC_ListBoxItem*> *folder = 
+			plugin->audio ? plugin->transition ?
+				&awindow->gui->atransitions :
+				&awindow->gui->aeffects :
+			plugin->video ?  plugin->transition ?
+				&awindow->gui->vtransitions :
+				&awindow->gui->veffects :
+			0;
+		if( folder ) remove_plugin(plugin, *folder);
 		awindow->gui->update_assets();
+		char png_path[BCTEXTLEN], plugin_path[BCTEXTLEN], index_path[BCTEXTLEN];
+		strcpy(plugin_path, plugin->path);
+		if( !plugin->get_plugin_png_path(png_path) ) png_path[0] = 0;
+		MWindow *mwindow = awindow->mwindow;
+        	sprintf(index_path, "%s/%s", mwindow->preferences->plugin_dir, PLUGIN_FILE);
+		mwindow->plugindb->remove(plugin);
+		plugin->delete_this();
+		remove(plugin_path);
+		if( png_path[0] ) remove(png_path);
+		remove(index_path);
 	}
 }
 

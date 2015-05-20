@@ -69,7 +69,7 @@ public:
 // dl interface
 	void *load_obj() { return dlobj; }
 	void *load_obj(const char *path) { return dlobj = dlopen(path, RTLD_NOW); }
-	static void unload_obj(void *dlp) { dlclose(dlp); }
+	static void unload_obj(void *dlp) { if( dlp ) dlclose(dlp); }
 	void unload_obj() { unload_obj(dlobj); }
 	void *load_sym(const char *sym) { return dlsym(dlobj, sym); }
 	const char *load_error() { return dlerror(); }
@@ -114,6 +114,8 @@ public:
 			EDL *edl, Plugin *plugin);
 // close the plugin
 	int close_plugin();    
+	void delete_this();
+	char *get_plugin_png_path(char *png_path);
 	void dump(FILE *fp=stdout);
 // Release any objects which are required after playback stops.
 	void render_stop();
@@ -146,9 +148,9 @@ public:
 	Theme* new_theme();
 // Get theme being used by Cinelerra currently.  Used by all plugins.
 	Theme* get_theme();
-// Get picon image
-	VFrame *get_plugin_images();
+// Get picon png vframe image
 	VFrame *get_picon();
+	VFrame *get_plugin_images();
 // ladspa
 	void set_lad_index(int i);
 	int get_lad_index();

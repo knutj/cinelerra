@@ -596,10 +596,10 @@ public:
 	void init_gwindow();
 	void init_tipwindow();
 // Used by MWindow and RenderFarmClient
-	static void init_plugins(MWindow *mwindow, Preferences *preferences);
+	static int init_plugins(MWindow *mwindow, Preferences *preferences);
 	static void init_plugin_index(MWindow *mwindow, Preferences *preferences,
 		FILE *fp, char *path, int &dir_id);
-	static void load_plugin_index(MWindow *mwindow, char *path);
+	static int load_plugin_index(MWindow *mwindow, char *path);
 	void init_preferences();
 	void init_signals();
 	void init_theme();
