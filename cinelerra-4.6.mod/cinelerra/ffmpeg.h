@@ -58,6 +58,7 @@ public:
 
 	int initted() { return init; }
 	void queue(int64_t pos);
+	void dequeue();
 };
 
 class FFAudioHistory {
@@ -74,8 +75,8 @@ public:
 	long avail();
 	void reset();
 	void iseek(int64_t ofs);
-	float *rseek(int len);
-	int64_t wseek(int len);
+	float *get_outp(int len);
+	int64_t get_inp(int len);
 	int write(const float *fp, long len);
 	int copy(float *fp, long len);
 	int zero(long len);
@@ -90,6 +91,7 @@ public:
 	static void ff_lock(const char *cp=0);
 	static void ff_unlock();
 	void queue(FFrame *frm);
+	void dequeue(FFrame *frm);
 
 	virtual int encode_activate();
 	virtual int decode_activate();
@@ -134,6 +136,7 @@ public:
 	FFPacket ipkt;
 	int need_packet, flushed;
 
+	int frm_count;
 	List<FFrame> frms;
 	Mutex *frm_lock;
 
@@ -167,7 +170,7 @@ public:
 	void append_history(const float *fp, int len);
 	void zero_history(int len);
 	int64_t load_buffer(double ** const sp, int len);
-	float *seek_history(int len);
+	float *get_history(int len);
 	int in_history(int64_t pos);
 
 	int init_frame(AVFrame *frame);
@@ -250,8 +253,6 @@ public:
 	void set_loglevel(const char *ap);
 	static double to_secs(int64_t time, AVRational time_base);
 	int info(char *text, int len);
-	void queue(FFrame *frm);
-	void dequeue(FFrame *frm);
 
 	int init_decoder(const char *filename);
 	int open_decoder();
@@ -292,12 +293,14 @@ public:
 	int mux_audio(FFrame *frm);
 	int mux_video(FFrame *frm);
 	Condition *mux_lock;
-	Mutex *que_lock;
-
+	Condition *flow_lock;
 	int done, flow;
-
+	
 	void start_muxer();
 	void stop_muxer();
+	void flow_off();
+	void flow_on();
+	void flow_ctl();
 	void mux();
 	void run();
 

@@ -64,7 +64,12 @@ FFrame::~FFrame()
 void FFrame::queue(int64_t pos)
 {
 	position = pos;
-	fst->ffmpeg->queue(this);
+	fst->queue(this);
+}
+
+void FFrame::dequeue()
+{
+	fst->dequeue(this);
 }
 
 FFAudioHistory::FFAudioHistory()
@@ -135,14 +140,14 @@ void FFAudioHistory::iseek(int64_t ofs)
 	if( outp < bfr ) outp += bsz;
 }
 
-float *FFAudioHistory::rseek(int ofs)
+float *FFAudioHistory::get_outp(int ofs)
 {
 	float *ret = outp;
 	outp += ofs*nch;
 	return ret;
 }
 
-int64_t FFAudioHistory::wseek(int ofs)
+int64_t FFAudioHistory::get_inp(int ofs)
 {
 	inp += ofs*nch;
 	return (inp-bfr) / nch;
@@ -222,10 +227,12 @@ FFStream::FFStream(FFMPEG *ffmpeg, AVStream *st, int idx)
 	this->ffmpeg = ffmpeg;
 	this->st = st;
 	this->idx = idx;
+	frm_lock = new Mutex("FFStream::frm_lock");
 	fmt_ctx = 0;
 	filter_graph = 0;
 	buffersrc_ctx = 0;
 	buffersink_ctx = 0;
+	frm_count = 0;
 	nudge = AV_NOPTS_VALUE;
 	eof = 0;
 	reading = writing = 0;
@@ -243,6 +250,7 @@ FFStream::~FFStream()
 	if( frame ) av_frame_free(&frame);
 	if( fframe ) av_frame_free(&fframe);
 	bsfilter.remove_all_objects();
+	delete frm_lock;
 }
 
 void FFStream::ff_lock(const char *cp)
@@ -253,6 +261,23 @@ void FFStream::ff_lock(const char *cp)
 void FFStream::ff_unlock()
 {
 	FFMPEG::fflock.unlock();
+}
+
+void FFStream::queue(FFrame *frm)
+{
+ 	frm_lock->lock("FFStream::queue");
+	frms.append(frm);
+	++frm_count;
+	frm_lock->unlock();
+	ffmpeg->mux_lock->unlock();
+}
+
+void FFStream::dequeue(FFrame *frm)
+{
+	frm_lock->lock("FFStream::dequeue");
+	--frm_count;
+	frms.remove_pointer(frm);
+	frm_lock->unlock();
 }
 
 int FFStream::encode_activate()
@@ -477,7 +502,7 @@ int64_t FFAudioStream::load_buffer(double ** const sp, int len)
 	int nch = st->codec->channels;
 	for( int ch=0; ch<nch; ++ch )
 		history.write(sp[ch], len, ch);
-	return history.wseek(len);
+	return history.get_inp(len);
 }
 
 void FFAudioStream::zero_history(int len)
@@ -485,9 +510,9 @@ void FFAudioStream::zero_history(int len)
 	history.zero(len);
 }
 
-float* FFAudioStream::seek_history(int len)
+float* FFAudioStream::get_history(int len)
 {
-	return history.rseek(len);
+	return history.get_outp(len);
 }
 
 int FFAudioStream::in_history(int64_t pos)
@@ -559,6 +584,7 @@ int FFAudioStream::audio_seek(int64_t pos)
 int FFAudioStream::encode(double **samples, int len)
 {
 	if( encode_activate() <= 0 ) return -1;
+	ffmpeg->flow_ctl();
 	int ret = 0;
 	int64_t count = load_buffer(samples, len);
 	FFrame *frm = 0;
@@ -567,7 +593,7 @@ int FFAudioStream::encode(double **samples, int len)
 		frm = new FFrame(this);
 		if( (ret=frm->initted()) < 0 ) break;
 		AVFrame *frame = *frm;
-		float *bfrp = seek_history(frame_sz);
+		float *bfrp = get_history(frame_sz);
 		ret =  swr_convert(resample_context,
 			(uint8_t **)frame->extended_data, frame_sz,
 			(const uint8_t **)&bfrp, frame_sz);
@@ -576,9 +602,11 @@ int FFAudioStream::encode(double **samples, int len)
 			break;
 		}
 		frm->queue(curr_pos);
+		frm = 0;
 		curr_pos += frame_sz;
 		count -= frame_sz;
 	}
+
 	delete frm;
 	return ret >= 0 ? 0 : 1;
 }
@@ -664,6 +692,7 @@ int FFVideoStream::init_frame(AVFrame *picture)
 int FFVideoStream::encode(VFrame *vframe)
 {
 	if( encode_activate() <= 0 ) return -1;
+	ffmpeg->flow_ctl();
 	FFrame *picture = new FFrame(this);
 	int ret = picture->initted();
 	if( ret >= 0 ) {
@@ -854,7 +883,7 @@ FFMPEG::FFMPEG(FileBase *file_base)
 	this->file_base = file_base;
 	memset(file_format,0,sizeof(file_format));
 	mux_lock = new Condition(0,"FFMPEG::mux_lock",0);
-	que_lock = new Mutex("FFMPEG::que_lock");
+	flow_lock = new Condition(1,"FFStream::flow_lock",0);
 	done = -1;
 	flow = 1;
 	decoding = encoding = 0;
@@ -873,7 +902,7 @@ FFMPEG::~FFMPEG()
 	ffvideo.remove_all_objects();
 	if( encoding ) avformat_free_context(fmt_ctx);
 	ff_unlock();
-	delete que_lock;
+	delete flow_lock;
 	delete mux_lock;
 	av_dict_free(&opts);
 }
@@ -1627,6 +1656,28 @@ void FFMPEG::stop_muxer()
 	}
 }
 
+void FFMPEG::flow_off()
+{
+	if( !flow ) return;
+	flow_lock->lock("FFMPEG::flow_off");
+	flow = 0;
+}
+
+void FFMPEG::flow_on()
+{
+	if( flow ) return;
+	flow = 1;
+	flow_lock->unlock();
+}
+
+void FFMPEG::flow_ctl()
+{
+	while( !flow ) {
+		flow_lock->lock("FFMPEG::flow_ctl");
+		flow_lock->unlock();
+	}
+}
+
 int FFMPEG::mux_audio(FFrame *frm)
 {
 	FFPacket pkt;
@@ -1683,60 +1734,34 @@ void FFMPEG::mux()
 	for(;;) {
 		double atm = -1, vtm = -1;
 		FFrame *afrm = 0, *vfrm = 0;
+		int demand = 0;
 		for( int i=0; i<ffaudio.size(); ++i ) {  // earliest audio
 			FFStream *fst = ffaudio[i];
+			if( fst->frm_count < 3 ) { demand = 1; flow_on(); }
 			FFrame *frm = fst->frms.first;
-			if( !frm ) continue;
+			if( !frm ) { if( !done ) return; continue; }
 			double tm = to_secs(frm->position, fst->st->codec->time_base);
 			if( atm < 0 || tm < atm ) { atm = tm;  afrm = frm; }
 		}
 		for( int i=0; i<ffvideo.size(); ++i ) {  // earliest video
 			FFStream *fst = ffvideo[i];
+			if( fst->frm_count < 2 ) { demand = 1; flow_on(); }
 			FFrame *frm = fst->frms.first;
-			if( !frm ) continue;
+			if( !frm ) { if( !done ) return; continue; }
 			double tm = to_secs(frm->position, fst->st->codec->time_base);
 			if( vtm < 0 || tm < vtm ) { vtm = tm;  vfrm = frm; }
 		}
+		if( !demand ) flow_off();
 		if( !afrm && !vfrm ) break;
-		if( !done && has_audio && !afrm ) break;
-		if( !done && has_video && !vfrm ) break;
 		int v = !afrm ? -1 : !vfrm ? 1 : av_compare_ts(
 			vfrm->position, vfrm->fst->st->codec->time_base,
 			afrm->position, afrm->fst->st->codec->time_base);
 		FFrame *frm = v <= 0 ? vfrm : afrm;
 		if( frm == afrm ) mux_audio(frm);
 		if( frm == vfrm ) mux_video(frm);
-		dequeue(frm);
+		frm->dequeue();
 		delete frm;
 	}
-}
-
-void FFMPEG::dequeue(FFrame *frm)
-{
-	if( flow ) {
-		flow = 0;
-		que_lock->lock("FFMPEG::dequeue");
-	}
-	frm->fst->frms.remove_pointer(frm);
-	int afrms = 0, vfrms = 0;
-	if( has_audio )
-		for( int i=0; i<ffaudio.size(); ++i )
-			afrms += ffaudio[i]->frms.total();
-	if( has_video )
-		for( int i=0; i<ffvideo.size(); ++i )
-			vfrms += ffvideo[i]->frms.total();
-	if( (has_audio && afrms < 2) || (has_video && vfrms < 2) ) {
-		flow = 1;
-		que_lock->unlock();
-	}
-}
-
-void FFMPEG::queue(FFrame *frm)
-{
-	que_lock->lock("FFMPEG::queue");
-	frm->fst->frms.append(frm);
-	que_lock->unlock();
-	mux_lock->unlock();
 }
 
 void FFMPEG::run()
