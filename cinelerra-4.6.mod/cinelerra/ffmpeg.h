@@ -249,7 +249,6 @@ public:
 	int read_options(const char *options, AVDictionary *&opts);
 	int read_options(FILE *fp, const char *options, AVDictionary *&opts, int no=0);
 	int load_options(const char *options, AVDictionary *&opts);
-	const char *opt_get(AVDictionary *opts, const char *key);
 	void set_loglevel(const char *ap);
 	static double to_secs(int64_t time, AVRational time_base);
 	int info(char *text, int len);
@@ -278,6 +277,9 @@ public:
 	ArrayList<FFAudioStream*> ffaudio;
 	ArrayList<FFVideoStream*> ffvideo;
 	AVDictionary *opts;
+	double opt_duration;
+	char *opt_video_filter;
+	char *opt_audio_filter;
 	char file_format[BCTEXTLEN];
 
 	class ffidx {

@@ -823,9 +823,12 @@ static void handle_dump(int n, siginfo_t * info, void *sc)
 	uncatch_segv();  uncatch_intr();
 	signal(SIGSEGV, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
+	// gotta be root, or the dump is worthless
+	int uid = getuid();
+	if( uid != 0 ) return;
 	ucontext_t *uc = (ucontext_t *)sc;
-	struct sigcontext *c = (struct sigcontext *)&uc->uc_mcontext;
 	int pid = getpid(), tid = gettid();
+	struct sigcontext *c = (struct sigcontext *)&uc->uc_mcontext;
 	fprintf(stderr,"** %s at %p in pid %d, tid %d\n",
 		n==SIGSEGV? "segv" : n==SIGINT? "intr" : "trap",
 		(void*)c->IP, pid, tid);
@@ -847,7 +850,7 @@ static void handle_dump(int n, siginfo_t * info, void *sc)
 	}
 	time_t t;  time(&t);
 	fprintf(fp,"created on %s", ctime(&t));
-	struct passwd *pw = getpwuid(getuid());
+	struct passwd *pw = getpwuid(uid);
 	if( pw ) {
 		fprintf(fp,"        by %d:%d %s(%s)\n",
 			pw->pw_uid, pw->pw_gid, pw->pw_name, pw->pw_gecos);
@@ -864,8 +867,6 @@ static void handle_dump(int n, siginfo_t * info, void *sc)
 	fprintf(fp,"\nMAPS:\n");     bc_copy_textfile(fp,"/proc/%d/maps",pid);
 	fprintf(fp,"\n\n");
 	if( fp != stdout ) fclose(fp);
-// must be root
-	if( getuid() != 0 ) return;
 	char cmd[1024], *cp = cmd;
 	cp += sprintf(cp, "exec gdb /proc/%d/exe -p %d --batch --quiet "
 		"-ex \"thread apply all info registers\" "

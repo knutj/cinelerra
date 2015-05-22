@@ -889,6 +889,9 @@ FFMPEG::FFMPEG(FileBase *file_base)
 	decoding = encoding = 0;
 	has_audio = has_video = 0;
 	opts = 0;
+	opt_duration = -1;
+	opt_video_filter = 0;
+	opt_audio_filter = 0;
 	char option_path[BCTEXTLEN];
 	set_option_path(option_path, "%s", "ffmpeg.opts");
 	read_options(option_path, opts);
@@ -905,6 +908,8 @@ FFMPEG::~FFMPEG()
 	delete flow_lock;
 	delete mux_lock;
 	av_dict_free(&opts);
+	delete opt_video_filter;
+	delete opt_audio_filter;
 }
 
 int FFMPEG::check_sample_rate(AVCodec *codec, int sample_rate)
@@ -1092,11 +1097,19 @@ int FFMPEG::read_options(FILE *fp, const char *options, AVDictionary *&opts, int
 				" err reading %s: line %d\n", options, no);
 			ret = 1;
 		}
-		if( !ret )
-			av_dict_set(&opts, key, val, 0);
+		if( !ret ) {
+			if( !strcmp(key, "duration") )
+				opt_duration = strtod(val, 0);
+			if( !strcmp(key, "video_filter") )
+				opt_video_filter = cstrdup(val);
+			if( !strcmp(key, "audio_filter") )
+				opt_audio_filter = cstrdup(val);
+			else if( !strcmp(key, "loglevel") )
+				set_loglevel(val);
+			else
+				av_dict_set(&opts, key, val, 0);
+		}
 	}
-	if( !ret )
-		set_loglevel(opt_get(opts, "loglevel"));
 	return ret;
 }
 
@@ -1105,12 +1118,6 @@ int FFMPEG::load_options(const char *options, AVDictionary *&opts)
 	char option_path[BCTEXTLEN];
 	set_option_path(option_path, "%s", options);
 	return read_options(option_path, opts);
-}
-
-const char *FFMPEG::opt_get(AVDictionary *opts, const char *key)
-{
-	AVDictionaryEntry *ep = av_dict_get(opts, key, 0, 0);
-	return !ep ? 0 : ep->value;
 }
 
 void FFMPEG::set_loglevel(const char *ap)
@@ -1211,7 +1218,20 @@ int FFMPEG::init_decoder(const char *filename)
 {
 	ff_lock("FFMPEG::init_decoder");
 	av_register_all();
-	load_options("decode.opts", opts);
+	char file_opts[BCTEXTLEN];
+	char *bp = strrchr(strcpy(file_opts, filename), '/');
+	char *sp = strrchr(!bp ? file_opts : bp, '.');
+	FILE *fp = 0;
+	if( sp ) {
+		strcpy(sp, ".opts");
+		fp = fopen(file_opts, "r");
+	}
+	if( fp ) {
+		read_options(fp, file_opts, opts, 0);
+		fclose(fp);
+	}
+	else
+		load_options("decode.opts", opts);
 	AVDictionary *fopts = 0;
 	av_dict_copy(&fopts, opts, 0);
 	int ret = avformat_open_input(&fmt_ctx, filename, NULL, &fopts);
@@ -1227,17 +1247,24 @@ int FFMPEG::init_decoder(const char *filename)
 
 int FFMPEG::open_decoder()
 {
-	ff_lock("FFMPEG::open_decoder");
-
 	struct stat st;
+	if( stat(fmt_ctx->filename, &st) < 0 ) {
+		fprintf(stderr,"FFMPEG::open_decoder: can't stat file: %s\n",
+			fmt_ctx->filename);
+		return 1;
+	}
+
+	int64_t file_bits = 8 * st.st_size;
+	if( !fmt_ctx->bit_rate && opt_duration > 0 )
+		fmt_ctx->bit_rate = file_bits / opt_duration;
+
 	int estimated = 0;
-	if( fmt_ctx->bit_rate > 0 && stat(fmt_ctx->filename, &st) >= 0 ) {
-		int64_t bits = 8 * st.st_size;
+	if( fmt_ctx->bit_rate > 0 ) {
 		for( int i=0; i<(int)fmt_ctx->nb_streams; ++i ) {
 			AVStream *st = fmt_ctx->streams[i];
 			if( st->duration != AV_NOPTS_VALUE ) continue;
 			if( st->time_base.num > INT64_MAX / fmt_ctx->bit_rate ) continue;
-			st->duration = av_rescale(bits, st->time_base.den,
+			st->duration = av_rescale(file_bits, st->time_base.den,
 				fmt_ctx->bit_rate * (int64_t) st->time_base.num);
 			estimated = 1;
 		}
@@ -1245,6 +1272,7 @@ int FFMPEG::open_decoder()
 	if( estimated )
 		printf("FFMPEG::open_decoder: some stream times estimated\n");
 
+	ff_lock("FFMPEG::open_decoder");
 	int bad_time = 0;
 	for( int i=0; i<(int)fmt_ctx->nb_streams; ++i ) {
 		AVStream *st = fmt_ctx->streams[i];
@@ -1265,7 +1293,8 @@ int FFMPEG::open_decoder()
 			vid->aspect_ratio = (double)st->sample_aspect_ratio.num / st->sample_aspect_ratio.den;
 			vid->nudge = st->start_time;
 			vid->reading = -1;
-			//vid->create_filter("edgedetect", avctx,avctx);
+			if( opt_video_filter )
+				vid->create_filter(opt_video_filter, avctx,avctx);
 		}
 		else if( avctx->codec_type == AVMEDIA_TYPE_AUDIO ) {
 			has_audio = 1;
@@ -1290,7 +1319,8 @@ int FFMPEG::open_decoder()
 			}
 			aud->nudge = st->start_time;
 			aud->reading = -1;
-			//aud->create_filter("aecho", avctx,avctx);
+			if( opt_audio_filter )
+				aud->create_filter(opt_audio_filter, avctx,avctx);
 		}
 	}
 	if( bad_time )
