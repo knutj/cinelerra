@@ -27,6 +27,7 @@
 
 extern "C" {
 #include "libavcodec/avcodec.h"
+#include "libswresample/swresample.h"
 };
 
 #include "filebase.h"
@@ -56,6 +57,8 @@ public:
 private:
 	AVCodec *codec;
 	AVCodecContext *codec_context;
+	SwrContext *resample_context;
+
 	FileMPEG *mpg_file;
 	FILE *fd;
 	int16_t *temp_raw;
