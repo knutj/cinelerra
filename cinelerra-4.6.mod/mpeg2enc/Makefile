@@ -116,7 +116,7 @@ LIBS = \
 	$(EXTRA_LIBS)
 
 HVEG2LIB = $(OBJDIR)/hveg2enc.a
-HVEG2ENC = ../bin/hveg2enc.plugin
+HVEG2ENC = $(PLUGIN_DIR)/hveg2enc.plugin
 HVEG2ENC_G = $(OBJDIR)/hveg2enc_g
 
 $(shell echo $(CFLAGS) > $(OBJDIR)/c_flags)

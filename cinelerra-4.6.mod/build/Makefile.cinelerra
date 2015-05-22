@@ -22,7 +22,7 @@ DIRS := \
 	po
 
 all: $(OBJDIR)/soundtest
-	mkdir -p bin
+	mkdir -p bin $(PLUGIN_DIR)
 	@ for i in $(DIRS) ; do \
 		 $(MAKE) $(jobs) -C $$i ; \
 	done
@@ -49,13 +49,13 @@ dist-clean:
 
 MJPEGDIR := $(shell expr thirdparty/mjpegtools* )
 
-bin/mpeg2enc.plugin:
+$(PLUGIN_DIR)/mpeg2enc.plugin:
 	/bin/cp -a $(MJPEGDIR)/mpeg2enc/mpeg2enc $@
 
 bin/mplex:
 	/bin/cp -a $(MJPEGDIR)/mplex/mplex $@
 
-install:	bin/mpeg2enc.plugin bin/mplex
+install:	$(PLUGIN_DIR)/mpeg2enc.plugin bin/mplex
 	$(MAKE) -C plugins install
 	DST=../bin $(MAKE) -C libzmpeg3 install
 	$(MAKE) -C po install
