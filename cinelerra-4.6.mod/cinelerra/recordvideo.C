@@ -149,13 +149,13 @@ void RecordVideo::delete_buffer()
 {
 	RecordMonitorThread *thr = !record->record_monitor ?
 		 0 : record->record_monitor->thread;
-	if( thr ) thr->lock_input();
+	if( thr && thr->running() ) thr->lock_input();
 	frame_ptr = 0;
 	if( buffer_frame ) {
 		delete buffer_frame;
 		buffer_frame = 0;
 	}
-	if( thr ) thr->unlock_input();
+	if( thr && thr->running() ) thr->unlock_input();
 }
 
 void RecordVideo::config_update()

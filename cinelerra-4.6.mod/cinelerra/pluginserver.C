@@ -162,6 +162,7 @@ int PluginServer::reset_parameters()
 	picon = 0;
 
 	is_lad = 0;
+	lad_index = -1;
 	lad_descriptor_function = 0;
 	lad_descriptor = 0;
 	return 0;
@@ -277,16 +278,27 @@ int PluginServer::open_plugin(int master,
 	this->preferences = preferences;
 	this->plugin = plugin;
 	this->edl = edl;
-
-	if( !load_obj() && !load_obj(path) ) {
+	if( !load_obj() ) {
+		// add base path if not absolute path
+		char dl_path[BCTEXTLEN], *dp = dl_path;
+		char *cp = path;
+		if( *cp != '/' ) {
+			char *bp = preferences->plugin_dir;
+			while( *bp ) *dp++ = *bp++;
+			*dp++ = '/';
+		}
+		while( *cp ) *dp++ = *cp++;
+		*dp = 0;
+		if( !load_obj(dl_path) ) {
 // If the load failed it may still be an executable tool for a specific
 // file format, in which case we just store the path.
-		set_title(path);
-		char string[BCTEXTLEN];
-		strcpy(string, load_error());
-		if(!strstr(string, "executable"))
-			eprintf("PluginServer::open_plugin: load_obj failure = %s\n", string);
-		return PLUGINSERVER_NOT_RECOGNIZED;
+			set_title(path);
+			char string[BCTEXTLEN];
+			strcpy(string, load_error());
+			if(!strstr(string, "executable"))
+				eprintf("PluginServer::open_plugin: load_obj failure = %s\n", string);
+			return PLUGINSERVER_NOT_RECOGNIZED;
+		}
 	}
 	if( !new_plugin && !lad_descriptor ) {
 		new_plugin =

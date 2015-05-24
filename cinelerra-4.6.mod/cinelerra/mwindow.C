@@ -407,38 +407,50 @@ int MWindow::load_plugin_index(MWindow *mwindow, char *path)
 	return ret;
 }
 
-void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences,
-	FILE *fp, char *path, int &idx)
+void MWindow::init_plugin_index(MWindow *mwindow, Preferences *preferences, FILE *fp,
+	const char *plug_dir, const char *plug_path, int &idx)
 {
+	char plugin_path[BCTEXTLEN];
+	if( *plug_path != '/' )
+		sprintf(plugin_path, "%s/%s", plug_dir, plug_path);
+	else
+		strcpy(plugin_path, plug_path);
 	FileSystem fs;
 	fs.set_filter( "[*.plugin][*.so]" );
-	int result = fs.update(path);
+	int result = fs.update(plugin_path);
 	if( result || !fs.dir_list.total ) return;
 	int vis_id = ++idx;
 
 	for( int i=0; i<fs.dir_list.total; ++i ) {
-		char plugin_path[BCTEXTLEN];
-		strcpy(plugin_path, fs.dir_list.values[i]->path);
-		if( fs.is_dir(plugin_path) ) {
-			init_plugin_index(mwindow, preferences, fp, plugin_path, idx);
+		char *fs_path = fs.dir_list.values[i]->path;
+		char *base_path = FileSystem::basepath(fs_path), *bp = base_path;
+		const char *dp = plug_dir;
+		while( *bp && *dp && *bp == *dp ) { ++bp; ++dp; }
+		strcpy(plugin_path, !*dp && *bp == '/' ? bp+1 : base_path);
+		delete [] base_path;
+		if( fs.is_dir(fs_path) ) {
+			init_plugin_index(mwindow, preferences, fp, plug_dir, plugin_path, idx);
 			continue;
 		}
 		if( plugin_exists(plugin_path) ) continue;
-		int lad_index = -1;
-		for(;;) {
-			PluginServer *new_plugin = new PluginServer(plugin_path, mwindow);
-			result = new_plugin->open_plugin(1, preferences, 0, 0);
-			if( result ) {
-				if( lad_index >= 0 || result != PLUGINSERVER_IS_LAD ) break;
-				delete new_plugin;
-				lad_index = 0;  result = 0;
-				continue;
-			}
+		PluginServer *new_plugin = new PluginServer(plugin_path, mwindow);
+		result = new_plugin->open_plugin(1, preferences, 0, 0);
+		if( !result ) {
 			new_plugin->write_table(fp,vis_id);
 			new_plugin->close_plugin();
 			new_plugin->delete_this();
-			if( lad_index < 0 ) break;
+			continue;
+		}
+		if( result != PLUGINSERVER_IS_LAD ) continue;
+		int lad_index = 0;
+		for(;;) {
+			PluginServer *new_plugin = new PluginServer(plugin_path, mwindow);
 			new_plugin->set_lad_index(lad_index++);
+			result = new_plugin->open_plugin(1, preferences, 0, 0);
+			if( result ) break;
+			new_plugin->write_table(fp,vis_id);
+			new_plugin->close_plugin();
+			new_plugin->delete_this();
 		}
 	}
 }
@@ -456,21 +468,11 @@ int MWindow::init_plugins(MWindow *mwindow, Preferences *preferences)
 		return 1;
 	}
 	fprintf(fp, "%d\n", PLUGIN_FILE_VERSION);
-	char dir_path[BCTEXTLEN];
-	strcpy(dir_path, preferences->plugin_dir);
+	char *plug_path = FileSystem::basepath(preferences->plugin_dir);
 	int dir_id = 0;
-	init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
-// Parse LAD environment variable
-	char *env = getenv("LADSPA_PATH");
-	if( env ) {
-		for( char *cp=env; *cp; ++cp ) {
-			char *sp = dir_path;
-			while( *cp && *cp!=':' ) *sp++ = *cp++;
-			*sp = 0;
-			init_plugin_index(mwindow, preferences, fp, dir_path, dir_id);
-		}
-	}
+	init_plugin_index(mwindow, preferences, fp, plug_path, ".", dir_id);
 	fclose(fp);
+	delete [] plug_path;
 	return load_plugin_index(mwindow, index_path);
 }
 

@@ -113,6 +113,7 @@ AudioOutConfig& AudioOutConfig::operator=(AudioOutConfig &that)
 
 void AudioOutConfig::copy_from(AudioOutConfig *src)
 {
+	if( this == src ) return;
 	fragment_size = src->fragment_size;
 	driver = src->driver;
 	audio_offset = src->audio_offset;

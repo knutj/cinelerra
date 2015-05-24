@@ -103,6 +103,7 @@ public:
 	int parse_tildas(char *new_dir);     // expand tildas
 	int parse_directories(char *new_dir);  // add directories
 	int parse_dots(char *new_dir);         // move up directory tree after expanding tildas
+	static char *basepath(const char *path); // collapse ".", "..", "//" elements
 
 // Alphabetize all the directories and files.  By default
 // directories come first.

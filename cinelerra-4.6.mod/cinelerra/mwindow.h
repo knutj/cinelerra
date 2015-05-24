@@ -598,7 +598,7 @@ public:
 // Used by MWindow and RenderFarmClient
 	static int init_plugins(MWindow *mwindow, Preferences *preferences);
 	static void init_plugin_index(MWindow *mwindow, Preferences *preferences,
-		FILE *fp, char *path, int &dir_id);
+		FILE *fp, const char *plug_dir, const char *plug_path, int &dir_id);
 	static int load_plugin_index(MWindow *mwindow, char *path);
 	void init_preferences();
 	void init_signals();

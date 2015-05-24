@@ -1745,8 +1745,8 @@ void AddPluginsMenu::create_objects()
 		if( !cp ) continue;
 		*cp = 0;
 		char *bp = strrchr(parent, '/');
-		if( !bp ) continue;
-		if( !strcmp(++bp, "ladspa") )
+		if( !bp ) bp = parent; else ++bp;
+		if( !strcmp(bp, "ladspa") )
 			gui->plugin_visibility &= ~(1 << idx);
 		add_item(new AddPluginItem(this, bp, idx));
 	}

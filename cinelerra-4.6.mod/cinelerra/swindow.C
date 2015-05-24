@@ -2,6 +2,7 @@
 #include "bchash.h"
 #include "bctimer.h"
 #include "condition.h"
+#include "cstrdup.h"
 #include "edl.h"
 #include "filesystem.h"
 #include "localsession.h"
@@ -778,10 +779,10 @@ void SWindowGUI::save_spumux_data()
 	char filename[BCTEXTLEN], track_title[BCTEXTLEN];
 	snprintf(filename,sizeof(filename),"%s",script_path);
 	filename[sizeof(filename)-1] = 0;
-	char *basename = strrchr(filename, '/');
-	if( !basename ) basename = filename;
-	char *ext = strrchr(basename, '.');
-	if( !ext ) ext = basename + strlen(basename);
+	char *bp = strrchr(filename,'/');
+	if( !bp ) bp = filename; else ++bp;
+	char *ext = strrchr(bp, '.');
+	if( !ext ) ext = bp + strlen(bp);
 	int len = sizeof(filename)-1 - (ext-filename);
 
 	Tracks *tracks = swindow->mwindow->edl->tracks;

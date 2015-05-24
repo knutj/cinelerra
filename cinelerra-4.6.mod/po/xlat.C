@@ -578,7 +578,7 @@ int main(int ac, char **av)
   FILE *ifp = !strcmp(av[2],"-") ? stdin : fopen(av[2], "r");
   if( !ifp ) { perror(av[2]);  exit(1); }
  
-  if( ac < 4 ) usage(av[0]);
+//  if( ac < 4 ) usage(av[0]);
 
   if( strcmp(av[1],"xlat") ) {
     fprintf(stderr,"unkn cmd: %s\n", av[1]);

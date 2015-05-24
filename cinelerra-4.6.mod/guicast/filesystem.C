@@ -19,6 +19,7 @@
  */
 
 #include "bcsignals.h"
+#include "cstrdup.h"
 #include <dirent.h>
 #include <errno.h>
 #include <pwd.h>
@@ -855,3 +856,35 @@ FileItem* FileSystem::get_entry(int entry)
 {
 	return dir_list.values[entry];
 }
+
+// collapse ".",  "..", "//"  eg. x/./..//y = y
+char *FileSystem::basepath(const char *path)
+{
+	char fpath[BCTEXTLEN];
+	unsigned len = strlen(path);
+	if( len >= sizeof(fpath) ) return 0;
+	strcpy(fpath, path);
+	char *flat = cstrdup("");
+
+	int r = 0;
+	char *fn = fpath + len;
+	while( fn > fpath ) {
+		while( --fn >= fpath )
+			if( *fn == '/' ) { *fn = 0;  break; }
+		fn = fn < fpath ? fpath : fn+1;
+		if( !*fn || !strcmp(fn, ".") ) continue;
+		if( !strcmp(fn, "..") ) { ++r; continue; }
+		if( r < 0 ) continue;
+		if( r > 0 ) { --r;  continue; }
+		char *cp = cstrcat(3, "/",fn,flat);
+		delete [] flat;  flat = cp;
+	}
+
+	if( *path != '/' ) {
+		char *cp = cstrcat(2, ".",flat);
+		delete [] flat;  flat = cp;
+	}
+
+	return flat;
+}
+
