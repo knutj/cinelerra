@@ -488,14 +488,14 @@ ZTYP(float);	ZTYP(double);
   typ inp2 = (typ)inp[2] - ofs, inp3 = fade * mx + rnd; \
   typ out0 = (typ)out[0], out1 = (typ)out[1] - ofs; \
   typ out2 = (typ)out[2] - ofs, out3 = mx; \
-  r = aclip(COLOR_##FN(mx, inp0, inp3, out0, out3), mx); \
+  r = COLOR_##FN(mx, inp0, inp3, out0, out3); \
   if( ofs ) { \
-    g = cclip(CHROMA_##FN(mx, inp1, inp3, out1, out3), mx); \
-    b = cclip(CHROMA_##FN(mx, inp2, inp3, out2, out3), mx); \
+    g = CHROMA_##FN(mx, inp1, inp3, out1, out3); \
+    b = CHROMA_##FN(mx, inp2, inp3, out2, out3); \
   } \
   else { \
-    g = aclip(COLOR_##FN(mx, inp1, inp3, out1, out3), mx); \
-    b = aclip(COLOR_##FN(mx, inp2, inp3, out2, out3), mx); \
+    g = COLOR_##FN(mx, inp1, inp3, out1, out3); \
+    b = COLOR_##FN(mx, inp2, inp3, out2, out3); \
   }
 
 #define ALPHA4_BLEND(FN, typ, inp, out, mx, ofs, rnd) \
@@ -503,16 +503,16 @@ ZTYP(float);	ZTYP(double);
   typ inp2 = (typ)inp[2] - ofs, inp3 = (typ)inp[3] * fade + rnd; \
   typ out0 = (typ)out[0], out1 = (typ)out[1] - ofs; \
   typ out2 = (typ)out[2] - ofs, out3 = out[3]; \
-  r = aclip(COLOR_##FN(mx, inp0, inp3, out0, out3), mx); \
+  r = COLOR_##FN(mx, inp0, inp3, out0, out3); \
   if( ofs ) { \
-    g = cclip(CHROMA_##FN(mx, inp1, inp3, out1, out3), mx); \
-    b = cclip(CHROMA_##FN(mx, inp2, inp3, out2, out3), mx); \
+    g = CHROMA_##FN(mx, inp1, inp3, out1, out3); \
+    b = CHROMA_##FN(mx, inp2, inp3, out2, out3); \
   } \
   else { \
-    g = aclip(COLOR_##FN(mx, inp1, inp3, out1, out3), mx); \
-    b = aclip(COLOR_##FN(mx, inp2, inp3, out2, out3), mx); \
+    g = COLOR_##FN(mx, inp1, inp3, out1, out3); \
+    b = COLOR_##FN(mx, inp2, inp3, out2, out3); \
   } \
-  a = aclip(ALPHA_##FN(mx, inp3, out3), mx); \
+  a = ALPHA_##FN(mx, inp3, out3)
 
 #define ALPHA_STORE(out, ofs, mx) \
   out[0] = r; \
@@ -520,6 +520,9 @@ ZTYP(float);	ZTYP(double);
   out[2] = b + ofs
 
 #define ALPHA3_STORE(out, ofs, mx) \
+  r = aclip(r, mx); \
+  g = ofs ? cclip(g, mx) : aclip(g, mx); \
+  b = ofs ? cclip(b, mx) : aclip(b, mx); \
   if( trnsp ) { \
     r = (r * opcty + out0 * trnsp) / mx; \
     g = (g * opcty + out1 * trnsp) / mx; \
@@ -528,6 +531,9 @@ ZTYP(float);	ZTYP(double);
   ALPHA_STORE(out, ofs, mx)
 
 #define ALPHA4_STORE(out, ofs, mx) \
+  r = aclip(r, mx); \
+  g = ofs ? cclip(g, mx) : aclip(g, mx); \
+  b = ofs ? cclip(b, mx) : aclip(b, mx); \
   if( trnsp ) { \
     r = (r * opcty + out0 * trnsp) / mx; \
     g = (g * opcty + out1 * trnsp) / mx; \
@@ -535,7 +541,7 @@ ZTYP(float);	ZTYP(double);
     a = (a * opcty + out3 * trnsp) / mx; \
   } \
   ALPHA_STORE(out, ofs, mx); \
-  out[3] = a
+  out[3] = aclip(a, mx)
 
 #define XBLEND(FN, temp_type, type, max, components, chroma_offset, round) { \
 	temp_type opcty = alpha * max + round, trnsp = max - opcty; \
