@@ -30,7 +30,7 @@ typedef struct
         uint8_t ** rows;
   } quicktime_yuv2_codec_t;
 
-static int quicktime_delete_codec_yuv2(quicktime_video_map_t *vtrack)
+static void quicktime_delete_codec_yuv2(quicktime_video_map_t *vtrack)
 {
 	quicktime_yuv2_codec_t *codec;
 
@@ -38,7 +38,6 @@ static int quicktime_delete_codec_yuv2(quicktime_video_map_t *vtrack)
 	if(codec->work_buffer) free(codec->work_buffer);
         if(codec->rows) free(codec->rows);
         free(codec);
-	return 0;
 }
 #if 0
 static int quicktime_reads_colormodel_yuv2(quicktime_t *file,
@@ -165,17 +164,17 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 		file->out_w == width &&
 		file->out_h == height)
 	{
-		result = !quicktime_read_data(file, row_pointers[0], bytes);
+		result = !quicktime_read_data(file, (char*)row_pointers[0], bytes);
                 if(codec->is_2vuy)
-                  convert_decode_2vuy(codec, row_pointers);
+			convert_decode_2vuy(codec, row_pointers);
                 else
-                  convert_decode_yuv2(codec, row_pointers);
+			convert_decode_yuv2(codec, row_pointers);
 	}
 	else
 	{
         if(!codec->rows)
             codec->rows = malloc(height * sizeof(*(codec->rows)));
-        result = !quicktime_read_data(file, codec->work_buffer, bytes);
+        result = !quicktime_read_data(file, (char*)codec->work_buffer, bytes);
 		for(y = 0; y < height; y++)
 			codec->rows[y] = &codec->work_buffer[y * codec->bytes_per_line];
                 if(codec->is_2vuy)
@@ -235,7 +234,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
                 else
                   convert_encode_yuv2(codec, row_pointers);
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = !quicktime_write_data(file, buffer, bytes);
+		result = !quicktime_write_data(file, (char*)buffer, bytes);
 	}
 	else
 	{
@@ -271,7 +270,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
                   convert_encode_yuv2(codec, codec->rows);
 
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = !quicktime_write_data(file, buffer, bytes);
+		result = !quicktime_write_data(file, (char*)buffer, bytes);
 	}
 
 	quicktime_write_chunk_footer(file,
@@ -338,7 +337,7 @@ void quicktime_init_codec_2vuy(quicktime_video_map_t *vtrack)
 	codec_base->encode_audio = 0;
 	codec_base->reads_colormodel = reads_colormodel;
 	codec_base->writes_colormodel = writes_colormodel;
-	codec_base->fourcc = "2vuy";
+	codec_base->fourcc = QUICKTIME_2VUY;
 	codec_base->title = "Component Y'CbCr 8-bit 4:2:2 (2vuy)";
 	codec_base->desc = "YUV 4:2:2";
         codec = (quicktime_yuv2_codec_t *)(codec_base->priv);

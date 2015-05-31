@@ -18,6 +18,7 @@
 
 
 #include "colormodels.h"
+#include "cmodel_permutation.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -182,18 +183,13 @@ int cmodel_components(int colormodel)
 		case BC_A8:           return 1; break;
 		case BC_A16:          return 1; break;
 		case BC_A_FLOAT:      return 1; break;
-		case BC_RGB888:       return 3; break;
 		case BC_RGBA8888:     return 4; break;
-		case BC_RGB161616:    return 3; break;
 		case BC_RGBA16161616: return 4; break;
-		case BC_YUV888:       return 3; break;
 		case BC_YUVA8888:     return 4; break;
-		case BC_YUV161616:    return 3; break;
 		case BC_YUVA16161616: return 4; break;
-		case BC_YUV101010:    return 3; break;
-		case BC_RGB_FLOAT:    return 3; break;
 		case BC_RGBA_FLOAT:   return 4; break;
 	}
+	return 3;
 }
 
 int cmodel_calculate_pixelsize(int colormodel)
@@ -297,7 +293,7 @@ static void get_scale_tables(int **column_table,
 	int out_x2, 
 	int out_y2)
 {
-	int y_out, i;
+	int i;
 	float w_in = in_x2 - in_x1;
 	float h_in = in_y2 - in_y1;
 	int w_out = out_x2 - out_x1;
@@ -320,6 +316,7 @@ static void get_scale_tables(int **column_table,
 //printf("get_scale_tables %d %d\n", (*row_table)[i], i);
 	}
 }
+
 
 void cmodel_transfer(unsigned char **output_rows, 
 	unsigned char **input_rows,
@@ -507,6 +504,8 @@ int cmodel_has_alpha(int colormodel)
 	{
 		case BC_YUVA8888:
 		case BC_RGBA8888:
+		case BC_RGBA16161616:
+		case BC_YUVA16161616:
 		case BC_RGBA_FLOAT:
 			return 1;
 	}

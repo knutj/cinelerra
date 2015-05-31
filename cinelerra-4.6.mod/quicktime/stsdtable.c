@@ -100,20 +100,16 @@ if(table->sample_rate + 65536 == 96000 ||
 		{
 			quicktime_set_position(file, quicktime_position(file) + 0x14);
 		}
+	}
 
-		while(quicktime_position(file) < parent_atom->end)
-		{
-			quicktime_atom_read_header(file, &leaf_atom);
-
-			if(quicktime_atom_is(&leaf_atom, "wave"))
-			{
-				read_wave(file, table, &leaf_atom);
-			}
-			else
-			{
-				quicktime_atom_skip(file, &leaf_atom);
-			}
-		}
+	while(quicktime_position(file) < parent_atom->end) {
+		quicktime_atom_read_header(file, &leaf_atom);
+		if( quicktime_atom_is(&leaf_atom, "wave") )
+			read_wave(file, table, &leaf_atom);
+		else if( quicktime_atom_is(&leaf_atom, "esds") )
+			quicktime_read_esds(file, &leaf_atom, &table->esds);
+		else
+			quicktime_atom_skip(file, &leaf_atom);
 	}
 
 // FFMPEG says the esds sometimes contains a sample rate that overrides
@@ -137,29 +133,29 @@ void quicktime_write_stsd_audio(quicktime_t *file, quicktime_stsd_table_t *table
 	if(table->esds.mpeg4_header_size && table->esds.mpeg4_header)
 	{
 // Android requires leaving out the WAVE header
-#if 0
-// Version 1 info
-		quicktime_write_int32(file, 0);
-		quicktime_write_int32(file, 0);
-		quicktime_write_int32(file, 0);
-		quicktime_write_int32(file, 0);
+		if( table->version > 0 ) {
+// newer version info
+			int padding = table->version == 1 ?
+				0x10/sizeof(int32_t) : 0x24/sizeof(int32_t);
+			while( --padding >= 0 ) quicktime_write_int32(file, 0);
 
-		quicktime_atom_t wave_atom;
-		quicktime_atom_t frma_atom;
-		quicktime_atom_t mp4a_atom;
-		quicktime_atom_write_header(file, &wave_atom, "wave");
+			quicktime_atom_t wave_atom;
+			quicktime_atom_t frma_atom;
+			quicktime_atom_t mp4a_atom;
+			quicktime_atom_write_header(file, &wave_atom, "wave");
 
-		quicktime_atom_write_header(file, &frma_atom, "frma");
-		quicktime_write_data(file, "mp4a", 4);
-		quicktime_atom_write_footer(file, &frma_atom);
-
-		quicktime_atom_write_header(file, &mp4a_atom, "mp4a");
-		quicktime_write_int32(file, 0x0);
-		quicktime_atom_write_footer(file, &mp4a_atom);
-#endif // 0
-
-		quicktime_write_esds(file, &table->esds, 0, 1);
-//		quicktime_atom_write_footer(file, &wave_atom);
+			quicktime_atom_write_header(file, &frma_atom, "frma");
+			quicktime_write_data(file, "mp4a", 4);
+			quicktime_atom_write_footer(file, &frma_atom);
+	
+			quicktime_atom_write_header(file, &mp4a_atom, "mp4a");
+			quicktime_write_int32(file, 0x0);
+			quicktime_atom_write_footer(file, &mp4a_atom);
+			quicktime_write_esds(file, &table->esds, 0, 1);
+			quicktime_atom_write_footer(file, &wave_atom);
+		}
+		else
+			quicktime_write_esds(file, &table->esds, 0, 1);
 	}
 }
 
@@ -213,8 +209,7 @@ void quicktime_read_stsd_video(quicktime_t *file,
 
 /* The data needed for SVQ3 codec and maybe some others ? */
 	struct ImageDescription *id;
-	int stsd_size,fourcc,c,d;
-	stsd_size = parent_atom->end - parent_atom->start;
+	int stsd_size = parent_atom->end - parent_atom->start;
 	table->extradata_size = stsd_size - 4;
 	id = (struct ImageDescription *) malloc(table->extradata_size);     // we do not include size
 	table->extradata = (char *) id;

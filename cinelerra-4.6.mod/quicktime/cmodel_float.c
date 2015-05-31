@@ -411,7 +411,7 @@ static inline void transfer_RGBA_FLOAT_to_BGR8888(unsigned char *(*output),
 	*(*output)++ = (unsigned char)(b);
 	*(*output)++ = (unsigned char)(g);
 	*(*output)++ = (unsigned char)(r);
-	*(*output)++;
+	++(*output);
 }
 
 static inline void transfer_RGBA_FLOAT_to_YUV888(unsigned char *(*output), 

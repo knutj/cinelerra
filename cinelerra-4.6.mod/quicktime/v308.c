@@ -13,14 +13,13 @@ typedef struct
 	unsigned char *work_buffer;
 } quicktime_v308_codec_t;
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_v308_codec_t *codec;
 
 	codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	if(codec->work_buffer) free(codec->work_buffer);
 	free(codec);
-	return 0;
 }
 
 static int reads_colormodel(quicktime_t *file, 
@@ -91,7 +90,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 	quicktime_set_video_position(file, vtrack->current_position, track);
 	bytes = quicktime_frame_size(file, vtrack->current_position, track);
-	result = !quicktime_read_data(file, codec->work_buffer, bytes);
+	result = !quicktime_read_data(file, (char*)codec->work_buffer, bytes);
 
 
 
@@ -135,7 +134,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+//	int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_v308_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
@@ -179,13 +178,8 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 		width);
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
-	result = !quicktime_write_data(file, codec->work_buffer, bytes);
-	quicktime_write_chunk_footer(file, 
-		trak,
-		vtrack->current_chunk,
-		&chunk_atom, 
-		1);
-
+	result = !quicktime_write_data(file, (char*)codec->work_buffer, bytes);
+	quicktime_write_chunk_footer(file, trak, vtrack->current_chunk, &chunk_atom, 1);
 	vtrack->current_chunk++;
 	
 	free(output_rows);

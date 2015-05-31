@@ -2,7 +2,7 @@
 #include "quicktime.h"
 #include "workarounds.h"
 
-
+#include <string.h>
 #include <zlib.h>
 
 
@@ -20,7 +20,6 @@ int quicktime_moov_init(quicktime_moov_t *moov)
 
 int quicktime_moov_delete(quicktime_moov_t *moov)
 {
-	int i;
 	while(moov->total_tracks) quicktime_delete_trak(moov);
 	quicktime_mvhd_delete(&(moov->mvhd));
 	quicktime_udta_delete(&(moov->udta));
@@ -96,7 +95,7 @@ static int read_cmov(quicktime_t *file,
 			}
 
 			unsigned char *data_in = calloc(1, compressed_size);
-			quicktime_read_data(file, data_in, compressed_size);
+			quicktime_read_data(file, (char*)data_in, compressed_size);
 /* Decompress to another buffer */
 			unsigned char *data_out = calloc(1, uncompressed_size + 0x400);
 			z_stream zlib;
@@ -132,7 +131,7 @@ static int read_cmov(quicktime_t *file,
 			file->old_preload_end = file->preload_end;
 			file->old_preload_ptr = file->preload_ptr;
 			file->preload_size = uncompressed_size;
-			file->preload_buffer = data_out;
+			file->preload_buffer = (char *)data_out;
 			file->preload_start = moov_atom->start;
 			file->preload_end = file->preload_start + uncompressed_size;
 			file->preload_ptr = 0;

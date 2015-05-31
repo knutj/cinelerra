@@ -11,7 +11,7 @@
 
 
 #include "funcprotos.h"
-#include "faad.h"
+#include "neaacdec.h"
 #include "quicktime.h"
 
 
@@ -23,9 +23,9 @@
 typedef struct
 {
 // Decoder objects
-    faacDecHandle decoder_handle;
-    faacDecFrameInfo frame_info;
-    faacDecConfigurationPtr decoder_config;
+    NeAACDecHandle decoder_handle;
+    NeAACDecFrameInfo frame_info;
+    NeAACDecConfigurationPtr decoder_config;
 	int decoder_initialized;
 
 
@@ -53,14 +53,14 @@ typedef struct
 
 
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_mp4a_codec_t *codec = 
 		((quicktime_codec_t*)atrack->codec)->priv;
 
 	if(codec->decoder_initialized)
 	{
-		faacDecClose(codec->decoder_handle);
+		NeAACDecClose(codec->decoder_handle);
 	}
 
 	if(codec->encoder_initialized)
@@ -91,34 +91,41 @@ static int decode(quicktime_t *file,
 // Initialize decoder
 	if(!codec->decoder_initialized)
 	{
-		uint32_t samplerate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
+		unsigned long samplerate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
 // FAAD needs unsigned char here
 		uint8_t channels = track_map->channels;
 		quicktime_init_vbr(vbr, channels);
-		codec->decoder_handle = faacDecOpen();
-		codec->decoder_config = faacDecGetCurrentConfiguration(codec->decoder_handle);
+		codec->decoder_handle = NeAACDecOpen();
+		codec->decoder_config = NeAACDecGetCurrentConfiguration(codec->decoder_handle);
 		codec->decoder_config->outputFormat = FAAD_FMT_FLOAT;
 //		codec->decoder_config->defSampleRate = 
 //			trak->mdia.minf.stbl.stsd.table[0].sample_rate;
 
-		faacDecSetConfiguration(codec->decoder_handle, codec->decoder_config);
+		NeAACDecSetConfiguration(codec->decoder_handle, codec->decoder_config);
 
 
-		quicktime_align_vbr(track_map, samples);
+		char *mp4_hdr = trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header;
+		int hdr_len = trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header_size;
+		if( !mp4_hdr || !hdr_len ) {
+			quicktime_align_vbr(track_map, samples);
 
 //while(quicktime_vbr_input_size(vbr) < 65536)
-		quicktime_read_vbr(file, track_map);
+			quicktime_read_vbr(file, track_map);
 
 //printf("decode %d buffer=%p size=%d\n", __LINE__, quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
 //samplerate = -1;
 //channels = 0;
-		if(faacDecInit(codec->decoder_handle,
-			quicktime_vbr_input(vbr), 
-			quicktime_vbr_input_size(vbr),
-			&samplerate,
-			&channels) < 0)
-		{
-			return 1;
+			if( NeAACDecInit(codec->decoder_handle,
+				quicktime_vbr_input(vbr), 
+				quicktime_vbr_input_size(vbr),
+				&samplerate,
+				&channels) < 0 ) return 1;
+		}
+		else {
+			if( NeAACDecInit2(codec->decoder_handle,
+				(unsigned char *)mp4_hdr, hdr_len,
+				&samplerate,
+				&channels) < 0 ) return 1;
 		}
 //printf("decode %d samplerate=%d channels=%d\n", __LINE__, samplerate, channels);
 		codec->decoder_initialized = 1;
@@ -145,17 +152,14 @@ static int decode(quicktime_t *file,
 
 			if(quicktime_read_vbr(file, track_map)) break;
 
-			bzero(&codec->frame_info, sizeof(faacDecFrameInfo));
-			float *sample_buffer = faacDecDecode(codec->decoder_handle, 
-				&codec->frame_info,
-            	quicktime_vbr_input(vbr), 
-				quicktime_vbr_input_size(vbr));
+			bzero(&codec->frame_info, sizeof(NeAACDecFrameInfo));
+			float *sample_buffer =
+				NeAACDecDecode(codec->decoder_handle, &codec->frame_info,
+					quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
 
-        	if (codec->frame_info.error > 0)
-        	{
-//            	printf("decode mp4a: %s\n",
-//                	faacDecGetErrorMessage(codec->frame_info.error));
-        	}
+//        	if (codec->frame_info.error > 0) {
+//			printf("decode mp4a: %s\n", NeAACDecGetErrorMessage(codec->frame_info.error));
+//        	}
 
 /*
  * printf("decode 1 %d %d %d\n", 
@@ -265,7 +269,8 @@ static int encode(quicktime_t *file,
  		quicktime_set_mpeg4_header(&trak->mdia.minf.stbl.stsd.table[0],
 			buffer, 
 			buffer_size);
-		trak->mdia.minf.stbl.stsd.table[0].version = 1;
+//breaks android player
+		//trak->mdia.minf.stbl.stsd.table[0].version = 1;
 // Quicktime player needs this.
 		trak->mdia.minf.stbl.stsd.table[0].compression_id = 0xfffe;
 	}
@@ -324,10 +329,8 @@ static int encode(quicktime_t *file,
 // Write out the packet
 		if(bytes)
 		{
-			quicktime_write_vbr_frame(file, 
-				track,
-				codec->compressed_buffer,
-				bytes,
+			quicktime_write_vbr_frame(file, track,
+				(char*)codec->compressed_buffer, bytes,
 				codec->frame_size);
 		}
 	}
@@ -346,7 +349,6 @@ static int encode(quicktime_t *file,
 static void flush(quicktime_t *file, int track)
 {
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
-	quicktime_trak_t *trak = track_map->track;
 	quicktime_mp4a_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	int channels = quicktime_track_channels(file, track);
 	int i;
@@ -372,10 +374,8 @@ static void flush(quicktime_t *file, int track)
 // Write out the packet
 			if(bytes)
 			{
-				quicktime_write_vbr_frame(file, 
-					track,
-					codec->compressed_buffer,
-					bytes,
+				quicktime_write_vbr_frame(file, track,
+					(char*)codec->compressed_buffer, bytes,
 					codec->frame_size);
 			}
 		}
@@ -419,7 +419,7 @@ void quicktime_init_codec_mp4a(quicktime_audio_map_t *atrack)
 	codec_base->encode_audio = encode;
 	codec_base->set_parameter = set_parameter;
 	codec_base->flush = flush;
-	codec_base->fourcc = "mp4a";
+	codec_base->fourcc = QUICKTIME_MP4A;
 	codec_base->title = "MPEG4 audio";
 	codec_base->desc = "Audio section of MPEG4 standard";
 

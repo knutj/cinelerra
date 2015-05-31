@@ -90,11 +90,11 @@ typedef struct
 
 
 
-int quicktime_read_asf_header(quicktime_t *file);
+int quicktime_read_guid(quicktime_t *file,quicktime_guid_t *guid);
+quicktime_asfstream_t *new_asfstream(void);
+void delete_asfstream(quicktime_asfstream_t *stream);
 void quicktime_delete_asf(quicktime_asf_t *asf);
+int quicktime_read_asf(quicktime_t *file);
 void quicktime_dump_asf(quicktime_asf_t *asf);
-int quicktime_read_guid(quicktime_t *file, quicktime_guid_t *guid);
-
-
 
 #endif

@@ -53,12 +53,10 @@ static int mutex_initialized = 0;
 static int decode_handle = 1;
 static int encode_handle = 0;
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_divx_codec_t *codec;
 	int i;
-//printf("delete_codec 1\n");
-
 
 	codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	for(i = 0; i < codec->total_fields; i++)
@@ -101,8 +99,6 @@ static int delete_codec(quicktime_video_map_t *vtrack)
 
 
 	free(codec);
-//printf("delete_codec 100\n");
-	return 0;
 }
 
 static int reads_colormodel(quicktime_t *file,

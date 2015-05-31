@@ -60,7 +60,7 @@ typedef struct
 
 
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_mp3_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 	if(codec->mp3) mpeg3_delete_layer(codec->mp3);
@@ -96,8 +96,6 @@ static int delete_codec(quicktime_audio_map_t *atrack)
 		mpeg3_delete_layer(codec->encoded_header);
 
 	free(codec);
-
-	return 0;
 }
 
 static int chunk_len(quicktime_t *file,
@@ -112,7 +110,7 @@ static int chunk_len(quicktime_t *file,
 	while(offset < next_chunk)
 	{
 		quicktime_set_position(file, offset);
-		result = !quicktime_read_data(file, (unsigned char*)&header, 4);
+		result = !quicktime_read_data(file, (char*)&header, 4);
 
 		if(result)
 		{
@@ -158,7 +156,6 @@ static int decode(quicktime_t *file,
 	quicktime_mp3_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	quicktime_trak_t *trak = track_map->track;
 	long current_position = track_map->current_position;
-	long end_position = current_position + samples;
 	float *pcm;
 	int i, j, k;
 	int64_t offset1;
@@ -214,8 +211,7 @@ static int decode(quicktime_t *file,
 
 // Decode chunks until output is big enough
 	while(codec->output_position + codec->output_size < 
-		current_position + samples &&
-		try < 6)
+		current_position + samples && try < 64)
 	{
 // Decode a chunk
 		offset1 = quicktime_chunk_to_offset(file, trak, codec->chunk);
@@ -239,7 +235,7 @@ static int decode(quicktime_t *file,
 		}
 
 		quicktime_set_position(file, offset1);
-		result = !quicktime_read_data(file, codec->packet_buffer, chunk_size);
+		result = !quicktime_read_data(file, (char*)codec->packet_buffer, chunk_size);
 		if(result) break;
 
 		for(i = 0; i < chunk_size; )
@@ -265,13 +261,11 @@ static int decode(quicktime_t *file,
 				temp_output[j] = codec->output[j] + codec->output_size;
 
 			frame_size = mpeg3_layer_header(codec->mp3, 
-				codec->packet_buffer + i);
+					codec->packet_buffer + i);
 
 			result = mpeg3audio_dolayer3(codec->mp3, 
-				codec->packet_buffer + i, 
-				frame_size, 
-				temp_output, 
-				1);
+					(char*)codec->packet_buffer + i, 
+					frame_size, temp_output, 1);
 
 
 			if(result)
@@ -357,7 +351,7 @@ static int allocate_output(quicktime_mp3_codec_t *codec,
 		codec->encoder_output = new_output;
 		codec->encoder_output_allocated = new_size;
 	}
-
+	return 0;
 }
 
 
@@ -371,8 +365,8 @@ static int write_frames(quicktime_t *file,
 {
 	int result = 0;
 	int i, j;
+//	quicktime_atom_t chunk_atom;
 	int frames_end = 0;
-	quicktime_atom_t chunk_atom;
 
 // Write to chunks
 	for(i = 0; i < codec->encoder_output_size - 4; )
@@ -386,21 +380,11 @@ static int write_frames(quicktime_t *file,
 			if(i + frame_size <= codec->encoder_output_size)
 			{
 // Write the chunk
-				int64_t offset;
 				int frame_samples = mpeg3audio_dolayer3(codec->encoded_header, 
-					header, 
-					frame_size, 
-					0,
-					0);
+					(char*)header, frame_size, 0, 0);
 
-
-				quicktime_write_vbr_frame(file, 
-					track,
-					header,
-					frame_size,
-					frame_samples);
-
-
+				quicktime_write_vbr_frame(file, track,
+					(char*)header, frame_size, frame_samples);
 
 // 				quicktime_write_chunk_header(file, trak, &chunk_atom);
 // 				result = !quicktime_write_data(file, header, frame_size);
@@ -460,7 +444,6 @@ static int encode(quicktime_t *file,
 	quicktime_mp3_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	int new_size = codec->input_size + samples;
 	int i, j;
-	int frames_end = 0;
 
 	if(!codec->encode_initialized)
 	{
@@ -561,7 +544,6 @@ static int set_parameter(quicktime_t *file,
 static void flush(quicktime_t *file, int track)
 {
 	int result = 0;
-	int64_t offset = quicktime_position(file);
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_trak_t *trak = track_map->track;
 	quicktime_mp3_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
@@ -572,11 +554,7 @@ static void flush(quicktime_t *file, int track)
         	codec->encoder_output + codec->encoder_output_size, 
 			codec->encoder_output_allocated - codec->encoder_output_size);
 		codec->encoder_output_size += result;
-		result = write_frames(file, 
-			track_map,
-			trak,
-			codec,
-			track);
+		result = write_frames(file, track_map, trak, codec, track);
 	}
 }
 

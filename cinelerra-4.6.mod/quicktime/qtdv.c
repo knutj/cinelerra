@@ -36,7 +36,7 @@ typedef struct
 
 static pthread_mutex_t libdv_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_dv_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 
@@ -56,7 +56,6 @@ static int delete_codec(quicktime_video_map_t *vtrack)
 	if(codec->temp_rows) free(codec->temp_rows);
 	free(codec->data);
 	free(codec);
-	return 0;
 }
 
 static int check_sequentiality( unsigned char **row_pointers,
@@ -200,7 +199,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+	//int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_dv_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
@@ -213,7 +212,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	int is_pal = (height_i == 480) ? 0 : 1;
 	int data_length = is_pal ? DV_PAL_SIZE : DV_NTSC_SIZE;
 	int result = 0;
-	int encode_colormodel = 0;
 	dv_color_space_t encode_dv_colormodel = 0;
 	quicktime_atom_t chunk_atom;
 
@@ -252,7 +250,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			is_sequential )
 		{
 			input_rows = row_pointers;
-			encode_colormodel = file->color_model;
 			switch( file->color_model )
 			{
 				case BC_YUV422:
@@ -304,7 +301,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 
 			input_rows = codec->temp_rows;
-			encode_colormodel = BC_YUV422;
 			encode_dv_colormodel = e_dv_color_yuv;
 		}
 
@@ -322,7 +318,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 //printf("dv.c encode: 2 %d %d\n", width_i, height_i);
 
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = !quicktime_write_data(file, codec->data, data_length);
+		result = !quicktime_write_data(file, (char*)codec->data, data_length);
 		quicktime_write_chunk_footer(file, 
 			trak,
 			vtrack->current_chunk,
@@ -397,7 +393,6 @@ static void init_codec_common(quicktime_video_map_t *vtrack, char *fourcc)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)vtrack->codec;
 	quicktime_dv_codec_t *codec;
-	int i;
 
 /* Init public items */
 	codec_base->priv = calloc(1, sizeof(quicktime_dv_codec_t));

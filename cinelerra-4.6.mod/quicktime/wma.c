@@ -1,7 +1,8 @@
-#include "libavcodec/avcodec.h"
+#include <string.h>
+
 #include "funcprotos.h"
 #include "quicktime.h"
-#include <string.h>
+#include "qtffmpeg.h"
 #include "wma.h"
 
 /* McRowesoft media player audio */
@@ -35,7 +36,7 @@ typedef struct
 // Default number of samples to allocate in work buffer
 #define OUTPUT_ALLOCATION 0x100000
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_wma_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
@@ -103,7 +104,6 @@ static int decode(quicktime_t *file,
 	quicktime_wma_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	quicktime_trak_t *trak = track_map->track;
 	long current_position = track_map->current_position;
-	long end_position = current_position + samples;
 	int try = 0;
 	int result = 0;
 	int i, j;
@@ -141,7 +141,7 @@ static int decode(quicktime_t *file,
 	{
 // Load chunk into work buffer
 		int64_t chunk_offset = 0;
-		int chunk_samples = quicktime_chunk_samples(trak, codec->chunk);
+//		int chunk_samples = quicktime_chunk_samples(trak, codec->chunk);
 		int chunk_size = quicktime_chunk_bytes(file,
 			&chunk_offset,
 			codec->chunk,
@@ -151,7 +151,7 @@ static int decode(quicktime_t *file,
 		int max_samples = 32768;
 		int max_bytes = max_samples * sample_size;
 		int bytes_decoded = 0;
-printf("decode 2 %x %llx %llx\n", chunk_size, chunk_offset, chunk_offset + chunk_size);
+//printf("decode 2 %x %jx %jx\n", chunk_size, chunk_offset, chunk_offset + chunk_size);
 
 // Allocate packet buffer
 		if(codec->packet_allocated < chunk_size &&
@@ -202,12 +202,12 @@ printf("decode 2 %x %llx %llx\n", chunk_size, chunk_offset, chunk_offset + chunk
 #else
 		AVPacket avpkt;
 		av_init_packet(&avpkt);
-		avpkt.data = codec->packet_buffer;
+		avpkt.data = (unsigned char *)codec->packet_buffer;
 		avpkt.size = chunk_size;
 		bytes_decoded = OUTPUT_ALLOCATION;
 		result = quicktime_decode_audio3(codec->decoder_context,
 			(int16_t*)(codec->work_buffer + codec->output_size * sample_size),
-			&bytes_decoded, codec->packet_buffer, chunk_size);
+			&bytes_decoded, &avpkt);
 #endif
 
 		pthread_mutex_unlock(&ffmpeg_lock);
@@ -218,7 +218,7 @@ printf("decode 2 %x %llx %llx\n", chunk_size, chunk_offset, chunk_offset + chunk
 		else
 		{
 			if(codec->output_size * sample_size + bytes_decoded > codec->output_allocated * sample_size)
-				printf("decode: FYI: bytes_decoded=%d is greater than output_allocated=%d\n",
+				printf("decode: FYI: bytes_decoded=%ld is greater than output_allocated=%ld\n",
 					codec->output_size * sample_size + bytes_decoded,
 					codec->output_allocated);
 			codec->output_size += bytes_decoded / sample_size;
@@ -280,7 +280,6 @@ printf("decode 2 %x %llx %llx\n", chunk_size, chunk_offset, chunk_offset + chunk
 
 static void init_codec_common(quicktime_audio_map_t *atrack)
 {
-	quicktime_wma_codec_t *codec;
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)atrack->codec;
 
 /* Init public items */
@@ -289,7 +288,8 @@ static void init_codec_common(quicktime_audio_map_t *atrack)
 
 
 /* Init private items */
-	codec = codec_base->priv = calloc(1, sizeof(quicktime_wma_codec_t));
+//	quicktime_wma_codec_t *codec =
+	codec_base->priv = calloc(1, sizeof(quicktime_wma_codec_t));
 }
 
 

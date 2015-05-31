@@ -3,16 +3,14 @@
 #include "quicktime.h"
 #include <string.h>
 
-static int delete_vcodec_stub(quicktime_video_map_t *vtrack)
+static void delete_vcodec_stub(quicktime_video_map_t *vtrack)
 {
 	printf("delete_vcodec_stub called\n");
-	return 0;
 }
 
-static int delete_acodec_stub(quicktime_audio_map_t *atrack)
+static void delete_acodec_stub(quicktime_audio_map_t *atrack)
 {
 	printf("delete_acodec_stub called\n");
-	return 0;
 }
 
 static int decode_video_stub(quicktime_t *file, 
@@ -83,7 +81,7 @@ void quicktime_id_to_codec(char *result, int id)
 			memcpy(result, QUICKTIME_WMA, 4);
 			break;
 		default:
-			printf("quicktime_id_to_codec: unknown audio id: %p\n", id);
+			printf("quicktime_id_to_codec: unknown audio id: 0x%06x\n", id);
 			break;
 	}
 }
@@ -96,13 +94,17 @@ int quicktime_codec_to_id(char *codec)
 	if(quicktime_match_32(codec, QUICKTIME_WMA))
 		return 0x161;
 	else
-		printf("quicktime_codec_to_id: unknown codec %c%c%c%c\n", codec[0], codec[1], codec[2], codec[3]);
+		printf("quicktime_codec_to_id: unknown codec %c%c%c%c\n",
+			codec[0], codec[1], codec[2], codec[3]);
+	return 0;
 }
 
 
-static quicktime_codec_t* new_codec()
+quicktime_codec_t* quicktime_new_codec()
 {
-	quicktime_codec_t *codec = calloc(1, sizeof(quicktime_codec_t));
+	quicktime_codec_t *codec = malloc(sizeof(*codec));
+	if( !codec ) return 0;
+	memset(codec, 0, sizeof(*codec));
 	codec->delete_vcodec = delete_vcodec_stub;
 	codec->delete_acodec = delete_acodec_stub;
 	codec->decode_video = decode_video_stub;
@@ -115,47 +117,36 @@ static quicktime_codec_t* new_codec()
 	return codec;
 }
 
+void quicktime_del_codec(quicktime_codec_t *codec)
+{
+	if( codec ) free(codec);
+}
+
 int new_vcodec(quicktime_video_map_t *vtrack)
 {
-	quicktime_codec_t *codec_base = vtrack->codec = new_codec();
-	char *compressor = vtrack->track->mdia.minf.stbl.stsd.table[0].format;
 	int result = quicktime_find_vcodec(vtrack);
-
-	if(result)
-	{
+	if(result) {
+		char *compressor = vtrack->track->mdia.minf.stbl.stsd.table[0].format;
 		fprintf(stderr, 
 			"new_vcodec: couldn't find codec for \"%c%c%c%c\"\n",
-			compressor[0],
-			compressor[1],
-			compressor[2],
-			compressor[3]);
-		free(codec_base);
+			compressor[0], compressor[1], compressor[2], compressor[3]);
 		vtrack->codec = 0;
 		return 1;
 	}
-
 	return 0;
 }
 
 int new_acodec(quicktime_audio_map_t *atrack)
 {
-	quicktime_codec_t *codec_base = atrack->codec = new_codec();
-	char *compressor = atrack->track->mdia.minf.stbl.stsd.table[0].format;
 	int result = quicktime_find_acodec(atrack);
-
-	if(result)
-	{
+	if(result) {
+		char *compressor = atrack->track->mdia.minf.stbl.stsd.table[0].format;
 		fprintf(stderr, 
 			"new_acodec: couldn't find codec for \"%c%c%c%c\"\n",
-			compressor[0],
-			compressor[1],
-			compressor[2],
-			compressor[3]);
-		free(codec_base);
+			compressor[0], compressor[1], compressor[2], compressor[3]);
 		atrack->codec = 0;
 		return 1;
 	}
-
 	return 0;
 }
 
@@ -322,7 +313,7 @@ int quicktime_decode_audio(quicktime_t *file,
 int quicktime_encode_audio(quicktime_t *file, int16_t **input_i, float **input_f, long samples)
 {
 	int result = 1;
-	char *compressor = quicktime_audio_compressor(file, 0);
+	//char *compressor = quicktime_audio_compressor(file, 0);
 
 	result = ((quicktime_codec_t*)file->atracks[0].codec)->encode_audio(file, 
 		input_i, 

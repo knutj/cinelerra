@@ -17,10 +17,11 @@
 
 
 
+#include "libavformat/avformat.h"
 #include "libavcodec/avcodec.h"
 #include "qtprivate.h"
 
-
+#include <pthread.h>
 
 typedef struct
 {
@@ -59,19 +60,12 @@ extern int ffmpeg_initialized;
 extern pthread_mutex_t ffmpeg_lock;
 
 
-quicktime_ffmpeg_t* quicktime_new_ffmpeg(
-	int cpus,
-	int fields,
-	int ffmpeg_id,
-	int w,
-	int h,
-// FFmpeg needs this for the header
-	quicktime_stsd_table_t *stsd_table);
+quicktime_ffmpeg_t *quicktime_new_ffmpeg(int cpus,
+	int fields,int ffmpeg_id, int w,int h,
+	quicktime_stsd_table_t *stsd_table); // FFmpeg needs this for the header
 void quicktime_delete_ffmpeg(quicktime_ffmpeg_t *ptr);
 int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
-	quicktime_t *file,
-	unsigned char **row_pointers,
-	int track);
+	quicktime_t *file, unsigned char **row_pointers, int track);
 
 int quicktime_decode_audio3(
 		AVCodecContext *avctx, int16_t *samples,
@@ -79,10 +73,4 @@ int quicktime_decode_audio3(
 
 
 #endif
-
-
-
-
-
-
 

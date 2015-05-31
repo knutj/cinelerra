@@ -63,8 +63,8 @@ static int limit_samples(int samples)
 {
 	if(samples > MAX_VBR_BUFFER)
 	{
-		fprintf(stderr, 
-			"quicktime_align_vbr: can't decode more than %p samples at a time.\n",
+		fprintf(stderr, "quicktime_align_vbr: "
+			"can't decode more than 0x%x samples at a time.\n",
 			MAX_VBR_BUFFER);
 		return 1;
 	}
@@ -114,7 +114,7 @@ int quicktime_read_vbr(quicktime_t *file,
 
 
 	quicktime_set_position(file, offset);
-	result = !quicktime_read_data(file, vbr->input_buffer + vbr->input_size, size);
+	result = !quicktime_read_data(file, (char*)vbr->input_buffer + vbr->input_size, size);
 	vbr->input_size += size;
 	vbr->sample++;
 	return result;
@@ -186,7 +186,7 @@ void quicktime_copy_vbr_float(quicktime_vbr_t *vbr,
 	float *output, 
 	int channel)
 {
-	int i, j;
+	int i;
 	int input_ptr = vbr->buffer_ptr - 
 		(vbr->buffer_end - start_position);
 	while(input_ptr < 0) input_ptr += MAX_VBR_BUFFER;
@@ -206,7 +206,7 @@ void quicktime_copy_vbr_int16(quicktime_vbr_t *vbr,
 	int16_t *output, 
 	int channel)
 {
-	int i, j;
+	int i;
 	int input_ptr = vbr->buffer_ptr - 
 		(vbr->buffer_end - start_position);
 	while(input_ptr < 0) input_ptr += MAX_VBR_BUFFER;

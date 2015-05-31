@@ -3,11 +3,11 @@
 #include <string.h>
 
 #define DEFAULT_INFO "Made with Quicktime for Linux"
-static unsigned char cpy_tag[] = {0xa9, 'c', 'p', 'y'};
-static unsigned char nam_tag[] = {0xa9, 'n', 'a', 'm'};
-static unsigned char inf_tag[] = {0xa9, 'i', 'n', 'f'};
-static unsigned char req_tag[] = {0xa9, 'r', 'e', 'q'};
-static unsigned char enc_tag[] = {0xa9, 'e', 'n', 'c'};
+static char cpy_tag[] = {(char)0xa9, 'c', 'p', 'y'};
+static char nam_tag[] = {(char)0xa9, 'n', 'a', 'm'};
+static char inf_tag[] = {(char)0xa9, 'i', 'n', 'f'};
+static char req_tag[] = {(char)0xa9, 'r', 'e', 'q'};
+static char enc_tag[] = {(char)0xa9, 'e', 'n', 'c'};
 
 int quicktime_udta_init(quicktime_udta_t *udta)
 {

@@ -1,13 +1,11 @@
 #include "colormodels.h"
 #include "funcprotos.h"
-#include <pthread.h>
 #include "quicktime.h"
 #include "qtffmpeg.h"
 #include "qtprivate.h"
+
 #include <string.h>
 // FFMPEG front end for quicktime.
-
-
 
 
 // Different ffmpeg versions
@@ -20,7 +18,7 @@ pthread_mutex_t ffmpeg_lock = PTHREAD_MUTEX_INITIALIZER;
 
 
 
-
+#if 0
 static void dump_context(void *ptr)
 {
 	AVCodecContext *context = (AVCodecContext*)ptr;
@@ -145,6 +143,7 @@ static void dump_context(void *ptr)
 	printf("    skip_alpha=%d\n",context->skip_alpha);
 	printf("    seek_preroll=%d\n",context->seek_preroll);
 }
+#endif
 
 quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 	int fields,
@@ -204,18 +203,18 @@ quicktime_ffmpeg_t* quicktime_new_ffmpeg(int cpus,
 		context->height = ptr->height_i;
 //		context->width = w;
 //		context->height = h;
-		context->extradata = fake_data;
+		context->extradata = (unsigned char *)fake_data;
 		context->extradata_size = 0;
 
 		if(esds->mpeg4_header && esds->mpeg4_header_size)
 		{
-			context->extradata = esds->mpeg4_header;
+			context->extradata = (unsigned char *)esds->mpeg4_header;
 			context->extradata_size = esds->mpeg4_header_size;
 		}
 
 		if(avcc->data && avcc->data_size)
 		{
-			context->extradata = avcc->data;
+			context->extradata = (unsigned char *)avcc->data;
 			context->extradata_size = avcc->data_size;
 		}
 		if(cpus > 1)
@@ -306,7 +305,6 @@ static int decode_wrapper(quicktime_t *file,
 	int result = 0;
 	int bytes = 0;
 	int header_bytes = 0;
- 	char *compressor = vtrack->track->mdia.minf.stbl.stsd.table[0].format;
 	quicktime_trak_t *trak = vtrack->track;
 	quicktime_stsd_table_t *stsd_table = &trak->mdia.minf.stbl.stsd.table[0];
 
@@ -336,7 +334,7 @@ static int decode_wrapper(quicktime_t *file,
 //printf("decode_wrapper %d frame_number=%d field=%d offset=0x%llx bytes=%d header_bytes=%d\n",
 //__LINE__, frame_number, current_field, quicktime_ftell(file), bytes, header_bytes);
 	if(!quicktime_read_data(file,
-		ffmpeg->work_buffer + header_bytes,
+		(char*)ffmpeg->work_buffer + header_bytes,
 		bytes))
 		result = -1;
 
@@ -468,7 +466,6 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 	int track)
 {
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
-	quicktime_trak_t *trak = vtrack->track;
 	int current_field = vtrack->current_position % ffmpeg->fields;
 	int input_cmodel;
 	int result = 0;
@@ -525,7 +522,7 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 			int first_frame;
 			int frame2 = vtrack->current_position;
 			int current_frame = frame2;
-			int do_i_frame = 1;
+//			int do_i_frame = 1;
 
 // If an interleaved codec, the opposite field would have been decoded in the previous
 // seek.
@@ -563,7 +560,7 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 				frame2 > ffmpeg->last_frame[current_field])
 			{
 				frame1 = ffmpeg->last_frame[current_field] + ffmpeg->fields;
-				do_i_frame = 0;
+//				do_i_frame = 0;
 			}
 
 			first_frame = frame1;
@@ -670,10 +667,11 @@ int quicktime_ffmpeg_decode(quicktime_ffmpeg_t *ffmpeg,
 			input_cmodel = BC_YUV9P;
 			break;
 		default:
+			input_cmodel = 0;
+			if(!ffmpeg->picture[current_field].data[0]) break;
 			fprintf(stderr,
 				"quicktime_ffmpeg_decode: unrecognized color model %d\n",
 				ffmpeg->decoder_context[current_field]->pix_fmt);
-			input_cmodel = 0;
 			break;
 	}
 
@@ -741,8 +739,7 @@ int quicktime_decode_audio3(
 	ret = avcodec_decode_audio4(avctx, frame, &got_frame, avpkt);
 
 	if( ret >= 0 && got_frame ) {
-		int ch, plane_size;
-		int planar = av_sample_fmt_is_planar(avctx->sample_fmt);
+		int plane_size;
 		int data_size = av_samples_get_buffer_size(&plane_size, avctx->channels,
 					   frame->nb_samples, avctx->sample_fmt, 1);
 		if( *frame_size_ptr < data_size ) {

@@ -268,7 +268,7 @@ probe libsndfile "sndfile.h" sf_open -lsndfile
 probe ilmbase "OpenEXR/ImfCRgbaFile.h" ImfOpenInputFile -lIlmImf -lIlmThread -lIex
 probe openexr "OpenEXR/ImfCRgbaFile.h" ImfOpenInputFile -lIlmImf -lIlmThread -lIex
 probe libtheora "theora/theoraenc.h" th_info_init -ltheora -ltheoraenc -ltheoradec -logg
-probe libvorbis "vorbis/vorbisenc.h" vorbis_info_init -lvorbisenc -lvorbis -logg
+probe libvorbis "vorbis/vorbisenc.h" vorbis_info_init -lvorbisenc -lvorbis -lvorbisfile -logg
 probe libvpx "vpx/vpx_decoder.h" vpx_codec_decode -lvpx
 probe tiff "tiff.h tiffio.h" TIFFOpen -ltiff
 probe twolame "twolame.h" twolame_encode_buffer_float32_interleaved -ltwolame
@@ -276,8 +276,8 @@ probe x264 "stdint.h x264.h" x264_encoder_encode -lx264
 probe x265 "x265.h" x265_encoder_encode -lx265
 
 echo ""
-# for ffmpeg deps/quicktime link
-forced_libs="ffmpeg libdv lame openjpeg giflib libuuid libdv x264 x265"
+# for ffmpeg deps/quicktime link/broken disto libs
+forced_libs="encore ffmpeg giflib libuuid"
 for name in $LIBS; do
   if is_in $name $forced_libs; then
     set - ${!name}

@@ -76,7 +76,7 @@ void quicktime_stts_append_audio(quicktime_t *file,
 		sizeof(quicktime_stts_table_t) * stts->total_entries);
 	table = &(stts->table[stts->total_entries - 1]);
 	table->sample_duration = sample_duration;
-	table->sample_count++;
+	table->sample_count = 1;
 }
 
 
@@ -104,11 +104,12 @@ void quicktime_stts_dump(quicktime_stts_t *stts)
 	int i;
 	printf("     time to sample\n");
 	printf("      version %d\n", stts->version);
-	printf("      flags %d\n", stts->flags);
-	printf("      total_entries %d\n", stts->total_entries);
+	printf("      flags %ld\n", stts->flags);
+	printf("      total_entries %ld\n", stts->total_entries);
 	for(i = 0; i < stts->total_entries; i++)
 	{
-		printf("       count %ld duration %ld\n", stts->table[i].sample_count, stts->table[i].sample_duration);
+		printf("       count %ld duration %ld\n",
+			stts->table[i].sample_count, stts->table[i].sample_duration);
 	}
 }
 

@@ -38,6 +38,7 @@ unpack=$(call unpack_$(call ext,$(1)),$(1))
 unpack_gz=tar -xzf $(1)
 unpack_bz2=tar -xjf $(1)
 unpack_xz=tar -xJf $(1)
+bld_depends=$(if $(filter $(firstword $($(1))),static),$(call pkg-built,$(1)))
 bld_path=`echo $(THIRDPARTY)/$(1)*`/$(2)
 inc_path=$(if $(filter $(firstword $($(1))),static),-I$(call bld_path,$(1),$(2)))
 ld_path=$(if $(filter $(firstword $($(1))),static),-L$(call bld_path,$(1),$(2)))
@@ -65,7 +66,7 @@ $(call pkg-source,$(1)):
 		patch -d $(1)* -p1 < $(pch))
 	touch $$@
 
-$(call pkg-config,$(1)): $(call pkg-source,$(1)) $(foreach dep,$(2),$(call pkg-built,$(dep)))
+$(call pkg-config,$(1)): $(call pkg-source,$(1)) $(foreach dep,$(2),$(call bld_depends,$(dep)))
 	@echo "CONFIGURING $(1)"
 	cd $(1)* && \
 		$($(1).cfg_vars) ./configure $($(1).cfg_params)
@@ -93,7 +94,7 @@ esound.cfg_vars+= AUDIOFILE_LIBS="$(call ld_path,audiofile,libaudiofile/.libs)"
 esound.cfg_params= --enable-shared=no --with-pic
 esound.ldflags=-lm
 faac.cfg_params= --enable-shared=no
-faad2.cfg_params= --enable-shared=no
+faad2.cfg_params= --with-drm --enable-shared=no
 fdk.cfg_vars= ./autogen.sh ;
 fdk.cfg_params= --enable-shared=no
 fdk.mak_params= ; for f in $(call bld_path,fdk,/lib*/include); do ln -s include `dirname $$$$f`/fdk-aac ; done
@@ -144,10 +145,14 @@ ffmpeg.cfg_params= \
 		-ldl $(EXTRA_LIBS)" \
 	--extra-ldflags="-ldl"
 
+audiofile.cfg_params=--enable-shared=no
+audiofile.mak_params=LIBS="-lm -lstdc++"
 flac.cfg_params= --enable-shared=no
 flac.cflags="$(call inc_path,libogg,include) $(call ld_path,libogg,src/.libs)"
+giflib.cfg_params=--enable-shared=no
 ilmbase.cfg_params=--prefix=$(call bld_path,ilmbase,usr)
 ilmbase.mak_params=; make -C ilmbase* install; cd $(call bld_path,ilmbase); ln -sf lib64 usr/lib
+lame.cfg_params=--enable-shared=no
 lame.mak_params= ; cd $(call bld_path,lame,include); ln -sf . lame
 mjpegtools.cflags="$(call inc_path,libjpeg) $(call ld_path,libjpeg,.libs)"
 mjpegtools.mak_params=; ln -s . $(call bld_path,mjpegtools,utils)/mjpegtools 
@@ -162,11 +167,14 @@ libiec61883.cfg_vars=PKG_CONFIG_PATH=$(bld_path libraw1394)
 libiec61883.cflags="$(inc_path libraw1394)"
 libiec61883.ldflags="$(ld_path libraw1394,src/.libs)"
 libiec61883.cfg_params= --enable-shared=no
+libjpeg.cfg_params= --enable-shared=no
+libogg.cfg_params= --enable-shared=no
 libraw1394.cfg_params=  --enable-shared=no; ln -sf src libraw1394
 libtheora.cfg_vars=PKG_CONFIG_PATH=$(bld_path libogg):$(bld_path libvorbis)
 libtheora.cflags="$(inc_path libogg,include) $(inc_path libogg,src) $(inc_path libvorbis,include)"
 libtheora.ldflags="$(ld_path libvorbis,lib/.libs) $(ld_path libogg,src/.libs)"
 libtheora.cfg_params= --disable-examples --enable-shared=no
+libuuid.cfg_params=--enable-shared=no
 libvorbis.cfg_params= --disable-oggtest --enable-shared=no
 openjpeg.cfg_vars=echo "exec cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_MJ2:BOOL=ON ." > ./configure; chmod +x ./configure;
 openjpeg.mak_params= openmj2

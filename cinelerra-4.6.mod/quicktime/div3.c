@@ -1,11 +1,7 @@
-#include "libavcodec/avcodec.h"
 #include "colormodels.h"
 #include "funcprotos.h"
 #include "quicktime.h"
-
-
-#include <pthread.h>
-
+#include "qtffmpeg.h"
 
 
 typedef struct
@@ -80,7 +76,7 @@ static void init_mutex()
 	}
 }
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_div3_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	if(codec->decode_initialized)

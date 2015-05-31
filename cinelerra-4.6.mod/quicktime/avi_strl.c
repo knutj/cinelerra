@@ -234,22 +234,20 @@ void quicktime_read_strl(quicktime_t *file,
 // These are 0 if no track is currently being processed.
 // Set to 1 if audio or video track is being processed.
 	char data[4], codec[4];
-	int denominator;
-	int numerator;
-	double frame_rate;
-	int width;
-	int height;
-	int depth;
-	int frames;
+	int denominator = 0;
+	int numerator = 0;
+	double frame_rate = 0;
+	int width = 0;
+	int height = 0;
+	int depth = 0;
+	int frames = 0;
 	int bytes_per_sample = 0;
-	int sample_size;
+	int sample_size = 0;
 	int samples_per_chunk = 0;
-	int channels;
-	int sample_rate;
-	int compression_id;
+	int channels = 0;
+	int sample_rate = 0;
+	int compression_id = 0;
 	quicktime_trak_t *trak = 0;
-	quicktime_riff_t *first_riff = file->riff[0];
-
 
 	codec[0] = codec[1] = codec[2] = codec[3] = 0;
 

@@ -44,7 +44,6 @@ int quicktime_read_asf(quicktime_t *file)
 {
 	quicktime_asf_t *asf = calloc(1, sizeof(quicktime_asf_t));
 	int got_header = 0;
-	int debug = 1;
 	int i;
 
 	file->asf = asf;
@@ -60,7 +59,7 @@ int quicktime_read_asf(quicktime_t *file)
 		quicktime_read_guid(file, &guid);
 		guid_size = quicktime_read_int64_le(file);
 
-		printf("quicktime_read_asf start=0x%llx size=0x%llx\n", guid_start, guid_size);
+		printf("quicktime_read_asf start=0x%jx size=0x%jx\n", guid_start, guid_size);
 
 // Glitch
 		if(guid_size < 24) return 1;
@@ -84,20 +83,15 @@ int quicktime_read_asf(quicktime_t *file)
 			asf->header.max_bitrate = quicktime_read_int32_le(file);
 			asf->header.packet_size = asf->header.max_packet;
 		}
-		else
-		if(!memcmp(&guid, &index_guid, sizeof(guid)))
+		else if(!memcmp(&guid, &index_guid, sizeof(guid)))
 		{
 			quicktime_guid_t leaf_guid;
-			int max;
-			int count;
-			int total_packets = 0;
-
 // Leaf Guid
 			quicktime_read_guid(file, &leaf_guid);
 // indexed interval
 			quicktime_read_int64_le(file);
 // max
-			max = quicktime_read_int32_le(file);
+			quicktime_read_int32_le(file);
 // count
 			asf->index_size = quicktime_read_int32_le(file);
 			asf->index = calloc(sizeof(quicktime_asfpacket_t), asf->index_size);
@@ -108,8 +102,7 @@ int quicktime_read_asf(quicktime_t *file)
 				asf->index[i].count = quicktime_read_int16_le(file);
 			}
 		}
-		else
-		if(!memcmp(&guid, &stream_header, sizeof(guid)))
+		else if(!memcmp(&guid, &stream_header, sizeof(guid)))
 		{
 			quicktime_asfstream_t *stream = 
 				asf->streams[asf->total_streams++] = 
@@ -118,11 +111,9 @@ int quicktime_read_asf(quicktime_t *file)
 			quicktime_read_guid(file, &leaf_guid);
 			if(!memcmp(&leaf_guid, &audio_stream, sizeof(leaf_guid)))
 				stream->is_audio = 1;
-			else
-			if(!memcmp(&leaf_guid, &video_stream, sizeof(leaf_guid)))
+			else if(!memcmp(&leaf_guid, &video_stream, sizeof(leaf_guid)))
 				stream->is_video = 1;
-			else
-			if(!memcmp(&leaf_guid, &ext_stream_embed_stream_header, sizeof(leaf_guid)))
+			else if(!memcmp(&leaf_guid, &ext_stream_embed_stream_header, sizeof(leaf_guid)))
 				stream->is_ext_audio = 1;
 			quicktime_read_guid(file, &leaf_guid);
 			
@@ -134,17 +125,17 @@ int quicktime_read_asf(quicktime_t *file)
 			if(stream->is_ext_audio)
 			{
 				quicktime_read_guid(file, &leaf_guid);
-                if (!memcmp(&leaf_guid, &ext_stream_audio_stream, sizeof(leaf_guid)))
+				if (!memcmp(&leaf_guid, &ext_stream_audio_stream, sizeof(leaf_guid)))
 				{
-                    stream->is_audio = 1;
+					stream->is_audio = 1;
 					stream->is_ext_audio = 0;
-                    quicktime_read_guid(file, &leaf_guid);
-                    quicktime_read_int32_le(file);
-                    quicktime_read_int32_le(file);
-                    quicktime_read_int32_le(file);
-                    quicktime_read_guid(file, &leaf_guid);
-                    quicktime_read_int32_le(file);
-                }
+					quicktime_read_guid(file, &leaf_guid);
+					quicktime_read_int32_le(file);
+					quicktime_read_int32_le(file);
+					quicktime_read_int32_le(file);
+					quicktime_read_guid(file, &leaf_guid);
+					quicktime_read_int32_le(file);
+				}
 			}
 			
 			
@@ -163,15 +154,15 @@ int quicktime_read_asf(quicktime_t *file)
 				if(stream->type_specific_size > 16)
 				{
 					stream->extradata_size = quicktime_read_int16_le(file);
-        			if (stream->extradata_size > 0) 
+	        			if (stream->extradata_size > 0) 
 					{
-            			if (stream->extradata_size > stream->type_specific_size - 18)
-                			stream->extradata_size = stream->type_specific_size - 18;
-            			stream->extradata = calloc(1, stream->extradata_size + 1024);
-            			quicktime_read_data(file, stream->extradata, stream->extradata_size);
-        			}
+						if (stream->extradata_size > stream->type_specific_size - 18)
+							stream->extradata_size = stream->type_specific_size - 18;
+						stream->extradata = calloc(1, stream->extradata_size + 1024);
+						quicktime_read_data(file, (char*)stream->extradata, stream->extradata_size);
+					}
 					else
-            			stream->extradata_size = 0;
+						stream->extradata_size = 0;
 					
 					if(stream->type_specific_size - stream->extradata_size - 18 > 0)
 						quicktime_set_position(file,
@@ -182,16 +173,14 @@ int quicktime_read_asf(quicktime_t *file)
 
 // Make fourcc from codec_tag and bits_per_sample
 			}
-			else
-			if(stream->is_video)
+			else if(stream->is_video)
 			{
 				int size1;
-				int size2;
 				quicktime_read_int32_le(file);
 				quicktime_read_int32_le(file);
 				quicktime_read_char(file);
 				size1 = quicktime_read_int16_le(file);
-				size2 = quicktime_read_int32_le(file);
+				quicktime_read_int32_le(file);
 				stream->width = quicktime_read_int32_le(file);
 				stream->height = quicktime_read_int32_le(file);
 				quicktime_read_int16_le(file);
@@ -202,7 +191,7 @@ int quicktime_read_asf(quicktime_t *file)
 				{
 					stream->extradata_size = size1 - 40;
 					stream->extradata = calloc(1, stream->extradata_size + 1024);
-					quicktime_read_data(file, stream->extradata, stream->extradata_size);
+					quicktime_read_data(file, (char*)stream->extradata, stream->extradata_size);
 				}
 
 // Make fourcc from codec_tag
@@ -217,8 +206,7 @@ int quicktime_read_asf(quicktime_t *file)
 		if(quicktime_position(file) >= file->total_length) break;
 	}
 
-quicktime_dump_asf(asf);
-return 1;
+	quicktime_dump_asf(asf);
 	return !got_header;
 }
 
@@ -226,7 +214,7 @@ void quicktime_dump_asf(quicktime_asf_t *asf)
 {
 	int i;
 	printf("asf header:\n");
-	printf("  total_packets=%d\n  min_packet=%d\n  max_packet=%d\n  packet_size=%d\n",
+	printf("  total_packets=%jd\n  min_packet=%d\n  max_packet=%d\n  packet_size=%d\n",
 		asf->header.total_packets,
 		asf->header.min_packet,
 		asf->header.max_packet,

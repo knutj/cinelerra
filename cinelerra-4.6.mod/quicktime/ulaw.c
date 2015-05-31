@@ -20,36 +20,9 @@ typedef struct
 #define uBIAS 0x84
 #define uCLIP 32635
 
-int ulaw_init_ulawtoint16(quicktime_t *file, int track)
-{
-	int i;
-	quicktime_audio_map_t *atrack = &(file->atracks[track]);
-	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
-
-/* We use the floating point table to get values for the 16 bit table */
-	ulaw_init_ulawtofloat(file, track);
-	if(!codec->ulawtoint16_table)
-	{
-		codec->ulawtoint16_table = malloc(sizeof(int16_t) * 256);
-		codec->ulawtoint16_ptr = codec->ulawtoint16_table;
-
-		for(i = 0; i < 256; i++)
-		{
-			codec->ulawtoint16_table[i] = (int)(32768 * codec->ulawtofloat_ptr[i]);
-		}
-	}
-	return 0;
-}
-
-int16_t ulaw_bytetoint16(quicktime_ulaw_codec_t *codec, unsigned char input)
-{
-	return codec->ulawtoint16_ptr[input];
-}
-
 int ulaw_init_ulawtofloat(quicktime_t *file, int track)
 {
 	int i;
-	float value;
 	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)file->atracks[track].codec)->priv;
 
 	if(!codec->ulawtofloat_table)
@@ -79,6 +52,32 @@ int ulaw_init_ulawtofloat(quicktime_t *file, int track)
 float ulaw_bytetofloat(quicktime_ulaw_codec_t *codec, unsigned char input)
 {
 	return codec->ulawtofloat_ptr[input];
+}
+
+int ulaw_init_ulawtoint16(quicktime_t *file, int track)
+{
+	int i;
+	quicktime_audio_map_t *atrack = &(file->atracks[track]);
+	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
+
+/* We use the floating point table to get values for the 16 bit table */
+	ulaw_init_ulawtofloat(file, track);
+	if(!codec->ulawtoint16_table)
+	{
+		codec->ulawtoint16_table = malloc(sizeof(int16_t) * 256);
+		codec->ulawtoint16_ptr = codec->ulawtoint16_table;
+
+		for(i = 0; i < 256; i++)
+		{
+			codec->ulawtoint16_table[i] = (int)(32768 * codec->ulawtofloat_ptr[i]);
+		}
+	}
+	return 0;
+}
+
+int16_t ulaw_bytetoint16(quicktime_ulaw_codec_t *codec, unsigned char input)
+{
+	return codec->ulawtoint16_ptr[input];
 }
 
 int ulaw_init_int16toulaw(quicktime_t *file, int track)
@@ -192,13 +191,12 @@ int ulaw_delete_tables(quicktime_audio_map_t *atrack)
 
 /* =================================== public for ulaw */
 
-static int quicktime_delete_codec_ulaw(quicktime_audio_map_t *atrack)
+static void quicktime_delete_codec_ulaw(quicktime_audio_map_t *atrack)
 {
 	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
 	ulaw_delete_tables(atrack);
 	free(codec);
-	return 0;
 }
 
 static int quicktime_decode_ulaw(quicktime_t *file, 
@@ -209,7 +207,6 @@ static int quicktime_decode_ulaw(quicktime_t *file,
 					int channel)
 {
 	int result = 0;
-	long i;
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 
@@ -220,7 +217,7 @@ static int quicktime_decode_ulaw(quicktime_t *file,
 
 	if(!result)
 	{
-		result = !quicktime_read_audio(file, codec->read_buffer, samples, track);
+		result = !quicktime_read_audio(file, (char*)codec->read_buffer, samples, track);
 // Undo increment since this is done in codecs.c
 		track_map->current_position -= samples;
 
@@ -268,7 +265,6 @@ static int quicktime_encode_ulaw(quicktime_t *file,
 {
 	int result = 0;
 	int channel, step;
-	int64_t i;
 	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)file->atracks[track].codec)->priv;
 	quicktime_atom_t chunk_atom;
 	quicktime_audio_map_t *track_map = &file->atracks[track];
@@ -314,14 +310,10 @@ static int quicktime_encode_ulaw(quicktime_t *file,
 		}
 
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = quicktime_write_data(file, 
-			codec->read_buffer, 
+		result = quicktime_write_data(file, (char*)codec->read_buffer, 
 			samples * file->atracks[track].channels);
-		quicktime_write_chunk_footer(file, 
-						trak,
-						track_map->current_chunk,
-						&chunk_atom, 
-						samples);
+		quicktime_write_chunk_footer(file, trak,
+			track_map->current_chunk, &chunk_atom, samples);
 
 /* defeat fwrite's return */
 		if(result) 
@@ -339,7 +331,7 @@ static int quicktime_encode_ulaw(quicktime_t *file,
 void quicktime_init_codec_ulaw(quicktime_audio_map_t *atrack)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)atrack->codec;
-	quicktime_ulaw_codec_t *codec;
+//	quicktime_ulaw_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
 /* Init public items */
 	codec_base->priv = calloc(1, sizeof(quicktime_ulaw_codec_t));
@@ -354,5 +346,4 @@ void quicktime_init_codec_ulaw(quicktime_audio_map_t *atrack)
 	codec_base->wav_id = 0x07;
 
 /* Init private items */
-	codec = ((quicktime_codec_t*)atrack->codec)->priv;
 }

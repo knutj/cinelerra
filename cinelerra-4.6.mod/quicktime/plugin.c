@@ -13,23 +13,32 @@ static quicktime_codectable_t *acodecs = NULL;
 
 
 
-static int register_vcodec(void (*init_vcodec)(quicktime_video_map_t *))
+static int register_vcodec(void (*init_vcodec)(quicktime_video_map_t *),
+		const char *fourcc, int vid_id)
 {
-    total_vcodecs++;
-    vcodecs = (quicktime_codectable_t *)realloc(vcodecs,
-	    total_vcodecs * sizeof(quicktime_codectable_t));
-
-    vcodecs[total_vcodecs - 1].init_vcodec = init_vcodec;
-    return total_vcodecs - 1;
+	int idx = total_vcodecs++;
+	const uint8_t *bp = (const uint8_t *)fourcc;
+	vcodecs = (quicktime_codectable_t *)realloc(vcodecs,
+		total_vcodecs * sizeof(quicktime_codectable_t));
+	quicktime_codectable_t *codec = vcodecs + idx;
+	codec->fourcc = (bp[3]<<24) | (bp[2]<<16) | (bp[1]<<8) | (bp[0]<<0);
+	codec->id = vid_id;
+	codec->init_vcodec = init_vcodec;
+	return idx;
 }
 
-static int register_acodec(void (*init_acodec)(quicktime_audio_map_t *))
+static int register_acodec(void (*init_acodec)(quicktime_audio_map_t *),
+		const char *fourcc, int wav_id)
 {
-    total_acodecs++;
-    acodecs = (quicktime_codectable_t *)realloc(acodecs,
+	int idx = total_acodecs++;
+	const uint8_t *bp = (const uint8_t *)fourcc;
+	acodecs = (quicktime_codectable_t *)realloc(acodecs,
 		total_acodecs * sizeof(quicktime_codectable_t));
-    acodecs[total_acodecs - 1].init_acodec = init_acodec;
-    return total_acodecs - 1;
+	quicktime_codectable_t *codec = acodecs + idx;
+	codec->fourcc = (bp[3]<<24) | (bp[2]<<16) | (bp[1]<<8) | (bp[0]<<0);
+	codec->id = wav_id;
+	codec->init_acodec = init_acodec;
+	return idx;
 }
 
 
@@ -48,19 +57,19 @@ static int register_acodec(void (*init_acodec)(quicktime_audio_map_t *))
 
 static void register_acodecs()
 {
-	register_acodec(quicktime_init_codec_twos);
-	register_acodec(quicktime_init_codec_sowt);
-	register_acodec(quicktime_init_codec_rawaudio);
-	register_acodec(quicktime_init_codec_ima4);
-	register_acodec(quicktime_init_codec_mp4a);
-	register_acodec(quicktime_init_codec_qdm2);
-	register_acodec(quicktime_init_codec_ulaw);
+	register_acodec(quicktime_init_codec_twos, QUICKTIME_TWOS, 0x01);
+	register_acodec(quicktime_init_codec_sowt, QUICKTIME_SOWT, 0x01);
+	register_acodec(quicktime_init_codec_rawaudio, QUICKTIME_RAW, 0x01);
+	register_acodec(quicktime_init_codec_ima4, QUICKTIME_IMA4, 0x11);
+	register_acodec(quicktime_init_codec_mp4a, QUICKTIME_MP4A, 0);
+	register_acodec(quicktime_init_codec_qdm2, QUICKTIME_QDM2, 0);
+	register_acodec(quicktime_init_codec_ulaw, QUICKTIME_ULAW, 0x07);
 
-	register_acodec(quicktime_init_codec_vorbis);
-	register_acodec(quicktime_init_codec_mp3);
-	register_acodec(quicktime_init_codec_wmx2);
-	register_acodec(quicktime_init_codec_wmav1);
-	register_acodec(quicktime_init_codec_wmav2);
+	register_acodec(quicktime_init_codec_vorbis, QUICKTIME_VORBIS, 0x01);
+	register_acodec(quicktime_init_codec_mp3, QUICKTIME_MP3, 0x55);
+	register_acodec(quicktime_init_codec_wmx2, QUICKTIME_WMX2, 0x11);
+	register_acodec(quicktime_init_codec_wmav1, QUICKTIME_WMA, 0x160);
+	register_acodec(quicktime_init_codec_wmav2, QUICKTIME_WMA, 0x161);
 }
 
 
@@ -84,39 +93,39 @@ static void register_acodecs()
 static void register_vcodecs()
 {
 
-	register_vcodec(quicktime_init_codec_raw);
+	register_vcodec(quicktime_init_codec_raw, QUICKTIME_RAW, 0);
 
-	register_vcodec(quicktime_init_codec_h264);
-	register_vcodec(quicktime_init_codec_hv64);
-	register_vcodec(quicktime_init_codec_divx);
-	register_vcodec(quicktime_init_codec_hv60);
-	register_vcodec(quicktime_init_codec_div5);
-	register_vcodec(quicktime_init_codec_div3);
-	register_vcodec(quicktime_init_codec_div3v2);
-	register_vcodec(quicktime_init_codec_div3lower);
-	register_vcodec(quicktime_init_codec_mp4v);
-	register_vcodec(quicktime_init_codec_xvid);
-	register_vcodec(quicktime_init_codec_dnxhd);
-	register_vcodec(quicktime_init_codec_svq1);
-	register_vcodec(quicktime_init_codec_svq3);
-	register_vcodec(quicktime_init_codec_h263);
-	register_vcodec(quicktime_init_codec_dv);
-	register_vcodec(quicktime_init_codec_dvsd);
-	register_vcodec(quicktime_init_codec_dvcp);
+	register_vcodec(quicktime_init_codec_h264, QUICKTIME_H264, 1);
+	register_vcodec(quicktime_init_codec_hv64, QUICKTIME_H264, 2);
+	register_vcodec(quicktime_init_codec_divx, QUICKTIME_DIVX, 0);
+	register_vcodec(quicktime_init_codec_hv60, QUICKTIME_HV60, 0);
+	register_vcodec(quicktime_init_codec_div5, QUICKTIME_DX50, 0);
+	register_vcodec(quicktime_init_codec_div3, QUICKTIME_DIV3, 0);
+	register_vcodec(quicktime_init_codec_div3v2, QUICKTIME_MP42, 0);
+	register_vcodec(quicktime_init_codec_div3lower, QUICKTIME_DIV3_LOWER, 0);
+	register_vcodec(quicktime_init_codec_mp4v, QUICKTIME_MP4V, 0);
+	register_vcodec(quicktime_init_codec_xvid, QUICKTIME_XVID, 0);
+	register_vcodec(quicktime_init_codec_dnxhd, QUICKTIME_DNXHD, 0);
+	register_vcodec(quicktime_init_codec_svq1, QUICKTIME_SVQ1, 0);
+	register_vcodec(quicktime_init_codec_svq3, QUICKTIME_SVQ3, 0);
+	register_vcodec(quicktime_init_codec_h263, QUICKTIME_H263, 0);
+	register_vcodec(quicktime_init_codec_dv, QUICKTIME_DV, 0);
+	register_vcodec(quicktime_init_codec_dvsd, QUICKTIME_DVSD, 0);
+	register_vcodec(quicktime_init_codec_dvcp, QUICKTIME_DVCP, 0);
 
-	register_vcodec(quicktime_init_codec_jpeg);
-	register_vcodec(quicktime_init_codec_mjpa);
-	register_vcodec(quicktime_init_codec_mjpg);
-	register_vcodec(quicktime_init_codec_png);
-	register_vcodec(quicktime_init_codec_rle);
+	register_vcodec(quicktime_init_codec_jpeg, QUICKTIME_JPEG, 0);
+	register_vcodec(quicktime_init_codec_mjpa, QUICKTIME_MJPA, 0);
+	register_vcodec(quicktime_init_codec_mjpg, QUICKTIME_MJPG, 0);
+	register_vcodec(quicktime_init_codec_png, QUICKTIME_PNG, 0);
+	register_vcodec(quicktime_init_codec_rle, QUICKTIME_RLE, 0);
 
-	register_vcodec(quicktime_init_codec_yuv2);
-	register_vcodec(quicktime_init_codec_2vuy);
-	register_vcodec(quicktime_init_codec_yuv4);
-	register_vcodec(quicktime_init_codec_yv12);
-	register_vcodec(quicktime_init_codec_v410);
-	register_vcodec(quicktime_init_codec_v308);
-	register_vcodec(quicktime_init_codec_v408);
+	register_vcodec(quicktime_init_codec_yuv2, QUICKTIME_YUV2, 0);
+	register_vcodec(quicktime_init_codec_2vuy, QUICKTIME_2VUY, 0);
+	register_vcodec(quicktime_init_codec_yuv4, QUICKTIME_YUV4, 0);
+	register_vcodec(quicktime_init_codec_yv12, QUICKTIME_YUV420, 0);
+	register_vcodec(quicktime_init_codec_v410, QUICKTIME_YUV444_10bit, 0);
+	register_vcodec(quicktime_init_codec_v308, QUICKTIME_YUV444, 0);
+	register_vcodec(quicktime_init_codec_v408, QUICKTIME_YUVA4444, 0);
 }
 
 
@@ -124,64 +133,46 @@ static void register_vcodecs()
 
 int quicktime_find_vcodec(quicktime_video_map_t *vtrack)
 {
-  	int i;
+	int i;
+	quicktime_codec_t *codec_base = 0;
 	char *compressor = vtrack->track->mdia.minf.stbl.stsd.table[0].format;
-	quicktime_codec_t *codec_base = (quicktime_codec_t*)vtrack->codec;
+	const uint8_t *bp = (const uint8_t *)compressor;
+	uint32_t fourcc = (bp[3]<<24) | (bp[2]<<16) | (bp[1]<<8) | (bp[0]<<0);
 	if(!total_vcodecs) register_vcodecs();
-
-  	for(i = 0; i < total_vcodecs; i++)
-  	{
-		quicktime_codectable_t *table = &vcodecs[i];
-		table->init_vcodec(vtrack);
-		if(quicktime_match_32(compressor, codec_base->fourcc))
-		{
-			return 0;
-		}
-		else
-		{
-			codec_base->delete_vcodec(vtrack);
-			codec_base->priv = 0;
-		}
-  	}
-
-  	return -1;
+	for(i = 0; i<total_vcodecs; ++i ) {
+		if( fourcc == vcodecs[i].fourcc ) break;
+	}
+	if( i >= total_vcodecs ) return -1;
+	if( !(codec_base = quicktime_new_codec()) ) return -1;
+	vtrack->codec = codec_base;
+	vcodecs[i].init_vcodec(vtrack);
+	return 0;
 }
-
 
 int quicktime_find_acodec(quicktime_audio_map_t *atrack)
 {
 	int i;
 	char *compressor = atrack->track->mdia.minf.stbl.stsd.table[0].format;
 	int compression_id = atrack->track->mdia.minf.stbl.stsd.table[0].compression_id;
-	quicktime_codec_t *codec_base = (quicktime_codec_t*)atrack->codec;
-	int32_t compressor_int = *(int32_t*)compressor;
+	const uint8_t *bp = (const uint8_t *)compressor;
+	uint32_t fourcc = (bp[3]<<24) | (bp[2]<<16) | (bp[1]<<8) | (bp[0]<<0);
 	if(!total_acodecs) register_acodecs();
+	quicktime_codec_t *codec_base = 0;
 
-	for(i = 0; i < total_acodecs; i++)
-	{
-		quicktime_codectable_t *table = &acodecs[i];
-		table->init_acodec(atrack);
-
-// For writing and reading Quicktime
-		if(quicktime_match_32(compressor, codec_base->fourcc))
-			return 0;
-		else
+	for(i = 0; i<total_acodecs; ++i ) {
+		if( fourcc == acodecs[i].fourcc ) break;
 // For reading AVI, sometimes the fourcc is 0 and the compression_id is used instead.
 // Sometimes the compression_id is the fourcc.
-		if((compressor[0] == 0 || compressor_int == codec_base->wav_id) &&
-			codec_base->wav_id == compression_id)
-		{
-			quicktime_copy_char32(compressor, codec_base->fourcc);
-			return 0;
-		}
-		else
-		{
-			codec_base->delete_acodec(atrack);
-			codec_base->priv = 0;
-		}
+		if( acodecs[i].id != compression_id ) continue;
+		if( !compressor[0] || fourcc == acodecs[i].id ) break;
 	}
-
-	return -1;
+	if( i >= total_acodecs ) return -1;
+	if( !(codec_base = quicktime_new_codec()) ) return -1;
+	atrack->codec = codec_base;
+	acodecs[i].init_acodec(atrack);
+// For writing and reading Quicktime
+	quicktime_copy_char32(compressor, codec_base->fourcc);
+	return 0;
 }
 
 
@@ -189,36 +180,26 @@ char* quicktime_acodec_title(char *fourcc)
 {
 	int i;
 	char *result = 0;
-	quicktime_audio_map_t *atrack =
-		(quicktime_audio_map_t*)calloc(1, sizeof(quicktime_audio_map_t));
-	quicktime_codec_t *codec_base =
-		atrack->codec =
-		(quicktime_codec_t*)calloc(1, sizeof(quicktime_codec_t));
-	int done = 0;
+	quicktime_audio_map_t *atrack = (quicktime_audio_map_t*)
+		calloc(1, sizeof(quicktime_audio_map_t));
 	if(!total_acodecs) register_acodecs();
-	for(i = 0; i < total_acodecs && !done; i++)
-	{
-//printf("quicktime_acodec_title 1\n");
-		quicktime_codectable_t *table = &acodecs[i];
-//printf("quicktime_acodec_title 2\n");
-		table->init_acodec(atrack);
-//printf("quicktime_acodec_title 3\n");
-		if(quicktime_match_32(fourcc, codec_base->fourcc))
-		{
+	quicktime_codec_t *codec_base = 0;
+
+	int done = 0;
+	for(i = 0; i < total_acodecs && !done; i++) {
+		if( !(codec_base = quicktime_new_codec()) ) return 0;
+		atrack->codec = codec_base;
+		acodecs[i].init_acodec(atrack);
+		if( quicktime_match_32(fourcc, codec_base->fourcc) ) {
 			result = codec_base->title;
 			done = 1;
 		}
-//printf("quicktime_acodec_title 4\n");
 		codec_base->delete_acodec(atrack);
-//printf("quicktime_acodec_title 5\n");
+		quicktime_del_codec(codec_base);
 	}
-	free(codec_base);
-	free(atrack);
 
-	if(!result)
-		return fourcc;
-	else
-		return result;
+	free(atrack);
+	return result ? result : fourcc;
 }
 
 char* quicktime_vcodec_title(char *fourcc)
@@ -228,40 +209,23 @@ char* quicktime_vcodec_title(char *fourcc)
 
 	quicktime_video_map_t *vtrack =
 		(quicktime_video_map_t*)calloc(1, sizeof(quicktime_video_map_t));
-	quicktime_codec_t *codec_base =
-		vtrack->codec =
-		(quicktime_codec_t*)calloc(1, sizeof(quicktime_codec_t));
-	int done = 0;
-
-
 	if(!total_vcodecs) register_vcodecs();
-	for(i = 0; i < total_vcodecs && !done; i++)
-	{
-		quicktime_codectable_t *table = &vcodecs[i];
-		table->init_vcodec(vtrack);
-		if(quicktime_match_32(fourcc, codec_base->fourcc))
-		{
+	quicktime_codec_t *codec_base = 0;
+
+	int done = 0;
+	for(i = 0; i < total_vcodecs && !done; i++) {
+		if( !(codec_base = quicktime_new_codec()) ) return 0;
+		vtrack->codec = codec_base;
+		vcodecs[i].init_vcodec(vtrack);
+		if( quicktime_match_32(fourcc, codec_base->fourcc) ) {
 			result = codec_base->title;
 			done = 1;
 		}
 		codec_base->delete_vcodec(vtrack);
+		quicktime_del_codec(codec_base);
 	}
 
-
-
-	free(codec_base);
 	free(vtrack);
-
-	if(!result)
-		return fourcc;
-	else
-		return result;
+	return result ? result : fourcc;
 }
-
-
-
-
-
-
-
 

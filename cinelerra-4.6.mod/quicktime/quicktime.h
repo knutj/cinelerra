@@ -53,6 +53,7 @@ extern "C" {
 
 /* RGB uncompressed.  Allows alpha */
 #define QUICKTIME_RAW  "raw "
+#define QUICKTIME_RLE "rle "
 
 /* Jpeg Photo */
 #define QUICKTIME_JPEG "jpeg"
@@ -286,16 +287,8 @@ int quicktime_set_video_position(quicktime_t *file, int64_t frame, int track);
 /* ========================== Access to raw data follows. */
 /* write data for one quicktime track */
 /* the user must handle conversion to the channels in this track */
-/*
- * int quicktime_write_audio(quicktime_t *file,
- * 	char *audio_buffer,
- * 	long samples,
- * 	int track);
- */
-int quicktime_write_frame(quicktime_t *file,
-	unsigned char *video_buffer,
-	int64_t bytes,
-	int track);
+int quicktime_write_audio(quicktime_t *file, char *audio_buffer, long samples,int track);
+int quicktime_write_frame(quicktime_t *file, unsigned char *video_buffer, int64_t bytes, int track);
 
 /* Read an entire chunk. */
 /* read the number of bytes starting at the byte_start in the specified chunk */
@@ -427,6 +420,31 @@ int64_t quicktime_byte_position(quicktime_t *file);
 
 /* Set frame offset for programme timecode */
 void quicktime_set_frame_start(quicktime_t *file, int64_t value);
+
+
+quicktime_trak_t *quicktime_add_track(quicktime_t *file);
+int quicktime_init(quicktime_t *file);
+int quicktime_init_audio_map(quicktime_audio_map_t *atrack, quicktime_trak_t *trak);
+int quicktime_delete_audio_map(quicktime_audio_map_t *atrack);
+int quicktime_init_video_map(quicktime_video_map_t *vtrack, quicktime_trak_t *trak);
+int quicktime_delete_video_map(quicktime_video_map_t *vtrack);
+int quicktime_delete(quicktime_t *file);
+int quicktime_get_timescale(double frame_rate);
+int quicktime_update_positions(quicktime_t *file);
+
+int quicktime_codec_to_id(char *codec);
+quicktime_codec_t *quicktime_new_codec(void);
+void quicktime_del_codec(quicktime_codec_t *codec);
+int new_vcodec(quicktime_video_map_t *vtrack);
+int new_acodec(quicktime_audio_map_t *atrack);
+int quicktime_init_vcodec(quicktime_video_map_t *vtrack);
+int quicktime_init_acodec(quicktime_audio_map_t *atrack);
+int quicktime_delete_vcodec(quicktime_video_map_t *vtrack);
+int quicktime_delete_acodec(quicktime_audio_map_t *atrack);
+int quicktime_flush_acodec(quicktime_t *file,int track);
+void quicktime_flush_vcodec(quicktime_t *file,int track);
+int64_t quicktime_samples_to_bytes(quicktime_trak_t *track,long samples);
+int quicktime_codecs_flush(quicktime_t *file);
 
 #ifdef __cplusplus
 }

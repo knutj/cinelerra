@@ -71,8 +71,8 @@ void quicktime_elst_dump(quicktime_elst_t *elst)
 	int i;
 	printf("   edit list (elst)\n");
 	printf("    version %d\n", elst->version);
-	printf("    flags %d\n", elst->flags);
-	printf("    total_entries %d\n", elst->total_entries);
+	printf("    flags %ld\n", elst->flags);
+	printf("    total_entries %ld\n", elst->total_entries);
 
 	for(i = 0; i < elst->total_entries; i++)
 	{
@@ -83,8 +83,6 @@ void quicktime_elst_dump(quicktime_elst_t *elst)
 void quicktime_read_elst(quicktime_t *file, quicktime_elst_t *elst)
 {
 	int i;
-	quicktime_atom_t leaf_atom;
-
 	elst->version = quicktime_read_char(file);
 	elst->flags = quicktime_read_int24(file);
 	elst->total_entries = quicktime_read_int32(file);

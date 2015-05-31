@@ -7,7 +7,6 @@
 
 
 
-#include "libavcodec/avcodec.h"
 #include "colormodels.h"
 #include "funcprotos.h"
 #include "qtffmpeg.h"
@@ -16,9 +15,6 @@
 #include ENCORE_INCLUDE
 //#include DECORE_INCLUDE
 
-
-
-#include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -93,7 +89,6 @@ typedef struct
 
 
 // Decore needs the user to specify handles
-static int decode_handle = 1;
 static int encode_handle = 0;
 
 
@@ -210,7 +205,6 @@ int quicktime_mpeg4_write_vol(unsigned char *data_start,
 	unsigned char *data = data_start;
 	int bit_pos;
 	uint64_t bit_store;
-	int i, j;
 
 	bit_store = 0;
 	bit_pos = 0;
@@ -602,7 +596,7 @@ static void frame_defaults(AVFrame *frame)
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+//	int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_mpeg4_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
@@ -657,7 +651,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 		else
 // ffmpeg section
 		{
-			static char *video_rc_eq="tex^qComp";
 			codec->encode_initialized[current_field] = 1;
 			if(!ffmpeg_initialized)
 			{
@@ -763,12 +756,12 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			{
 				codec->temp_frame = malloc(width_i * height_i * 3 / 2);
 			}
-
+			unsigned char *utmp_frame = (unsigned char *)codec->temp_frame;
 			cmodel_transfer(0, /* Leave NULL if non existent */
 				row_pointers,
-				codec->temp_frame, /* Leave NULL if non existent */
-				codec->temp_frame + width_i * height_i,
-				codec->temp_frame + width_i * height_i + width_i * height_i / 4,
+				utmp_frame, /* Leave NULL if non existent */
+				utmp_frame + width_i * height_i,
+				utmp_frame + width_i * height_i + width_i * height_i / 4,
 				row_pointers[0], /* Leave NULL if non existent */
 				row_pointers[1],
 				row_pointers[2],
@@ -840,12 +833,13 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			{
 				codec->temp_frame = malloc(width_i * height_i * 3 / 2);
 			}
+			unsigned char *utmp_frame = (unsigned char *)codec->temp_frame;
 
 			cmodel_transfer(0, /* Leave NULL if non existent */
 				row_pointers,
-				codec->temp_frame, /* Leave NULL if non existent */
-				codec->temp_frame + width_i * height_i,
-				codec->temp_frame + width_i * height_i + width_i * height_i / 4,
+				utmp_frame, /* Leave NULL if non existent */
+				utmp_frame + width_i * height_i,
+				utmp_frame + width_i * height_i + width_i * height_i / 4,
 				row_pointers[0], /* Leave NULL if non existent */
 				row_pointers[1],
 				row_pointers[2],
@@ -863,9 +857,9 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 				width,       /* For planar use the luma rowspan */
 				width_i);
 
-			picture->data[0] = codec->temp_frame;
-			picture->data[1] = codec->temp_frame + width_i * height_i;
-			picture->data[2] = codec->temp_frame + width_i * height_i + width_i * height_i / 4;
+			picture->data[0] = utmp_frame;
+			picture->data[1] = utmp_frame + width_i * height_i;
+			picture->data[2] = utmp_frame + width_i * height_i + width_i * height_i / 4;
 			picture->linesize[0] = width_i;
 			picture->linesize[1] = width_i / 2;
 			picture->linesize[2] = width_i / 2;
@@ -915,18 +909,10 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 	pthread_mutex_unlock(&ffmpeg_lock);
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
-	result = !quicktime_write_data(file, 
-		codec->work_buffer, 
-		bytes);
-	quicktime_write_chunk_footer(file, 
-		trak,
-		vtrack->current_chunk,
-		&chunk_atom, 
-		1);
+	result = !quicktime_write_data(file, (char*)codec->work_buffer, bytes);
+	quicktime_write_chunk_footer(file, trak, vtrack->current_chunk, &chunk_atom, 1);
 	if(is_keyframe || vtrack->current_position == 0)
-		quicktime_insert_keyframe(file, 
-			vtrack->current_position, 
-			track);
+		quicktime_insert_keyframe(file, vtrack->current_position, track);
 
 	vtrack->current_chunk++;
 	return result;
@@ -941,7 +927,6 @@ static void flush(quicktime_t *file, int track)
 {
 	quicktime_video_map_t *track_map = &(file->vtracks[track]);
 	quicktime_trak_t *trak = track_map->track;
-	quicktime_mpeg4_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 
 // Create header
 	if(!trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header_size &&
@@ -953,13 +938,9 @@ static void flush(quicktime_t *file, int track)
 		int height_i = quicktime_quantize16(height);
 
 		unsigned char temp[1024];
-		int size = write_mp4v_header(temp,
-			width_i,
-			height_i,
+		int size = write_mp4v_header(temp, width_i, height_i,
 			quicktime_frame_rate(file, track));
-		quicktime_set_mpeg4_header(&trak->mdia.minf.stbl.stsd.table[0],
-			temp, 
-			size);
+		quicktime_set_mpeg4_header(&trak->mdia.minf.stbl.stsd.table[0], temp, size);
 	}
 
 // Create udta
@@ -1051,7 +1032,7 @@ static int set_parameter(quicktime_t *file,
 
 
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_mpeg4_codec_t *codec;
 	int i;
@@ -1085,7 +1066,6 @@ static int delete_codec(quicktime_video_map_t *vtrack)
 	if(codec->decoder) quicktime_delete_ffmpeg(codec->decoder);
 
 	free(codec);
-	return 0;
 }
 
 

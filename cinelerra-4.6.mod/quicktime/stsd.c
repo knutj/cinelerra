@@ -81,8 +81,8 @@ void quicktime_stsd_dump(void *minf_ptr, quicktime_stsd_t *stsd)
 	int i;
 	printf("     sample description\n");
 	printf("      version %d\n", stsd->version);
-	printf("      flags %d\n", stsd->flags);
-	printf("      total_entries %d\n", stsd->total_entries);
+	printf("      flags %ld\n", stsd->flags);
+	printf("      total_entries %ld\n", stsd->total_entries);
 	
 	for(i = 0; i < stsd->total_entries; i++)
 	{
@@ -93,7 +93,6 @@ void quicktime_stsd_dump(void *minf_ptr, quicktime_stsd_t *stsd)
 void quicktime_read_stsd(quicktime_t *file, quicktime_minf_t *minf, quicktime_stsd_t *stsd)
 {
 	int i;
-	quicktime_atom_t leaf_atom;
 
 	stsd->version = quicktime_read_char(file);
 	stsd->flags = quicktime_read_int24(file);

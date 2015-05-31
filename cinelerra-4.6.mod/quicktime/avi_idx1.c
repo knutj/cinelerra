@@ -13,7 +13,7 @@ typedef struct
 } avi_tag_t;
 
 
-
+#if 0
 static int is_keyframe(quicktime_trak_t *trak, int frame)
 {
 	int i;
@@ -25,7 +25,7 @@ static int is_keyframe(quicktime_trak_t *trak, int frame)
 	}
 	return 0;
 }
-
+#endif
 
 void quicktime_delete_idx1(quicktime_idx1_t *idx1)
 {
@@ -37,8 +37,6 @@ void quicktime_read_idx1(quicktime_t *file,
 	quicktime_atom_t *parent_atom)
 {
 	int i;
-	quicktime_riff_t *first_riff = file->riff[0];
-	quicktime_hdrl_t *hdrl = &first_riff->hdrl;
 	quicktime_idx1_t *idx1 = &riff->idx1;
 
 //printf("quicktime_read_idx1 1 %llx\n", quicktime_position(file));
@@ -62,13 +60,6 @@ void quicktime_read_idx1(quicktime_t *file,
 	}
 
 //printf("quicktime_read_idx1 100\n");
-
-
-
-
-
-
-
 }
 
 void quicktime_write_idx1(quicktime_t *file, 

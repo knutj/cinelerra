@@ -797,8 +797,8 @@ typedef struct
 /* Structure created in track_map to describe the codec */
 typedef struct
 {
-	int (*delete_vcodec)(quicktime_video_map_t *vtrack);
-	int (*delete_acodec)(quicktime_audio_map_t *atrack);
+	void (*delete_vcodec)(quicktime_video_map_t *vtrack);
+	void (*delete_acodec)(quicktime_audio_map_t *atrack);
 /* Decode a single frame */
 	int (*decode_video)(quicktime_t *file,
 				unsigned char **row_pointers,
@@ -858,6 +858,7 @@ typedef struct
 /* Structure tabulated in plugin.c to search the codecs */
 typedef struct
 {
+	int32_t fourcc, id;
 	void (*init_vcodec)(quicktime_video_map_t *);
 	void (*init_acodec)(quicktime_audio_map_t *);
 } quicktime_codectable_t;

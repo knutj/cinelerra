@@ -1,70 +1,101 @@
+-include ../global_config
+include $(THIRDPARTY)/config.mak
+
 OBJDIR := $(shell uname --machine)
 USE_MMX = 0
 CC = gcc
 OBJS := 
+INCS :=
 
+ifndef HAVE_CFLAGS
 ifeq ($(origin CFLAGS), environment)
 HAVE_CFLAGS := y
 else
 HAVE_CFLAGS := n
 endif
+endif
 
-MJPEG_DIR = $(shell cd ../thirdparty/mjpegtools*; pwd)
-
-ENCORE_DIR = $(shell cd ../thirdparty/encore*; pwd)
-ENCORE_LIB = $(OBJDIR)/encore
-ENCORE_INCLUDE = $(ENCORE_DIR)/encore.h
-
+MJPEG_DIR = $(shell cd $(THIRDPARTY)/mjpegtools*; pwd)
 MPEG3_DIR = $(shell cd ../libzmpeg3*; pwd)
 
-FFMPEG_DIR = $(shell cd ../thirdparty/ffmpeg*; pwd)
+ifeq ($(call firstword,$(encore)),static)
+ENCORE_DIR = $(shell cd $(THIRDPARTY)/encore*; pwd)
+ENCORE_LIB = $(OBJDIR)/encore
+INCS += -DENCORE_INCLUDE=\"$(ENCORE_DIR)/encore.h\"
+endif
+
+ifeq ($(call firstword,$(ffmpeg)),static)
+FFMPEG_DIR = $(shell cd $(THIRDPARTY)/ffmpeg*; pwd)
 FFMPEG_LIB = $(OBJDIR)/ffmpeg/
-FFMPEG_INCLUDE = -I$(FFMPEG_DIR) \
+INCS += -I$(FFMPEG_DIR)
+endif
 
-FAAD_DIR = $(shell cd ../thirdparty/faad*; pwd)
+ifeq ($(call firstword,$(faad2)),static)
+FAAD_DIR = $(shell cd $(THIRDPARTY)/faad*; pwd)
 FAAD_LIB = $(OBJDIR)/faad/
-FAAD_INCLUDE = $(FAAD_DIR)/include/
+INCS += -I$(FAAD_DIR)/include/
+endif
 
-FAAC_DIR = $(shell cd ../thirdparty/faac*; pwd)
+ifeq ($(call firstword,$(faac)),static)
+FAAC_DIR = $(shell cd $(THIRDPARTY)/faac*; pwd)
 FAAC_LIB = $(OBJDIR)/faac/
-FAAC_INCLUDE = $(FAAC_DIR)/include/
+INCS += -I$(FAAC_DIR)/include/
+endif
 
-LAME_DIR = $(shell cd ../thirdparty/lame*; pwd)
+ifeq ($(call firstword,$(lame)),static)
+LAME_DIR = $(shell cd $(THIRDPARTY)/lame*; pwd)
 LAME_LIB = $(OBJDIR)/lame
+INCS += -I$(LAME_DIR)/include/
+else
+INCS += -I/usr/include/lame
+endif
 
-OPENJPEG_DIR = $(shell cd ../thirdparty/openjpeg*; pwd)
+ifeq ($(call firstword,$(openjpeg)),static)
+OPENJPEG_DIR = $(shell cd $(THIRDPARTY)/openjpeg*; pwd)
 OPENJPEG_LIB = $(OBJDIR)/openjpeg
+INCS += -I$(OPENJPEG_DIR)/src/lib/openmj2
+endif
 
-X264_DIR = $(shell cd ../thirdparty/x264*; pwd)
+ifeq ($(call firstword,$(x264)),static)
+X264_DIR = $(shell cd $(THIRDPARTY)/x264*; pwd)
 X264_LIB = $(OBJDIR)/x264
-X264_INCLUDE = $(X264_DIR)
+INCS += -I$(X264_DIR)
+endif
 
-DV_DIR = $(shell cd ../thirdparty/libdv*; pwd)
+ifeq ($(call firstword,$(libdv)),static)
+DV_DIR = $(shell cd $(THIRDPARTY)/libdv*; pwd)
 DV_LIB = $(OBJDIR)/libdv
-DV_INCLUDE = $(DV_DIR)/
+INCS += -I$(DV_DIR)/
+endif
 
-OGG_DIR = $(shell cd ../thirdparty/libogg*; pwd)
-OGG_LIB = $(OBJDIR)/ogg
+ifeq ($(call firstword,$(libogg)),static)
+OGG_DIR = $(shell cd $(THIRDPARTY)/libogg*; pwd)
+INCS += -I$(OBJDIR)/ogg
+endif
 
-VORBIS_DIR = $(shell cd ../thirdparty/libvorbis*; pwd)
+ifeq ($(call firstword,$(libvorbis)),static)
+VORBIS_DIR = $(shell cd $(THIRDPARTY)/libvorbis*; pwd)
 VORBIS_LIB = $(OBJDIR)/vorbis
+INCS += -I$(VORBIS_DIR)/include -I$(VORBIS_DIR)
+endif
 
-JPEG_DIR = $(shell cd ../thirdparty/libjpeg*; pwd)
+ifeq ($(call firstword,$(libjpeg)),static)
+JPEG_DIR = $(shell cd $(THIRDPARTY)/libjpeg*; pwd)
 JPEG_LIB = $(OBJDIR)/libjpeg
-JPEG_INCLUDE = $(JPEG_DIR)
+INCS += -I$(JPEG_DIR)
+endif
 
 ifneq ($(HAVE_CFLAGS), y)
 ifeq ($(OBJDIR), alpha)
-  CFLAGS := -O4 -arch ev67 -ieee -accept c99_keywords -gcc_messages
+  CFLAGS += -O4 -arch ev67 -ieee -accept c99_keywords -gcc_messages
 endif
 
 ifeq ($(OBJDIR), i686)
-  CFLAGS := -O3 -fmessage-length=0 -funroll-all-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -I/usr/local/include
+  CFLAGS += -O3 -fmessage-length=0 -funroll-all-loops -fomit-frame-pointer -falign-loops=2 -falign-jumps=2 -falign-functions=2 -I/usr/local/include
 endif
 
-
 ifeq ($(OBJDIR), x86_64)
-  CFLAGS := -O2 -funroll-all-loops -fomit-frame-pointer -I/usr/local/include
+  CFLAGS += -O2 -funroll-all-loops -fomit-frame-pointer -I/usr/local/include
 endif
 endif
 
@@ -170,25 +201,11 @@ UTILS := \
 OUTPUT = $(OBJDIR)/libquicktime.a
 SHAREDOUTPUT = $(OBJDIR)/libquicktime.so
 
-CFLAGS += \
-	-I. \
+CFLAGS += -I. \
 	-I$(MJPEG_DIR) -I$(MJPEG_DIR)/utils -I$(MJPEG_DIR)/lavtools \
-	-I$(ENCORE_DIR) \
-	-I$(FAAC_INCLUDE) \
-	-I$(FAAD_INCLUDE) \
-	-DENCORE_INCLUDE=\"$(ENCORE_INCLUDE)\" \
-	-I$(X264_INCLUDE) \
-	-I$(DV_INCLUDE) \
-	-I$(JPEG_INCLUDE) \
-	-I$(MPEG3_DIR) \
-	-I$(LAME_DIR)/include \
-	-I$(OGG_DIR)/include \
-	-I$(VORBIS_DIR)/include \
-	-ffast-math \
-	-mno-ieee-fp
+	-I$(MPEG3_DIR) $(INCS) -ffast-math -mno-ieee-fp
 
-FFMPEG_CFLAGS := $(CFLAGS) \
-	$(FFMPEG_INCLUDE) \
+FFMPEG_CFLAGS := $(CFLAGS) $(FFMPEG_INCLUDE)
 
 LIBS := $(OUTPUT) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a -lpng -lz -lpthread -ldl -lm
 
@@ -196,10 +213,9 @@ LIBS := $(OUTPUT) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a -lpng -lz -lpthread -ldl -l
 $(shell mkdir -p $(OBJDIR) )
 $(shell echo  $(CFLAGS) > $(OBJDIR)/c_flags)
 $(shell echo  $(LAME_CFLAGS) > $(OBJDIR)/lame_flags)
-$(shell echo  $(OBJS) $(FFMPEG_OBJS) $(JPEG_LIB)/*.o $(DV_LIB)/*.o \
-		 $(FAAD_LIB)/*.o $(FAAC_LIB)/*.o $(X264_LIB)/*.o \
-		 $(OGG_LIB)/*.o $(VORBIS_LIB)/*.o $(LAME_LIB)/*.o \
-		 $(ENCORE_LIB)/*.o > $(OBJDIR)/objs)
+$(shell echo > $(OBJDIR)/objs $(OBJS) $(FFMPEG_OBJS) \
+	$(foreach lib,$(JPEG_LIB) $(DV_LIB) $(FAAD_LIB) $(FAAC_LIB) $(X264_LIB) \
+		 $(OGG_LIB) $(VORBIS_LIB) $(LAME_LIB) $(ENCORE_LIB), $(lib)/*.o))
 $(shell echo  $(FFMPEG_CFLAGS) > $(OBJDIR)/ffmpeg_cflags)
 
 all: $(OBJDIR) $(THIRDPARTY) $(OUTPUT)
@@ -335,6 +351,6 @@ $(OBJDIR)/%.o:		  %.c
 $(OBJDIR)/mts2mp4.o:
 	$(CC) -c `cat $(OBJDIR)/c_flags` $(FFMPEG_INCLUDE) $(subst $(OBJDIR)/,, $*.c) -o $*.o
 
-$(FFMPEG_OBJS):
-	$(CC) `cat $(OBJDIR)/ffmpeg_cflags` -c $(subst $(OBJDIR)/,, $*.c) -o $*.o
+$(FFMPEG_OBJS): $(OBJDIR)/%.o: %.c
+	$(CC) `cat $(OBJDIR)/ffmpeg_cflags` -c $< -o $@
 

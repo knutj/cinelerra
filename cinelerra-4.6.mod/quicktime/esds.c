@@ -35,7 +35,7 @@ void quicktime_esds_samplerate(quicktime_stsd_table_t *table,
              7350, 0, 0, 0
         };
 
-		unsigned char *ptr = esds->mpeg4_header;
+		unsigned char *ptr = (unsigned char *)esds->mpeg4_header;
 		int samplerate_index = ((ptr[0] & 7) << 1) + ((ptr[1] >> 7) & 1);
 		table->channels = (ptr[1] >> 3) & 0xf;
 		table->sample_rate = 
@@ -57,25 +57,18 @@ void quicktime_read_esds(quicktime_t *file,
 
 	if(quicktime_read_char(file) == 0x3)
 	{
-		int len = decode_length(file);
-// elementary stream id
-		quicktime_read_int16(file);
-// stream priority
-		quicktime_read_char(file);
+		decode_length(file);
+		quicktime_read_int16(file); // elementary stream id
+		quicktime_read_char(file); // stream priority
 // decoder configuration descripton tab
 		if(quicktime_read_char(file) == 0x4)
 		{
-			int len2 = decode_length(file);
-// object type id
-			quicktime_read_char(file);
-// stream type
-			quicktime_read_char(file);
-// buffer size
-			quicktime_read_int24(file);
-// max bitrate
-			quicktime_read_int32(file);
-// average bitrate
-			quicktime_read_int32(file);
+			decode_length(file);
+			quicktime_read_char(file); // object type id
+			quicktime_read_char(file); // stream type
+			quicktime_read_int24(file); // buffer size
+			quicktime_read_int32(file); // max bitrate
+			quicktime_read_int32(file); // average bitrate
 
 // decoder specific description tag
 			if(quicktime_read_char(file) == 0x5)

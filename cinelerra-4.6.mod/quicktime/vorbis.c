@@ -2,6 +2,7 @@
 #include "quicktime.h"
 #include "qtvorbis.h"
 #include <string.h>
+#include <time.h>
 #include "vorbis/vorbisenc.h"
 
 // Attempts to read more samples than this will crash
@@ -66,7 +67,7 @@ typedef struct
 
 /* =================================== public for vorbis */
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_vorbis_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 	int i;
@@ -98,7 +99,6 @@ static int delete_codec(quicktime_audio_map_t *atrack)
 	}
 
 	free(codec);
-	return 0;
 }
 
 
@@ -120,28 +120,15 @@ static int chunk_len(quicktime_t *file, int64_t offset, int64_t next_chunk)
 	unsigned char buffer[BUFFER_FRAGMENT];
 	int accum = 0;
 	int segment_count = 0;
-	int segment_size = 0;
-	int lace_size = 0;
 	int page_size = 0;
-	int i, j;
+	int i;
 
 	while(offset < next_chunk)
 	{
 		quicktime_set_position(file, offset);
-		result = !quicktime_read_data(file, buffer, BUFFER_FRAGMENT);
-
-		if(result)
-		{
+		result = !quicktime_read_data(file, (char*)buffer, BUFFER_FRAGMENT);
+		if(result || memcmp(buffer, "OggS", 4))
 			return accum;
-		}
-
-		if(memcmp(buffer, "OggS", 4))
-		{
-			return accum;
-		}
-		else
-		{
-		}
 
 // Decode size of OggS page
 		segment_count = buffer[SEGMENT_OFFSET];
@@ -176,9 +163,9 @@ static int chunk_len(quicktime_t *file, int64_t offset, int64_t next_chunk)
 		size = chunk_len(file, offset1, \
 			offset2 > offset1 ? offset2 : offset1 + 0xfffff); \
  \
-		buffer = ogg_sync_buffer(&codec->dec_oy, size); \
+		buffer = (char*)ogg_sync_buffer(&codec->dec_oy, size); \
 		quicktime_set_position(file, offset1); \
-		result = !quicktime_read_data(file, buffer, size); \
+		result = !quicktime_read_data(file, (char*)buffer, size); \
 		ogg_sync_wrote(&codec->dec_oy, size); \
 	} \
 /* printf("READ_CHUNK size=%d\n", size); */ \
@@ -199,24 +186,21 @@ static int decode(quicktime_t *file,
 					int channel)
 {
 	int result = 0;
-	int bytes;
 	int i, j;
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_trak_t *trak = track_map->track;
 	quicktime_vorbis_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	long current_position = track_map->current_position;
 	long end_position = current_position + samples;
-  	unsigned char *buffer;
+  	char *buffer;
 // End of data in ogg buffer
 	int eos = 0;
-// End of file
-	int eof = 0;
 	float *pcm;
 	int have_chunk = 0;
 
 
 	if(samples > OUTPUT_ALLOCATION)
-		printf("vorbis.c decode: can't read more than %p samples at a time.\n", OUTPUT_ALLOCATION);
+		printf("vorbis.c decode: can't read more than %d samples at a time.\n", OUTPUT_ALLOCATION);
 
 
 
@@ -605,12 +589,12 @@ while(1) \
 		quicktime_write_chunk_header(file, trak, &chunk_atom); \
 	} \
  \
-	result = !quicktime_write_data(file, codec->enc_og.header, codec->enc_og.header_len); \
+	result = !quicktime_write_data(file,(char*)codec->enc_og.header, codec->enc_og.header_len); \
 	size += codec->enc_og.header_len; \
  \
 	if(!result) \
 	{ \
-		result = !quicktime_write_data(file, codec->enc_og.body, codec->enc_og.body_len); \
+		result = !quicktime_write_data(file,(char*)codec->enc_og.body, codec->enc_og.body_len); \
 		size += codec->enc_og.body_len; \
 	} \
  \
@@ -639,12 +623,12 @@ while(vorbis_analysis_blockout(&codec->enc_vd, &codec->enc_vb) == 1) \
 				chunk_started = 1; \
 				quicktime_write_chunk_header(file, trak, &chunk_atom); \
 			} \
-			result = !quicktime_write_data(file, codec->enc_og.header, codec->enc_og.header_len); \
+			result = !quicktime_write_data(file, (char*)codec->enc_og.header, codec->enc_og.header_len); \
 			size += codec->enc_og.header_len; \
 	 \
 			if(!result) \
 			{ \
-				result = !quicktime_write_data(file, codec->enc_og.body, codec->enc_og.body_len); \
+				result = !quicktime_write_data(file, (char*)codec->enc_og.body, codec->enc_og.body_len); \
 				size += codec->enc_og.body_len; \
 			} \
 	 \
@@ -827,7 +811,7 @@ static void flush(quicktime_t *file, int track)
 		int result = 0;
 		int size = 0;
 		int64_t offset = quicktime_position(file);
-		long output_position = codec->enc_vd.granulepos;
+		//long output_position = codec->enc_vd.granulepos;
 		int chunk_started = 0;
 		quicktime_trak_t *trak = track_map->track;
 		int sample_rate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;

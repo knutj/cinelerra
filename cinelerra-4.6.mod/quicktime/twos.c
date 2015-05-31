@@ -42,7 +42,7 @@ static int get_work_buffer(quicktime_t *file, int track, long bytes)
 
 /* =================================== public for twos */
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_twos_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
@@ -50,27 +50,20 @@ static int delete_codec(quicktime_audio_map_t *atrack)
 	codec->work_buffer = 0;
 	codec->buffer_size = 0;
 	free(codec);
-	return 0;
 }
 
 static int swap_bytes(char *buffer, long samples, int channels, int bits)
 {
 	long i = 0;
-	char byte1, byte2, byte3;
-	char *buffer1, *buffer2, *buffer3;
+	char byte1, *buffer1, *buffer2;
 
 	if(!byte_order()) return 0;
 
-	switch(bits)
-	{
-		case 8:
-			break;
-
+	switch(bits) {
 		case 16:
 			buffer1 = buffer;
 			buffer2 = buffer + 1;
-			while(i < samples * channels * 2)
-			{
+			while(i < samples * channels * 2) {
 				byte1 = buffer2[i];
 				buffer2[i] = buffer1[i];
 				buffer1[i] = byte1;
@@ -81,8 +74,7 @@ static int swap_bytes(char *buffer, long samples, int channels, int bits)
 		case 24:
 			buffer1 = buffer;
 			buffer2 = buffer + 2;
-			while(i < samples * channels * 3)
-			{
+			while(i < samples * channels * 3) {
 				byte1 = buffer2[i];
 				buffer2[i] = buffer1[i];
 				buffer1[i] = byte1;
@@ -90,8 +82,7 @@ static int swap_bytes(char *buffer, long samples, int channels, int bits)
 			}
 			break;
 
-		default:
-			break;
+		default: break;
 	}
 	return 0;
 }
@@ -237,7 +228,7 @@ static int encode(quicktime_t *file,
 							long samples)
 {
 	int result = 0;
-	long i, j, offset;
+	long i, j;
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_twos_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	int step = track_map->channels * quicktime_audio_bits(file, track) / 8;

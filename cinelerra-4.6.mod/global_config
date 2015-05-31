@@ -25,13 +25,11 @@ endif
 
 
 
-
 ifeq ($(origin CFLAGS), environment)
 HAVE_CFLAGS := y
 else
 HAVE_CFLAGS := n
 endif
-
 
 
 ############################# C++ and C COMPILERS

@@ -19,13 +19,12 @@ typedef struct
 	unsigned char *temp_frame;
 } quicktime_png_codec_t;
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_png_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	if(codec->buffer) free(codec->buffer);
 	if(codec->temp_frame) free(codec->temp_frame);
 	free(codec);
-	return 0;
 }
 
 static int source_cmodel(quicktime_t *file, int track)
@@ -40,7 +39,6 @@ static int source_cmodel(quicktime_t *file, int track)
 void quicktime_set_png(quicktime_t *file, int compression_level)
 {
 	int i;
-	char *compressor;
 
 	for(i = 0; i < file->total_vtracks; i++)
 	{
@@ -131,7 +129,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 		codec->buffer = realloc(codec->buffer, codec->buffer_allocated);
 	}
 
-	result = !quicktime_read_data(file, codec->buffer, codec->buffer_size);
+	result = !quicktime_read_data(file, (char*)codec->buffer, codec->buffer_size);
 
 	if(!result)
 	{
@@ -181,9 +179,8 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+	//int64_t offset = quicktime_position(file);
 	int result = 0;
-	int i;
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_trak_t *trak = vtrack->track;
 	quicktime_png_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
@@ -220,14 +217,8 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
-	result = !quicktime_write_data(file, 
-				codec->buffer, 
-				codec->buffer_size);
-	quicktime_write_chunk_footer(file, 
-		trak,
-		vtrack->current_chunk,
-		&chunk_atom, 
-		1);
+	result = !quicktime_write_data(file, (char*) codec->buffer, codec->buffer_size);
+	quicktime_write_chunk_footer(file, trak, vtrack->current_chunk, &chunk_atom, 1);
 
 	vtrack->current_chunk++;
 	return result;
@@ -244,6 +235,7 @@ static int set_parameter(quicktime_t *file,
 
 	if(!strcasecmp(key, "compression_level"))
 		codec->compression_level = *(int*)value;
+	return 0;
 }
 
 static int reads_colormodel(quicktime_t *file, 

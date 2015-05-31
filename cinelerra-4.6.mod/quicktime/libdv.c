@@ -78,19 +78,7 @@ int dv_read_video(dv_t *dv,
 		long bytes,
 		int color_model)
 {
-	int dif = 0;
-	int lost_coeffs = 0;
-	long offset = 0;
-	int isPAL = 0;
-	int is61834 = 0;
-	int numDIFseq;
-	int ds;
-	int i, v, b, m;
-	dv_block_t *bl;
-	long mb_offset;
-	dv_sample_t sampling;
-	dv_macroblock_t *mb;
-	int pixel_size;
+	int i;
 	int pitches[3];
 	int use_temp = color_model != BC_YUV422;
 	unsigned char *pixels[3];
@@ -188,10 +176,7 @@ int dv_read_audio(dv_t *dv,
 		int channels,
 		int bits)
 {
-	long current_position;
-	int norm;
 	int i, j;
-    int audio_bytes;
 	short *samples_int16 = (short*)samples;
 	int samples_read;
 	if(channels > 4) channels = 4;
@@ -204,17 +189,10 @@ int dv_read_audio(dv_t *dv,
 			dv->temp_audio[i] = calloc(1, sizeof(int16_t) * MAX_AUDIO_SAMPLES);
 	}
 
-	switch(size)
-	{
-		case DV_PAL_SIZE:
-			norm = DV_PAL;
-			break;
-		case DV_NTSC_SIZE:
-			norm = DV_NTSC;
-			break;
-		default:
-			return 0;
-			break;
+	switch(size) {
+		case DV_PAL_SIZE: break;
+		case DV_NTSC_SIZE: break;
+		default: return 0;
 	}
 
 	if(data[0] != 0x1f) return 0;

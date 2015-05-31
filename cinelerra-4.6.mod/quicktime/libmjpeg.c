@@ -230,7 +230,7 @@ typedef mjpeg_source_mgr* mjpeg_src_ptr;
 
 METHODDEF(void) init_source(j_decompress_ptr cinfo)
 {
-    mjpeg_src_ptr src = (mjpeg_src_ptr) cinfo->src;
+    //mjpeg_src_ptr src = (mjpeg_src_ptr) cinfo->src;
 }
 
 METHODDEF(boolean) fill_input_buffer(j_decompress_ptr cinfo)
@@ -720,7 +720,6 @@ static void decompress_field(mjpeg_compressor *engine)
 	long buffer_offset = engine->instance * mjpeg->input_field2;
 	unsigned char *buffer = mjpeg->input_data + buffer_offset;
 	long buffer_size;
-	int i, j;
 
 //printf("decompress_field %02x%02x %d\n", buffer[0], buffer[1], engine->instance * mjpeg->input_field2);
 	if(engine->instance == 0 && mjpeg->fields > 1)
@@ -818,7 +817,6 @@ void mjpeg_decompress_loop(mjpeg_compressor *engine)
 
 static void compress_field(mjpeg_compressor *engine)
 {
-	int i, j;
 	mjpeg_t *mjpeg = engine->mjpeg;
 
 //printf("compress_field 1\n");
@@ -875,9 +873,7 @@ mjpeg_compressor* mjpeg_new_decompressor(mjpeg_t *mjpeg, int instance)
 {
 	mjpeg_compressor *result = calloc(1, sizeof(mjpeg_compressor));
 	pthread_attr_t  attr;
-	struct sched_param param;
 	pthread_mutexattr_t mutex_attr;
-	int i;
 
 	result->mjpeg = mjpeg;
 	result->instance = instance;
@@ -921,7 +917,6 @@ void mjpeg_delete_decompressor(mjpeg_compressor *engine)
 mjpeg_compressor* mjpeg_new_compressor(mjpeg_t *mjpeg, int instance)
 {
 	pthread_attr_t  attr;
-	struct sched_param param;
 	pthread_mutexattr_t mutex_attr;
 	mjpeg_compressor *result = calloc(1, sizeof(mjpeg_compressor));
 
@@ -1305,7 +1300,6 @@ mjpeg_t* mjpeg_new(int w,
 {
 	mjpeg_t *result = calloc(1, sizeof(mjpeg_t));
 	pthread_mutexattr_t mutex_attr;
-	int i;
 
 	result->output_w = w;
 	result->output_h = h;
@@ -1474,21 +1468,14 @@ static inline void write_char(unsigned char *data, long *offset, long length, un
 
 static int next_marker(unsigned char *buffer, long *offset, long buffer_size)
 {
-	int c, done = 0;  /* 1 - completion    2 - error */
-
-	while(*offset < buffer_size - 1)
-	{
-		if(buffer[*offset] == 0xff && buffer[*offset + 1] != 0xff)
-		{
+	while(*offset < buffer_size - 1) {
+		if(buffer[*offset] == 0xff && buffer[*offset + 1] != 0xff) {
 			(*offset) += 2;
 			return buffer[*offset - 1];
 		}
-
 		(*offset)++;
 	}
-
 	return 0;
-
 }
 
 /* Find the next marker after offset and return 0 on success */
@@ -1498,7 +1485,6 @@ static int find_marker(unsigned char *buffer,
 	unsigned long marker_type)
 {
 	long result = 0;
-	long marker_len;
 
 	while(!result && *offset < buffer_size - 1)
 	{
@@ -1537,7 +1523,6 @@ void insert_lml33_markers(unsigned char **buffer,
 	long *buffer_allocated)
 {
 	long marker_offset = -1;
-	int marker_exists;
 
 /* Search for existing marker to replace */
 //	marker_offset = find_marker(*buffer, *buffer_size, LML_MARKER_TAG);
@@ -1715,7 +1700,6 @@ void mjpeg_insert_quicktime_markers(unsigned char **buffer,
 	long *field2_offset)
 {
 	qt_hdr_t header[2];
-	long offset = 0;
 	int exists = 0;
 	*field2_offset = -1;
 
@@ -1974,9 +1958,7 @@ long mjpeg_get_avi_field2(unsigned char *buffer,
 
 long mjpeg_get_field2(unsigned char *buffer, long buffer_size)
 {
-	long result = 0;
 	int total_fields = 0;
-	long offset = 0;
 	long field2_offset = 0;
 	int i;
 
@@ -1989,8 +1971,6 @@ long mjpeg_get_field2(unsigned char *buffer, long buffer_size)
 			if(total_fields == 2) break;
 		}
 	}
-
-
 	return field2_offset;
 }
 

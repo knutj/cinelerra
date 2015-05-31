@@ -1,9 +1,9 @@
-#include <stdint.h>
-#include <string.h>
-
-#include "libavcodec/avcodec.h"
 #include "funcprotos.h"
 #include "quicktime.h"
+#include "qtffmpeg.h"
+
+#include <stdint.h>
+#include <string.h>
 
 extern int ffmpeg_initialized;
 extern pthread_mutex_t ffmpeg_lock;
@@ -46,7 +46,7 @@ typedef struct
 
 
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_qdm2_codec_t *codec = 
 		((quicktime_codec_t*)atrack->codec)->priv;
@@ -111,8 +111,6 @@ static int decode(quicktime_t *file,
 			return 1;
 		}
 
-		uint32_t samplerate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
-
 // allocate the codec and fill in header
 		AVCodecContext *context = avcodec_alloc_context3(codec->decoder);
 		codec->decoder_context = context;
@@ -121,7 +119,7 @@ static int decode(quicktime_t *file,
 
 		if(frma->data && frma->data_size)
 		{
-			context->extradata = frma->data;
+			context->extradata = (unsigned char *)frma->data;
 			context->extradata_size = frma->data_size;
 		}
 
@@ -149,20 +147,15 @@ static int decode(quicktime_t *file,
 
 	if(samples > OUTPUT_ALLOCATION)
 	{
-		printf("qdm2: decode: can't decode more than %p samples at a time.\n",
+		printf("qdm2: decode: can't decode more than 0x%x samples at a time.\n",
 			OUTPUT_ALLOCATION);
 		return 1;
 	}
 
-
-
 	if(debug)
 	{
-		printf("qdm2 decode: current_position=%lld end_position=%lld input_size=%d input_end=%lld\n",
-			current_position,
-			end_position,
-			codec->input_size,
-			codec->input_end);
+		printf("qdm2 decode: current_position=%jd end_position=%jd input_size=%d input_end=%jd\n",
+			current_position, end_position, codec->input_size, codec->input_end);
 	}
 
 // printf("qdm2 decode: current_position=%lld end_position=%lld chunk_sample=%lld chunk=%lld\n", 
@@ -201,10 +194,8 @@ static int decode(quicktime_t *file,
 
 		if(debug)
 		{
-			printf("qdm2 decode: input_end=%lld chunk=%d offset=0x%llx\n", 
-				codec->input_end, 
-				codec->current_chunk, 
-				offset);
+			printf("qdm2 decode: input_end=%jd chunk=%jd offset=0x%jx\n", 
+				codec->input_end, codec->current_chunk, offset);
 		}
 
 // Read fragments of chunk
@@ -213,7 +204,7 @@ static int decode(quicktime_t *file,
 // Hit next chunk of audio
 			if(max_offset > offset && quicktime_position(file) >= max_offset) break;
 			if(!quicktime_read_data(file, 
-				codec->compressed_buffer + codec->compressed_size, 
+				(char*)codec->compressed_buffer + codec->compressed_size, 
 				3))
 				break;
 			if(codec->compressed_buffer[codec->compressed_size] != 0x82)
@@ -229,7 +220,7 @@ static int decode(quicktime_t *file,
 			allocate_compressed(codec, 
 				codec->compressed_size + fragment_size + 1024);
 			if(!quicktime_read_data(file, 
-				codec->compressed_buffer + codec->compressed_size + 3, 
+				(char*)codec->compressed_buffer + codec->compressed_size + 3, 
 				fragment_size - 3))
 				break;
 
@@ -246,7 +237,6 @@ static int decode(quicktime_t *file,
 			{
 				if(!codec->temp_buffer)
 					codec->temp_buffer = calloc(sizeof(int16_t), OUTPUT_ALLOCATION);
-				int got_frame = 0;
 				int bytes_decoded = OUTPUT_ALLOCATION * sizeof(int16_t);
 				int result = quicktime_decode_audio3(codec->decoder_context, 
 					codec->temp_buffer, &bytes_decoded, &avpkt);

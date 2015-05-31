@@ -156,58 +156,37 @@ int  ilaceautofixmethod2(int projectilacemode, int assetautofixoption, int asset
 
 int ilace_bc_to_yuv4mpeg(int ilacemode)
 {
-	switch (ilacemode)
-	{
-	case BC_ILACE_MODE_UNDETECTED:
-		return(Y4M_UNKNOWN);
-		break;
-	case BC_ILACE_MODE_TOP_FIRST:		
-		return(Y4M_ILACE_TOP_FIRST);
-		break;
-	case BC_ILACE_MODE_BOTTOM_FIRST:
-		return(Y4M_ILACE_BOTTOM_FIRST);
-		break;
-	case BC_ILACE_MODE_NOTINTERLACED:
-		return(Y4M_ILACE_NONE);
-		break;
+	switch (ilacemode) {
+	case BC_ILACE_MODE_TOP_FIRST:	  return(Y4M_ILACE_TOP_FIRST);
+	case BC_ILACE_MODE_BOTTOM_FIRST:  return(Y4M_ILACE_BOTTOM_FIRST);
+	case BC_ILACE_MODE_NOTINTERLACED: return(Y4M_ILACE_NONE);
+	case BC_ILACE_MODE_UNDETECTED:    default: break;
 	}
+	return(Y4M_UNKNOWN);
 }
 
 int ilace_yuv4mpeg_to_bc(int ilacemode)
 {
-	switch (ilacemode)
-	{
-	case Y4M_UNKNOWN:
-		return (BC_ILACE_MODE_UNDETECTED);
-		break;
-	case Y4M_ILACE_NONE:
-		return (BC_ILACE_MODE_NOTINTERLACED);
-		break;
-	case Y4M_ILACE_TOP_FIRST:
-		return (BC_ILACE_MODE_TOP_FIRST);
-		break;
-	case Y4M_ILACE_BOTTOM_FIRST:
-		return (BC_ILACE_MODE_BOTTOM_FIRST);
-		break;
-//	case Y4M_ILACE_MIXED:
-//		return (BC_ILACE_MODE_UNDETECTED);  // fixme!!
-//		break;
-	default:
-		return (BC_ILACE_MODE_UNDETECTED);
+	switch (ilacemode) {
+	case Y4M_ILACE_NONE:	     return (BC_ILACE_MODE_NOTINTERLACED);
+	case Y4M_ILACE_TOP_FIRST:    return (BC_ILACE_MODE_TOP_FIRST);
+	case Y4M_ILACE_BOTTOM_FIRST: return (BC_ILACE_MODE_BOTTOM_FIRST);
+//	case Y4M_ILACE_MIXED: return (BC_ILACE_MODE_UNDETECTED);  // fixme!!
+	case Y4M_UNKNOWN:	     default: break;
 	}
+	return (BC_ILACE_MODE_UNDETECTED);
 }
 
 
 void ilace_yuv4mpeg_mode_to_text(char *string, int ilacemode)
 {
-	switch(ilacemode)
-	{
+	switch(ilacemode) {
 	case Y4M_UNKNOWN:             strcpy(string, BC_ILACE_Y4M_UKNOWN_T);       break;
 	case Y4M_ILACE_NONE:          strcpy(string, BC_ILACE_Y4M_NONE_T);         break;
 	case Y4M_ILACE_TOP_FIRST:     strcpy(string, BC_ILACE_Y4M_TOP_FIRST_T);    break;
 	case Y4M_ILACE_BOTTOM_FIRST:  strcpy(string, BC_ILACE_Y4M_BOTTOM_FIRST_T); break;
 //	case Y4M_ILACE_MIXED:         strcpy(string, BC_ILACE_Y4M_MIXED_T);        break;
-
 	default:                      strcpy(string, BC_ILACE_UNKNOWN_T);          break;
 	}
 }
+

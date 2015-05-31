@@ -6,7 +6,7 @@
 
 
 
-static int read_type(char *data, char *type)
+static int read_type(char *data, unsigned char *type)
 {
 	type[0] = data[4];
 	type[1] = data[5];
@@ -98,8 +98,6 @@ int quicktime_atom_read_header(quicktime_t *file, quicktime_atom_t *atom)
 	}
 	else
 	{
-		int64_t size2;
-
 		reset(atom);
 
 		atom->start = quicktime_position(file);
@@ -109,14 +107,15 @@ int quicktime_atom_read_header(quicktime_t *file, quicktime_atom_t *atom)
 		atom->size = read_size(header);
 		atom->end = atom->start + atom->size;
 		if(debug)
-			printf("quicktime_atom_read_header 1 %c%c%c%c start=0x%llx size=0x%llx end=0x%llx ftell %llx %llx\n",
+			printf("quicktime_atom_read_header 1 %c%c%c%c start=0x%jx"
+				" size=0x%jx end=0x%jx ftell %jx %jx\n",
 				atom->type[0], atom->type[1], atom->type[2], atom->type[3],
 				atom->start, atom->size, atom->end,
 				file->file_position,
 				(int64_t)FTELL(file->stream));
 
 /* Skip placeholder atom */
-		if(quicktime_match_32(atom->type, "wide"))
+		if(quicktime_match_32((char*)atom->type, "wide"))
 		{
 			atom->start = quicktime_position(file);
 			reset(atom);
@@ -216,15 +215,11 @@ void quicktime_atom_write_footer(quicktime_t *file, quicktime_atom_t *atom)
 	quicktime_set_position(file, atom->end);
 }
 
-int quicktime_atom_is(quicktime_atom_t *atom, unsigned char *type)
+int quicktime_atom_is(quicktime_atom_t *atom, char *typ)
 {
-	if(atom->type[0] == type[0] &&
-		atom->type[1] == type[1] &&
-		atom->type[2] == type[2] &&
-		atom->type[3] == type[3])
-	return 1;
-	else
-	return 0;
+	unsigned char *type = (unsigned char *)typ;
+	return  atom->type[0] == type[0] && atom->type[1] == type[1] &&
+		atom->type[2] == type[2] && atom->type[3] == type[3] ? 1 : 0;
 }
 
 int quicktime_atom_skip(quicktime_t *file, quicktime_atom_t *atom)

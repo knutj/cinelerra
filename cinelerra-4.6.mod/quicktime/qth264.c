@@ -1,12 +1,12 @@
 #include "libavcodec/avcodec.h"
 #include "colormodels.h"
 #include "funcprotos.h"
-#include <pthread.h>
 #include "qtffmpeg.h"
 #include "quicktime.h"
-#include <string.h>
 #include "workarounds.h"
 #include "x264.h"
+
+#include <string.h>
 
 // This generates our own header using fixed parameters
 //#define MANUAL_HEADER
@@ -52,13 +52,13 @@ static pthread_mutex_t h264_lock = PTHREAD_MUTEX_INITIALIZER;
 // Direct copy routines
 int quicktime_h264_is_key(unsigned char *data, long size, char *codec_id)
 {
-
+	return 0;
 }
 
 
 
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_h264_codec_t *codec;
 	int i;
@@ -95,14 +95,13 @@ static int delete_codec(quicktime_video_map_t *vtrack)
 
 
 	free(codec);
-	return 0;
 }
 
 
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+//	int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_h264_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
@@ -113,7 +112,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	int h_2 = quicktime_quantize2(height);
 	int i;
 	int result = 0;
-	int bytes = 0;
 	int is_keyframe = 0;
 	int current_field = vtrack->current_position % codec->total_fields;
 	quicktime_atom_t chunk_atom;
@@ -366,7 +364,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 		{
 			quicktime_write_chunk_header(file, trak, &chunk_atom);
 			result = !quicktime_write_data(file,
-				codec->work_buffer,
+				(char*)codec->work_buffer,
 				codec->buffer_size);
 			quicktime_write_chunk_footer(file,
 				trak,
@@ -397,25 +395,12 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 	quicktime_stsd_table_t *stsd_table = &trak->mdia.minf.stbl.stsd.table[0];
 	int width = trak->tkhd.track_width;
 	int height = trak->tkhd.track_height;
-	int w_16 = quicktime_quantize16(width);
-	int h_16 = quicktime_quantize16(height);
 
-
-	if(!codec->decoder) codec->decoder = quicktime_new_ffmpeg(
-		file->cpus,
-		codec->total_fields,
-		CODEC_ID_H264,
-		width,
-		height,
-		stsd_table);
-
-
-	if(codec->decoder) return quicktime_ffmpeg_decode(codec->decoder,
-		file,
-		row_pointers,
-		track);
-
-	return 1;
+	if(!codec->decoder)
+		codec->decoder = quicktime_new_ffmpeg(file->cpus,
+			codec->total_fields, CODEC_ID_H264, width, height, stsd_table);
+	return !codec->decoder ? 1 :
+		quicktime_ffmpeg_decode(codec->decoder, file, row_pointers, track); 
 }
 
 // Header copied straight out of another h264 file
@@ -495,8 +480,6 @@ static int reads_colormodel(quicktime_t *file,
 		int colormodel,
 		int track)
 {
-	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
-	quicktime_codec_t *codec = (quicktime_codec_t*)vtrack->codec;
 	return (colormodel == BC_YUV420P);
 }
 
@@ -542,6 +525,7 @@ static int set_parameter(quicktime_t *file,
 //			codec->param.rc.i_qp_constant = (*(int*)value) / 1000;
 #endif
 	}
+	return 0;
 }
 
 static quicktime_h264_codec_t* init_common(quicktime_video_map_t *vtrack,

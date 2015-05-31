@@ -10,7 +10,6 @@ void quicktime_read_riff(quicktime_t *file, quicktime_atom_t *parent_atom)
 	quicktime_riff_t *riff = quicktime_new_riff(file);
 	quicktime_atom_t leaf_atom;
 	int result = 0;
-	int i;
 	char data[5];
 
 	riff->atom = *parent_atom;
@@ -87,7 +86,7 @@ void quicktime_read_riff(quicktime_t *file, quicktime_atom_t *parent_atom)
 // Preload idx1 here
 				int64_t start_position = quicktime_position(file);
 				long temp_size = leaf_atom.end - start_position;
-				unsigned char *temp = malloc(temp_size);
+				char *temp = malloc(temp_size);
 				quicktime_set_preload(file,
 					(temp_size < 0x100000) ? 0x100000 : temp_size);
 				quicktime_read_data(file, temp, temp_size);
@@ -134,7 +133,6 @@ quicktime_riff_t* quicktime_new_riff(quicktime_t *file)
 
 void quicktime_delete_riff(quicktime_t *file, quicktime_riff_t *riff)
 {
-	int i = 0;
 	quicktime_delete_hdrl(file, &riff->hdrl);
 	quicktime_delete_movi(file, &riff->movi);
 	quicktime_delete_idx1(&riff->idx1);
@@ -186,8 +184,6 @@ void quicktime_import_avi(quicktime_t *file)
 	int i, j, k;
 	quicktime_riff_t *first_riff = file->riff[0];
 	quicktime_idx1_t *idx1 = &first_riff->idx1;
-	quicktime_hdrl_t *hdrl = &first_riff->hdrl;
-
 
 
 /* Determine whether to use idx1 or indx indexes for offsets. */

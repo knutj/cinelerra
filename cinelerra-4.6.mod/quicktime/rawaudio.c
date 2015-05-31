@@ -21,22 +21,16 @@ int rawaudio_byte_order(void)
 
 int rawaudio_swap_bytes(char *buffer, long samples, int channels, int bits)
 {
-	long i;
-	char byte1, byte2, byte3;
-	char *buffer1, *buffer2, *buffer3;
+	long i = 0;
+	char byte1, *buffer1, *buffer2;
 
 	if(!rawaudio_byte_order()) return 0;
 
-	switch(bits)
-	{
-		case 8:
-			break;
-
+	switch(bits) {
 		case 16:
 			buffer1 = buffer;
 			buffer2 = buffer + 1;
-			while(i < samples * 2)
-			{
+			while(i < samples * 2) {
 				byte1 = buffer2[i];
 				buffer2[i] = buffer1[i];
 				buffer1[i] = byte1;
@@ -47,8 +41,7 @@ int rawaudio_swap_bytes(char *buffer, long samples, int channels, int bits)
 		case 24:
 			buffer1 = buffer;
 			buffer2 = buffer + 2;
-			while(i < samples * 3)
-			{
+			while(i < samples * 3) {
 				byte1 = buffer2[i];
 				buffer2[i] = buffer1[i];
 				buffer1[i] = byte1;
@@ -56,8 +49,7 @@ int rawaudio_swap_bytes(char *buffer, long samples, int channels, int bits)
 			}
 			break;
 
-		default:
-			break;
+		default: break;
 	}
 	return 0;
 }
@@ -82,7 +74,7 @@ static int get_work_buffer(quicktime_t *file, int track, long bytes)
 
 /* =================================== public for rawaudio */
 
-static int quicktime_delete_codec_rawaudio(quicktime_audio_map_t *atrack)
+static void quicktime_delete_codec_rawaudio(quicktime_audio_map_t *atrack)
 {
 	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
@@ -90,7 +82,6 @@ static int quicktime_delete_codec_rawaudio(quicktime_audio_map_t *atrack)
 	codec->work_buffer = 0;
 	codec->buffer_size = 0;
 	free(codec);
-	return 0;
 }
 
 static int quicktime_decode_rawaudio(quicktime_t *file, 
@@ -201,7 +192,7 @@ static int quicktime_encode_rawaudio(quicktime_t *file,
 							long samples)
 {
 	int result = 0;
-	long i, j, offset;
+	long i, j;
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	int step = file->atracks[track].channels * quicktime_audio_bits(file, track) / 8;
@@ -298,7 +289,7 @@ static int quicktime_encode_rawaudio(quicktime_t *file,
 		}
 	}
 
-	result = quicktime_write_audio(file, codec->work_buffer, samples, track);
+	result = quicktime_write_audio(file, (char *)codec->work_buffer, samples, track);
 	return result;
 }
 
@@ -306,7 +297,7 @@ static int quicktime_encode_rawaudio(quicktime_t *file,
 void quicktime_init_codec_rawaudio(quicktime_audio_map_t *atrack)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)atrack->codec;
-	quicktime_rawaudio_codec_t *codec;
+//	quicktime_rawaudio_codec_t *codec = codec_base->priv;
 
 /* Init public items */
 	codec_base->priv = calloc(1, sizeof(quicktime_rawaudio_codec_t));
@@ -321,5 +312,4 @@ void quicktime_init_codec_rawaudio(quicktime_audio_map_t *atrack)
 	codec_base->wav_id = 0x01;
 
 /* Init private items */
-	codec = codec_base->priv;
 }

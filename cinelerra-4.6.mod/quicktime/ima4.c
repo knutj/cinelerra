@@ -86,13 +86,9 @@ void ima4_decode_sample(int *predictor, int *nibble, int *index, int *step)
 
 void ima4_decode_block(quicktime_audio_map_t *atrack, int16_t *output, unsigned char *input)
 {
-	int predictor;
-	int index;
-	int step;
-	int i, nibble, nibble_count, block_size;
-	unsigned char *block_ptr;
+	int predictor, index, step;
+	int nibble, nibble_count;
 	unsigned char *input_end = input + BLOCK_SIZE;
-	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
 /* Get the chunk header */
 	predictor = *input++ << 8;
@@ -209,7 +205,7 @@ int ima4_decode_chunk(quicktime_t *file, int track, long chunk, int channel)
 	int result = 0;
 	int i, j;
 	long chunk_samples, chunk_bytes;
-	unsigned char *chunk_ptr, *block_ptr;
+	unsigned char *block_ptr;
 	quicktime_trak_t *trak = file->atracks[track].track;
 	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)file->atracks[track].codec)->priv;
 
@@ -246,7 +242,8 @@ int ima4_decode_chunk(quicktime_t *file, int track, long chunk, int channel)
 /* codec->read_size now holds number of bytes in the last read buffer */
 
 /* Read the entire chunk regardless of where the desired sample range starts. */
-	result = quicktime_read_chunk(file, codec->read_buffer, track, chunk, 0, chunk_bytes);
+	result = quicktime_read_chunk(file, (char*)codec->read_buffer,
+			track, chunk, 0, chunk_bytes);
 
 /* Now decode the chunk, one block at a time, until the total samples in the chunk */
 /* is reached. */
@@ -274,7 +271,7 @@ int ima4_decode_chunk(quicktime_t *file, int track, long chunk, int channel)
 
 /* =================================== public for ima4 */
 
-static int delete_codec(quicktime_audio_map_t *atrack)
+static void delete_codec(quicktime_audio_map_t *atrack)
 {
 	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)atrack->codec)->priv;
 
@@ -291,7 +288,6 @@ static int delete_codec(quicktime_audio_map_t *atrack)
 	codec->work_size = 0;          /* Size of work buffer */
 	codec->read_size = 0;
 	free(codec);
-	return 0;
 }
 
 static int decode(quicktime_t *file, 
@@ -302,7 +298,7 @@ static int decode(quicktime_t *file,
 					int channel)
 {
 	int result = 0;
-	int64_t chunk, chunk_sample, chunk_bytes, chunk_samples;
+	int64_t chunk, chunk_sample, chunk_samples;
 	int64_t i, chunk_start, chunk_end;
 	quicktime_trak_t *trak = file->atracks[track].track;
 	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)file->atracks[track].codec)->priv;
@@ -369,7 +365,6 @@ static int encode(quicktime_t *file,
 	int64_t i, j, step;
 	int64_t chunk_bytes;
 	int64_t overflow_start;
-	int64_t offset;
 	int64_t chunk_samples; /* Samples in the current chunk to be written */
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
@@ -489,7 +484,7 @@ static int encode(quicktime_t *file,
 	if(chunk_samples)
 	{
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = quicktime_write_data(file, codec->read_buffer, chunk_bytes);
+		result = quicktime_write_data(file, (char*)codec->read_buffer, chunk_bytes);
 		quicktime_write_chunk_footer(file, 
 			trak,
 			track_map->current_chunk,
@@ -522,7 +517,6 @@ void flush(quicktime_t *file, int track)
 {
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_ima4_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
-	int result = 0;
 	int i;
 
 /*printf("quicktime_flush_ima4 %ld\n", codec->work_overflow); */
@@ -536,14 +530,14 @@ void flush(quicktime_t *file, int track)
 		}
 		codec->work_overflow = i / track_map->channels + 1;
 /* Write the work_overflow only. */
-		result = encode(file, 0, 0, track, 0);
+		encode(file, 0, 0, track, 0);
 	}
 }
 
 void quicktime_init_codec_ima4(quicktime_audio_map_t *atrack)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)atrack->codec;
-	quicktime_ima4_codec_t *codec;
+//	quicktime_ima4_codec_t *codec = codec_base->priv;
 
 /* Init public items */
 	codec_base->priv = calloc(1, sizeof(quicktime_ima4_codec_t));
@@ -559,5 +553,4 @@ void quicktime_init_codec_ima4(quicktime_audio_map_t *atrack)
 	codec_base->wav_id = 0x11;
 
 /* Init private items */
-	codec = codec_base->priv;
 }

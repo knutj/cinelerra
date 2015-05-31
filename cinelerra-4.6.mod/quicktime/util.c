@@ -147,7 +147,7 @@ int quicktime_read_data(quicktime_t *file, char *data, int64_t size)
 		if(selection_end - selection_start > file->preload_size)
 		{
 /* Size is larger than preload size.  Should never happen. */
-printf("read data Size is larger than preload size. size=%llx preload_size=%llx\n",
+printf("read data Size is larger than preload size. size=0x%jx preload_size=0x%jx\n",
 	selection_end - selection_start, file->preload_size);
 			quicktime_fseek(file, file->file_position);
 			result = fread(data, size, 1, file->stream);
@@ -242,7 +242,6 @@ int quicktime_write_data(quicktime_t *file, char *data, int size)
 	int data_offset = 0;
 	int writes_attempted = 0;
 	int writes_succeeded = 0;
-	int iterations = 0;
 
 	if(!file->use_presave)
 	{
@@ -332,7 +331,7 @@ int64_t quicktime_byte_position(quicktime_t *file)
 
 void quicktime_read_pascal(quicktime_t *file, char *data)
 {
-	char len = quicktime_read_char(file);
+	int len = quicktime_read_char(file);
 	quicktime_read_data(file, data, len);
 	data[len] = 0;
 }
@@ -349,7 +348,7 @@ float quicktime_read_fixed32(quicktime_t *file)
 	unsigned long a, b, c, d;
 	unsigned char data[4];
 
-	quicktime_read_data(file, data, 4);
+	quicktime_read_data(file, (char*)data, 4);
 	a = data[0];
 	b = data[1];
 	c = data[2];
@@ -376,7 +375,7 @@ int quicktime_write_fixed32(quicktime_t *file, float number)
 	data[2] = b >> 8;
 	data[3] = b & 0xff;
 
-	return quicktime_write_data(file, data, 4);
+	return quicktime_write_data(file, (char*)data, 4);
 }
 
 int quicktime_write_int64(quicktime_t *file, int64_t value)
@@ -392,7 +391,7 @@ int quicktime_write_int64(quicktime_t *file, int64_t value)
 	data[6] = (((uint64_t)value) & 0xff00LL) >> 8;
 	data[7] =  ((uint64_t)value) & 0xff;
 
-	return quicktime_write_data(file, data, 8);
+	return quicktime_write_data(file, (char*)data, 8);
 }
 
 int quicktime_write_int64_le(quicktime_t *file, int64_t value)
@@ -408,7 +407,7 @@ int quicktime_write_int64_le(quicktime_t *file, int64_t value)
 	data[1] = (((uint64_t)value) & 0xff00LL) >> 8;
 	data[0] =  ((uint64_t)value) & 0xff;
 
-	return quicktime_write_data(file, data, 8);
+	return quicktime_write_data(file, (char*)data, 8);
 }
 
 int quicktime_write_int32(quicktime_t *file, long value)
@@ -420,7 +419,7 @@ int quicktime_write_int32(quicktime_t *file, long value)
 	data[2] = (value & 0xff00) >> 8;
 	data[3] = value & 0xff;
 
-	return quicktime_write_data(file, data, 4);
+	return quicktime_write_data(file, (char*)data, 4);
 }
 
 int quicktime_write_int32_le(quicktime_t *file, long value)
@@ -432,7 +431,7 @@ int quicktime_write_int32_le(quicktime_t *file, long value)
 	data[1] = (value & 0xff00) >> 8;
 	data[0] = value & 0xff;
 
-	return quicktime_write_data(file, data, 4);
+	return quicktime_write_data(file, (char*)data, 4);
 }
 
 int quicktime_write_char32(quicktime_t *file, char *string)
@@ -445,7 +444,7 @@ float quicktime_read_fixed16(quicktime_t *file)
 {
 	unsigned char data[2];
 
-	quicktime_read_data(file, data, 2);
+	quicktime_read_data(file, (char*)data, 2);
 //printf("quicktime_read_fixed16 %02x%02x\n", data[0], data[1]);
 	if(data[1])
 		return (float)data[0] + (float)data[1] / 256;
@@ -463,7 +462,7 @@ int quicktime_write_fixed16(quicktime_t *file, float number)
 	data[0] = a;
 	data[1] = b;
 
-	return quicktime_write_data(file, data, 2);
+	return quicktime_write_data(file, (char*)data, 2);
 }
 
 unsigned long quicktime_read_uint32(quicktime_t *file)
@@ -589,7 +588,7 @@ int quicktime_write_int24(quicktime_t *file, long number)
 	data[1] = (number & 0xff00) >> 8;
 	data[2] = (number & 0xff);
 
-	return quicktime_write_data(file, data, 3);
+	return quicktime_write_data(file, (char*)data, 3);
 }
 
 int quicktime_read_int16(quicktime_t *file)
@@ -626,7 +625,7 @@ int quicktime_write_int16(quicktime_t *file, int number)
 	data[0] = (number & 0xff00) >> 8;
 	data[1] = (number & 0xff);
 
-	return quicktime_write_data(file, data, 2);
+	return quicktime_write_data(file, (char*)data, 2);
 }
 
 int quicktime_write_int16_le(quicktime_t *file, int number)
@@ -635,7 +634,7 @@ int quicktime_write_int16_le(quicktime_t *file, int number)
 	data[1] = (number & 0xff00) >> 8;
 	data[0] = (number & 0xff);
 
-	return quicktime_write_data(file, data, 2);
+	return quicktime_write_data(file, (char*)data, 2);
 }
 
 int quicktime_read_char(quicktime_t *file)

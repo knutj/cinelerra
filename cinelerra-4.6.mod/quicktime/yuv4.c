@@ -38,12 +38,11 @@ typedef struct
 	int initialized;
 } quicktime_yuv4_codec_t;
 
-static int quicktime_delete_codec_yuv4(quicktime_video_map_t *vtrack)
+static void quicktime_delete_codec_yuv4(quicktime_video_map_t *vtrack)
 {
 	quicktime_yuv4_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	free(codec->work_buffer);
 	free(codec);
-	return 0;
 }
 
 static int reads_colormodel(quicktime_t *file, 
@@ -120,19 +119,18 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 	int bytes_per_row = width * cmodel_calculate_pixelsize(file->color_model);
 	initialize(vtrack, codec);
 
-	vtrack->track->tkhd.track_width;
 	quicktime_set_video_position(file, vtrack->current_position, track);
 	bytes = quicktime_frame_size(file, vtrack->current_position, track);
 	switch(file->color_model)
 	{
 		case BC_RGB888:
 			buffer = codec->work_buffer;
-			result = quicktime_read_data(file, buffer, bytes);
+			result = quicktime_read_data(file, (char*)buffer, bytes);
 			if(result) result = 0; else result = 1;
 
 			for(out_y = 0, in_y = 0; out_y < height; in_y++)
 			{
-				input_row = &buffer[in_y * codec->bytes_per_line];
+				input_row = (char*)&buffer[in_y * codec->bytes_per_line];
 				row_pointer1 = row_pointers[out_y++];
 
 				if(out_y < height)
@@ -229,7 +227,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int64_t offset = quicktime_position(file);
+//	int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_yuv4_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
@@ -246,7 +244,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	int u, v;
 	int r, g, b;
 	int bytes_per_row = width * 3;
-	int denominator;
 	quicktime_atom_t chunk_atom;
 	initialize(vtrack, codec);
 
@@ -342,7 +339,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	}
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
-	result = quicktime_write_data(file, buffer, bytes);
+	result = quicktime_write_data(file, (char*)buffer, bytes);
 	if(result)
 		result = 0; 
 	else 
@@ -361,7 +358,6 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 void quicktime_init_codec_yuv4(quicktime_video_map_t *vtrack)
 {
-	int i;
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)vtrack->codec;
 
 /* Init public items */

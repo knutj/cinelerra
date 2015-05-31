@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 #include "colormodels.h"
 #include "funcprotos.h"
@@ -25,10 +26,9 @@ typedef struct
 	int use_float;
 } quicktime_jpeg_codec_t;
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_jpeg_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
-	int i;
 
 	if(codec->mjpeg) mjpeg_delete(codec->mjpeg);
 	if(codec->buffer)
@@ -36,13 +36,11 @@ static int delete_codec(quicktime_video_map_t *vtrack)
 	if(codec->temp_video)
 		free(codec->temp_video);
 	free(codec);
-	return 0;
 }
 
 void quicktime_set_jpeg(quicktime_t *file, int quality, int use_float)
 {
 	int i;
-	char *compressor;
 
 printf("1\n");
 	for(i = 0; i < file->total_vtracks; i++)
@@ -113,7 +111,7 @@ static int decode(quicktime_t *file,
 		codec->buffer = realloc(codec->buffer, codec->buffer_allocated);
 	}
 
-	result = !quicktime_read_data(file, codec->buffer, size);
+	result = !quicktime_read_data(file, (char*)codec->buffer, size);
 /*
  * printf("decode 1 %02x %02x %02x %02x %02x %02x %02x %02x\n", 
  * codec->buffer[0],
@@ -173,7 +171,6 @@ static int decode(quicktime_t *file,
 			file->out_w == track_width &&
 			file->out_h == track_height)
 		{
-			int i;
 			mjpeg_decompress(codec->mjpeg, 
 				codec->buffer, 
 				size,
@@ -251,21 +248,17 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	quicktime_trak_t *trak = vtrack->track;
 	mjpeg_set_quality(codec->mjpeg, codec->quality);
 	mjpeg_set_float(codec->mjpeg, codec->use_float);
-	int64_t offset = quicktime_position(file);
+	//int64_t offset = quicktime_position(file);
 	int result = 0;
 	long field2_offset;
 	quicktime_atom_t chunk_atom;
 
 //printf("encode 1\n");
 	mjpeg_set_cpus(codec->mjpeg, file->cpus);
+	mjpeg_compress(codec->mjpeg, row_pointers, 
+		row_pointers[0], row_pointers[1], row_pointers[2],
+		file->color_model, file->cpus);
 
-	mjpeg_compress(codec->mjpeg, 
-		row_pointers, 
-		row_pointers[0], 
-		row_pointers[1], 
-		row_pointers[2],
-		file->color_model,
-		file->cpus);
 	if(codec->jpeg_type == JPEG_MJPA)
 	{
 		if(file->use_avi)
@@ -288,7 +281,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
 	result = !quicktime_write_data(file, 
-				mjpeg_output_buffer(codec->mjpeg), 
+				(char*)mjpeg_output_buffer(codec->mjpeg), 
 				mjpeg_output_size(codec->mjpeg));
 	quicktime_write_chunk_footer(file, 
 					trak,
@@ -373,7 +366,6 @@ static void init_codec_common(quicktime_video_map_t *vtrack, char *compressor)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)vtrack->codec;
 	quicktime_jpeg_codec_t *codec;
-	int i;
 
 	codec = codec_base->priv = calloc(1, sizeof(quicktime_jpeg_codec_t));
 	if(quicktime_match_32(compressor, QUICKTIME_JPEG))
@@ -410,7 +402,7 @@ void quicktime_init_codec_mjpa(quicktime_video_map_t *vtrack)
 
 void quicktime_init_codec_mjpg(quicktime_video_map_t *vtrack)
 {
-	init_codec_common(vtrack, "MJPG");
+	init_codec_common(vtrack, QUICKTIME_MJPG);
 }
 
 

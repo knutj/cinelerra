@@ -13,7 +13,7 @@ typedef struct
 } quicktime_rle_codec_t;
 
 
-static int delete_codec(quicktime_video_map_t *vtrack)
+static void delete_codec(quicktime_video_map_t *vtrack)
 {
 	quicktime_rle_codec_t *codec;
 	codec = ((quicktime_codec_t*)vtrack->codec)->priv;
@@ -49,7 +49,6 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 	int width = trak->tkhd.track_width;
 	int height = trak->tkhd.track_height;
 	int size;
-	int result = 0;
 	unsigned char *ptr;
 	int start_line;
 	int total_lines;
@@ -83,11 +82,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 		codec->buffer_size = size;
 	}
 
-	if(!quicktime_read_data(file, 
-		codec->work_buffer, 
-		size))
-		result = -1;
-
+	quicktime_read_data(file, (char*)codec->work_buffer, size);
 	ptr = codec->work_buffer;
 	buffer_end = ptr + size;
 
@@ -223,15 +218,14 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 void quicktime_init_codec_rle(quicktime_video_map_t *vtrack)
 {
 	quicktime_codec_t *codec_base = (quicktime_codec_t*)vtrack->codec;
-	quicktime_rle_codec_t *codec;
+//	quicktime_rle_codec_t *codec = (quicktime_rle_codec_t*)codec_base->priv;
 	codec_base->priv = calloc(1, sizeof(quicktime_rle_codec_t));
 	codec_base->delete_vcodec = delete_codec;
 	codec_base->decode_video = decode;
 	codec_base->reads_colormodel = reads_colormodel;
-	codec_base->fourcc = "rle ";
+	codec_base->fourcc = QUICKTIME_RLE;
 	codec_base->title = "RLE";
 	codec_base->desc = "Run length encoding";
 
-	codec = (quicktime_rle_codec_t*)codec_base->priv;
 }
 

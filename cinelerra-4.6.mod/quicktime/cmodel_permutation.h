@@ -2557,7 +2557,8 @@ static inline void transfer_YUVA16161616_to_YUV422(unsigned char *(*output),
 
 
 
-
+#define ZTYP(ty) typedef ty z_##ty __attribute__ ((__unused__))
+ZTYP(int);
 
 
 // ******************************** Loops *************************************
@@ -2567,7 +2568,7 @@ static inline void transfer_YUVA16161616_to_YUV422(unsigned char *(*output),
 	{ \
 		unsigned char *output_row = output_rows[i + out_y] + out_x * out_pixelsize; \
 		unsigned char *input_row = input_rows[row_table[i]]; \
-		int bit_counter = 7; \
+		z_int bit_counter = 7; \
 		for(j = 0; j < out_w; j++) \
 		{
 
@@ -2695,3 +2696,11 @@ static inline void transfer_YUVA16161616_to_YUV422(unsigned char *(*output),
 	int bg_r, \
 	int bg_g, \
 	int bg_b
+
+void cmodel_float(PERMUTATION_ARGS);
+void cmodel_yuv420p(PERMUTATION_ARGS);
+void cmodel_yuv9p(PERMUTATION_ARGS);
+void cmodel_yuv444p(PERMUTATION_ARGS);
+void cmodel_yuv422(PERMUTATION_ARGS);
+void cmodel_default(PERMUTATION_ARGS);
+ 

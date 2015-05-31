@@ -10,7 +10,7 @@ typedef struct
 } quicktime_raw_codec_t;
 
 
-static int quicktime_delete_codec_raw(quicktime_video_map_t *vtrack)
+static void quicktime_delete_codec_raw(quicktime_video_map_t *vtrack)
 {
 	quicktime_raw_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	if(codec->temp_frame)
@@ -19,7 +19,6 @@ static int quicktime_delete_codec_raw(quicktime_video_map_t *vtrack)
 		free(codec->temp_rows);
 	}
 	free(codec);
-	return 0;
 }
 
 static int source_cmodel(quicktime_t *file, int track)
@@ -35,13 +34,11 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
 	int result = 0;
 	quicktime_trak_t *trak = file->vtracks[track].track;
-	int frame_depth = quicktime_video_depth(file, track);
 	int height = trak->tkhd.track_height;
 	int width = trak->tkhd.track_width;
 	long bytes;
 	int i;
 	quicktime_raw_codec_t *codec = ((quicktime_codec_t*)file->vtracks[track].codec)->priv;
-	int pixel_size = frame_depth / 8;
 	int cmodel = source_cmodel(file, track);
 	int use_temp = (cmodel != file->color_model ||
 		file->in_x != 0 ||
@@ -78,7 +75,7 @@ static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 /* Read data */
 	quicktime_set_video_position(file, file->vtracks[track].current_position, track);
 	bytes = quicktime_frame_size(file, file->vtracks[track].current_position, track);
-	result = !quicktime_read_data(file, temp_data, bytes);
+	result = !quicktime_read_data(file, (char*)temp_data, bytes);
 
 /* Convert colormodel */
 	if(use_temp)
@@ -115,18 +112,14 @@ static int encode(quicktime_t *file,
 	unsigned char **row_pointers, 
 	int track)
 {
+//	int64_t offset = quicktime_position(file);
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_raw_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
-	int64_t offset = quicktime_position(file);
-	int result = 0;
-	register int i, j;
+	int i, result;
 	int height = trak->tkhd.track_height;
 	int width = trak->tkhd.track_width;
 	int depth = quicktime_video_depth(file, track);
-	int64_t bytes = height * width * depth / 8;
-	int64_t bytes_per_row = width * depth / 8;
-	unsigned char temp;
 	int dest_cmodel;
 	quicktime_atom_t chunk_atom;
 
@@ -148,17 +141,12 @@ static int encode(quicktime_t *file,
 	{
 		if(!codec->temp_frame)
 		{
-			codec->temp_frame = malloc(cmodel_calculate_datasize(width,
-				height,
-				-1,
-				dest_cmodel));
+			int size = cmodel_calculate_datasize(width, height, -1, dest_cmodel);
+			int row_size = cmodel_calculate_pixelsize(dest_cmodel) * width;
+			codec->temp_frame = malloc(size);
 			codec->temp_rows = malloc(sizeof(unsigned char*) * height);
-			
 			for(i = 0; i < height; i++)
-			{
-				codec->temp_rows[i] = codec->temp_frame + 
-					i * cmodel_calculate_pixelsize(dest_cmodel) * width;
-			}
+				codec->temp_rows[i] = codec->temp_frame + i*row_size;
 		}
 		
 		
@@ -186,30 +174,18 @@ static int encode(quicktime_t *file,
 			width);     /* For planar use the luma rowspan */
 
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = !quicktime_write_data(file, codec->temp_frame, 
-			cmodel_calculate_datasize(width,
-				height,
-				-1,
-				dest_cmodel));
-		quicktime_write_chunk_footer(file, 
-			trak,
-			vtrack->current_chunk,
-			&chunk_atom, 
-			1);
+		result = !quicktime_write_data(file, (char*)codec->temp_frame, 
+			cmodel_calculate_datasize(width, height, -1, dest_cmodel));
+		quicktime_write_chunk_footer(file, trak,
+			vtrack->current_chunk, &chunk_atom, 1);
 	}
 	else
 	{
 		quicktime_write_chunk_header(file, trak, &chunk_atom);
-		result = !quicktime_write_data(file, row_pointers[0], 
-			cmodel_calculate_datasize(width,
-				height,
-				-1,
-				file->color_model));
-		quicktime_write_chunk_footer(file, 
-			trak,
-			vtrack->current_chunk,
-			&chunk_atom, 
-			1);
+		result = !quicktime_write_data(file, (char*)row_pointers[0], 
+			cmodel_calculate_datasize(width, height, -1, file->color_model));
+		quicktime_write_chunk_footer(file, trak,
+			vtrack->current_chunk, &chunk_atom, 1);
 	}
 
 

@@ -34,11 +34,11 @@ void quicktime_stco_dump(quicktime_stco_t *stco)
 	int i;
 	printf("     chunk offset\n");
 	printf("      version %d\n", stco->version);
-	printf("      flags %d\n", stco->flags);
-	printf("      total_entries %d\n", stco->total_entries);
+	printf("      flags %ld\n", stco->flags);
+	printf("      total_entries %ld\n", stco->total_entries);
 	for(i = 0; i < stco->total_entries; i++)
 	{
-		printf("       offset %d %llx\n", i, stco->table[i].offset);
+		printf("       offset %d 0x%jx\n", i, stco->table[i].offset);
 	}
 }
 
@@ -91,10 +91,8 @@ void quicktime_write_stco(quicktime_t *file, quicktime_stco_t *stco)
 // Chunk starts at 1
 void quicktime_update_stco(quicktime_stco_t *stco, long chunk, int64_t offset)
 {
-	long i;
 	if(chunk <= 0)
-		printf("quicktime_update_stco chunk must start at 1. chunk=%d\n",
-			chunk);
+		printf("quicktime_update_stco chunk must start at 1. chunk=%ld\n", chunk);
 
 	if(chunk > stco->entries_allocated)
 	{
