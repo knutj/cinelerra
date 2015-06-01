@@ -1,5 +1,6 @@
 #include "quicktime.h"
 #include "rawaudio.h"
+#include <math.h>
 
 typedef struct
 {
@@ -9,63 +10,22 @@ typedef struct
 
 /* =================================== private for rawaudio */
 
-int rawaudio_byte_order(void)
-{                /* 1 if little endian */
-	int16_t byteordertest;
-	int byteorder;
-
-	byteordertest = 0x0001;
-	byteorder = *((unsigned char *)&byteordertest);
-	return byteorder;
-}
-
-int rawaudio_swap_bytes(char *buffer, long samples, int channels, int bits)
+static int is_little_endian(void)
 {
-	long i = 0;
-	char byte1, *buffer1, *buffer2;
-
-	if(!rawaudio_byte_order()) return 0;
-
-	switch(bits) {
-		case 16:
-			buffer1 = buffer;
-			buffer2 = buffer + 1;
-			while(i < samples * 2) {
-				byte1 = buffer2[i];
-				buffer2[i] = buffer1[i];
-				buffer1[i] = byte1;
-				i += 2;
-			}
-			break;
-
-		case 24:
-			buffer1 = buffer;
-			buffer2 = buffer + 2;
-			while(i < samples * 3) {
-				byte1 = buffer2[i];
-				buffer2[i] = buffer1[i];
-				buffer1[i] = byte1;
-				i += 3;
-			}
-			break;
-
-		default: break;
-	}
-	return 0;
+	int16_t test = 0x0001;
+	return *((unsigned char *)&test);
 }
 
 static int get_work_buffer(quicktime_t *file, int track, long bytes)
 {
 	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)file->atracks[track].codec)->priv;
 
-	if(codec->work_buffer && codec->buffer_size != bytes)
-	{
+	if(codec->work_buffer && codec->buffer_size != bytes) {
 		free(codec->work_buffer);
 		codec->work_buffer = 0;
 	}
 	
-	if(!codec->work_buffer) 
-	{
+	if(!codec->work_buffer) {
 		codec->buffer_size = bytes;
 		if(!(codec->work_buffer = malloc(bytes))) return 1;
 	}
@@ -84,207 +44,148 @@ static void quicktime_delete_codec_rawaudio(quicktime_audio_map_t *atrack)
 	free(codec);
 }
 
-static int quicktime_decode_rawaudio(quicktime_t *file, 
-					int16_t *output_i, 
-					float *output_f, 
-					long samples, 
-					int track, 
-					int channel)
+static int fclip(float f, int mx)
 {
-	int result = 0;
-	long i, j;
-	quicktime_audio_map_t *track_map = &(file->atracks[track]);
-	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
-	int step = file->atracks[track].channels * quicktime_audio_bits(file, track) / 8;
+  f *= mx;  f += f >= 0 ? 0.5f : -0.5f;
+  return f >= mx ? mx+mx-1 : f < -mx ? 0 : (int)f + mx;
+}
+static int fclip8 (float f) { return fclip(f,0x80); }
+static int fclip16(float f) { return fclip(f,0x8000); }
+static int fclip24(float f) { return fclip(f,0x800000); }
 
-	get_work_buffer(file, track, samples * step);
-	result = !quicktime_read_audio(file, codec->work_buffer, samples, track);
-// Undo increment since this is done in codecs.c
-	track_map->current_position -= samples;
+static int   rd8be_s16 (uint8_t *bp) { return (bp[0]<<8) - 0x8000; }
+static int   rd8le_s16 (uint8_t *bp) { return (bp[0]<<8) - 0x8000; }
+static int   rd16be_s16(uint8_t *bp) { return ((bp[0]<<8) | bp[1]) - 0x8000; }
+static int   rd16le_s16(uint8_t *bp) { return (bp[0] | (bp[1]<<8)) - 0x8000; }
+static int   rd24be_s16(uint8_t *bp) { return ((bp[0]<<8) | bp[1]) - 0x8000; }
+static int   rd24le_s16(uint8_t *bp) { return (bp[1] | (bp[2]<<8)) - 0x8000; }
+static float rd8be_flt (uint8_t *bp) { return (float)(bp[0]-0x80)/0x80; }
+static float rd8le_flt (uint8_t *bp) { return (float)(bp[0]-0x80)/0x80; }
+static float rd16be_flt(uint8_t *bp) { return (float)(((bp[0]<<8) | bp[1])-0x8000)/0x8000; }
+static float rd16le_flt(uint8_t *bp) { return (float)((bp[0] | (bp[1]<<8))-0x8000)/0x8000; }
+static float rd24be_flt(uint8_t *bp) { return (float)(((bp[0]<<16) | (bp[1]<<8) | bp[2])-0x800000)/0x800000; }
+static float rd24le_flt(uint8_t *bp) { return (float)((bp[0] | (bp[1]<<8) | (bp[2]<<16))-0x800000)/0x800000; }
 
-	switch(quicktime_audio_bits(file, track))
-	{
-		case 8:
-			if(output_i && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_i[i] = ((int16_t)((unsigned char)codec->work_buffer[j]) << 8);
-					j += step;
-					output_i[i] -= 0x8000;
-				}
-			}
-			else
-			if(output_f && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_f[i] = (float)((unsigned char)codec->work_buffer[j]) - 0x80;
-					output_f[i] /= 0x7f;
-					j += step;
-				}
-			}
-			break;
+static void wr8be_s16 (uint8_t *bp, int v)   { v+=0x8000; bp[0] = v>>8; }
+static void wr8le_s16 (uint8_t *bp, int v)   { v+=0x8000; bp[0] = v>>8; }
+static void wr16be_s16(uint8_t *bp, int v)   { v+=0x8000; bp[0] = v>>8; bp[1] = v; }
+static void wr16le_s16(uint8_t *bp, int v)   { v+=0x8000; bp[0] = v; bp[1] = v>>8; }
+static void wr24be_s16(uint8_t *bp, int v)   { v+=0x8000; bp[0] = v>>8; bp[1] = v; bp[2] = 0; }
+static void wr24le_s16(uint8_t *bp, int v)   { v+=0x8000; bp[0] = 0; bp[1] = v; bp[2] = v>>8; }
+static void wr8be_flt (uint8_t *bp, float f) { int v = fclip8(f); bp[0] = v; }
+static void wr8le_flt (uint8_t *bp, float f) { int v = fclip8(f); bp[0] = v; }
+static void wr16be_flt(uint8_t *bp, float f) { int v = fclip16(f); bp[0] = v>>8; bp[1] = v; }
+static void wr16le_flt(uint8_t *bp, float f) { int v = fclip16(f); bp[0] = v; bp[1] = v>>8; }
+static void wr24be_flt(uint8_t *bp, float f) { int v = fclip24(f); bp[0] = v>>16; bp[1] = v>>8; bp[2] = v; }
+static void wr24le_flt(uint8_t *bp, float f) { int v = fclip24(f); bp[0] = v; bp[1] = v>>8; bp[2] = v>>16; }
 
-		case 16:
-			if(output_i && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_i[i] = (int16_t)(codec->work_buffer[j]) << 8 |
-									(unsigned char)(codec->work_buffer[j + 1]);
-					j += step;
-					output_i[i] -= 0x8000;
-				}
-			}
-			else
-			if(output_f && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_f[i] = (float)((int16_t)(codec->work_buffer[j]) << 8 |
-									(unsigned char)(codec->work_buffer[j + 1])) - 0x8000;
-					output_f[i] /= 0x7fff;
-					j += step;
-				}
-			}
-			break;
-
-		case 24:
-			if(output_i && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_i[i] = ((int16_t)(codec->work_buffer[j]) << 8) | 
-									(unsigned char)(codec->work_buffer[j + 1]);
-					output_i[i] -= 0x8000;
-					j += step;
-				}
-			}
-			else
-			if(output_f && !result)
-			{
-				for(i = 0, j = 0; i < samples; i++)
-				{
-					output_f[i] = (float)(((int)(codec->work_buffer[j]) << 16) | 
-									((unsigned int)(codec->work_buffer[j + 1]) << 8) |
-									(unsigned char)(codec->work_buffer[j + 2])) - 0x800000;
-					output_f[i] /= 0x7fffff;
-					j += step;
-				}
-			}
-			break;
-
-		default:
-			break;
-	}
-/*printf("quicktime_decode_rawaudio 2\n"); */
-
-	return result;
+#define rd_samples(typ, fn, out, step) { \
+  uint8_t *bp = (uint8_t *)codec->work_buffer + channel*byts; \
+  for( i=0; i<samples; ++i ) { *out++ = fn(bp); bp += step; } \
 }
 
-#define CLAMP(x, y, z) ((x) = ((x) <  (y) ? (y) : ((x) > (z) ? (z) : (x))))
+#define wr_samples(typ, fn, in, step) { \
+  for( j=0; j<channels; ++j ) { typ *inp = in[j]; \
+    uint8_t *bp = (uint8_t *)codec->work_buffer + j*byts; \
+    for( i=0; i<samples; ++i ) { fn(bp,*inp++); bp += step; } \
+  } \
+}
 
-static int quicktime_encode_rawaudio(quicktime_t *file, 
-							int16_t **input_i, 
-							float **input_f, 
-							int track, 
-							long samples)
+static int quicktime_decode_rawaudio(quicktime_t *file, 
+		int16_t *output_i, float *output_f, long samples, 
+		int track, int channel)
 {
-	int result = 0;
-	long i, j;
+	int i, result;
+	int little_endian = is_little_endian();
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
-	int step = file->atracks[track].channels * quicktime_audio_bits(file, track) / 8;
-	int sample;
-	float sample_f;
-
-	get_work_buffer(file, track, samples * step);
-
-	if(input_i)
-	{
-		for(i = 0; i < track_map->channels; i++)
-		{
-			switch(quicktime_audio_bits(file, track))
-			{
-				case 8:
-					for(j = 0; j < samples; j++)
-					{
-						sample = input_i[i][j] >> 8;
-						sample += 0x80;
-						codec->work_buffer[j * step + i] = sample;
-					}
-					break;
-				case 16:
-					for(j = 0; j < samples; j++)
-					{
-						sample = input_i[i][j];
-						sample += 0x8000;
-						codec->work_buffer[j * step + i * 2] = ((unsigned int)sample & 0xff00) >> 8;
-						codec->work_buffer[j * step + i * 2 + 1] = ((unsigned int)sample) & 0xff;
-					}
-					break;
-				case 24:
-					for(j = 0; j < samples; j++)
-					{
-						sample = input_i[i][j];
-						sample += 0x8000;
-						codec->work_buffer[j * step + i * 3] = ((unsigned int)sample & 0xff00) >> 8;
-						codec->work_buffer[j * step + i * 3 + 1] = ((unsigned int)sample & 0xff);
-						codec->work_buffer[j * step + i * 3 + 2] = 0;
-					}
-					break;
+	int bits = quicktime_audio_bits(file, track);
+	int byts = bits/8, channels = file->atracks[track].channels;
+	int size = channels * byts;
+	get_work_buffer(file, track, samples * size);
+	result = !quicktime_read_audio(file, codec->work_buffer, samples, track);
+	if( result ) return result;
+// Undo increment since this is done in codecs.c
+	track_map->current_position -= samples;
+	if( !little_endian ) {
+		if( output_i ) {
+			switch( byts ) {
+			case 1:  rd_samples(int16_t,rd8be_s16,output_i,size);   break;
+			case 2:  rd_samples(int16_t,rd16be_s16,output_i,size);  break;
+			case 3:  rd_samples(int16_t,rd24be_s16,output_i,size);  break;
+			}
+		}
+		else if( output_f ) {
+			switch( byts ) {
+			case 1:  rd_samples(float,rd8be_flt,output_f,size);   break;
+			case 2:  rd_samples(float,rd16be_flt,output_f,size);  break;
+			case 3:  rd_samples(float,rd24be_flt,output_f,size);  break;
 			}
 		}
 	}
-	else
-	{
-		for(i = 0; i < track_map->channels; i++)
-		{
-			switch(quicktime_audio_bits(file, track))
-			{
-				case 8:
-					for(j = 0; j < samples; j++)
-					{
-						sample_f = input_f[i][j];
-						if(sample_f < 0)
-							sample = (int)(sample_f * 0x7f - 0.5);
-						else
-							sample = (int)(sample_f * 0x7f + 0.5);
-						CLAMP(sample, -0x7f, 0x7f);
-						sample += 0x80;
-						codec->work_buffer[j * step + i] = sample;
-					}
-					break;
-				case 16:
-					for(j = 0; j < samples; j++)
-					{
-						sample_f = input_f[i][j];
-						if(sample_f < 0)
-							sample = (int)(sample_f * 0x7fff - 0.5);
-						else
-							sample = (int)(sample_f * 0x7fff + 0.5);
-						CLAMP(sample, -0x7fff, 0x7fff);
-						sample += 0x8000;
-						codec->work_buffer[j * step + i * 2] = ((unsigned int)sample & 0xff00) >> 8;
-						codec->work_buffer[j * step + i * 2 + 1] = ((unsigned int)sample) & 0xff;
-					}
-					break;
-				case 24:
-					for(j = 0; j < samples; j++)
-					{
-						sample_f = input_f[i][j];
-						if(sample_f < 0)
-							sample = (int)(sample_f * 0x7fffff - 0.5);
-						else
-							sample = (int)(sample_f * 0x7fffff + 0.5);
-						CLAMP(sample, -0x7fffff, 0x7fffff);
-						sample += 0x800000;
-						codec->work_buffer[j * step + i * 3] = ((unsigned int)sample & 0xff0000) >> 16;
-						codec->work_buffer[j * step + i * 3 + 1] = ((unsigned int)sample & 0xff00) >> 8;
-						codec->work_buffer[j * step + i * 3 + 2] = ((unsigned int)sample) & 0xff;
-					}
-					break;
+	else {
+// Undo increment since this is done in codecs.c
+		track_map->current_position -= samples;
+		if( output_i ) {
+			switch( byts ) {
+			case 1:  rd_samples(int16_t,rd8le_s16,output_i,size);   break;
+			case 2:  rd_samples(int16_t,rd16le_s16,output_i,size);  break;
+			case 3:  rd_samples(int16_t,rd24le_s16,output_i,size);  break;
+			}
+		}
+		else if( output_f ) {
+			switch( byts ) {
+			case 1:  rd_samples(float,rd8le_flt,output_f,size);   break;
+			case 2:  rd_samples(float,rd16le_flt,output_f,size);  break;
+			case 3:  rd_samples(float,rd24le_flt,output_f,size);  break;
+			}
+		}
+	}
+/*printf("quicktime_decode_rawaudio 2\n"); */
+	return 0;
+}
+
+static int quicktime_encode_rawaudio(quicktime_t *file, 
+		int16_t **input_i, float **input_f, int track, long samples)
+{
+	int i, j, result;
+	int little_endian = is_little_endian();
+	quicktime_audio_map_t *track_map = &(file->atracks[track]);
+	quicktime_rawaudio_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
+	int bits = quicktime_audio_bits(file, track);
+	int byts = bits/8, channels = file->atracks[track].channels;
+	int size = channels * byts;
+	get_work_buffer(file, track, samples * size);
+
+	if( !little_endian ) {
+		if( input_i ) {
+			switch( byts ) {
+			case 1:  wr_samples(int16_t,wr8be_s16,input_i,size);   break;
+			case 2:  wr_samples(int16_t,wr16be_s16,input_i,size);  break;
+			case 3:  wr_samples(int16_t,wr24be_s16,input_i,size);  break;
+			}
+		}
+		else if( input_f ) {
+			switch( byts ) {
+			case 1:  wr_samples(float,wr8be_flt,input_f,size);   break;
+			case 2:  wr_samples(float,wr16be_flt,input_f,size);  break;
+			case 3:  wr_samples(float,wr24be_flt,input_f,size);  break;
+			}
+		}
+	}
+	else {
+		if( input_i ) {
+			switch( byts ) {
+			case 1:  wr_samples(int16_t,wr8le_s16,input_i,size);   break;
+			case 2:  wr_samples(int16_t,wr16le_s16,input_i,size);  break;
+			case 3:  wr_samples(int16_t,wr24le_s16,input_i,size);  break;
+			}
+		}
+		else if( input_f ) {
+			switch( byts ) {
+			case 1:  wr_samples(float,wr8le_flt,input_f,size);   break;
+			case 2:  wr_samples(float,wr16le_flt,input_f,size);  break;
+			case 3:  wr_samples(float,wr24le_flt,input_f,size);  break;
 			}
 		}
 	}
@@ -308,8 +209,7 @@ void quicktime_init_codec_rawaudio(quicktime_audio_map_t *atrack)
 	codec_base->encode_audio = quicktime_encode_rawaudio;
 	codec_base->fourcc = QUICKTIME_RAW;
 	codec_base->title = "8 bit unsigned";
-	codec_base->desc = "8 bit unsigned for video";
+	codec_base->desc = "8 bit unsigned for audio";
 	codec_base->wav_id = 0x01;
-
 /* Init private items */
 }
