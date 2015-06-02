@@ -92,7 +92,7 @@ encore.cfg_vars= true ||
 esound.cfg_vars:= AUDIOFILE_CFLAGS="$(call inc_path,audiofile,libaudiofile) -laudiofile"
 esound.cfg_vars+= AUDIOFILE_LIBS="$(call ld_path,audiofile,libaudiofile/.libs)"
 esound.cfg_params= --enable-shared=no --with-pic
-esound.ldflags=-lm
+esound.ldflags="-lm -lstdc++"
 faac.cfg_params= --enable-shared=no
 faad2.cfg_params= --with-drm --enable-shared=no
 fdk.cfg_vars= ./autogen.sh ;
