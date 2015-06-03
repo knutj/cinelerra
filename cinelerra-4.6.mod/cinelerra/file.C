@@ -881,6 +881,7 @@ int File::close_file(int ignore_thread)
 			current_frame);
 
 		delete file_fork;
+		file_fork = 0;
 	}
 #endif
 

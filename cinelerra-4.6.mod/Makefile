@@ -18,11 +18,13 @@ rebuild:
 
 rebuild_all:
 	$(MAKE) -C libzmpeg3 clean
-	$(MAKE) -C db clean
 	$(MAKE) -C libzmpeg3
+	$(MAKE) -C quicktime clean
+	$(MAKE) -C quicktime
+	$(MAKE) -C db clean
 	$(MAKE) -C db
-	$(MAKE) rebuild
 	$(MAKE) -C db/utils
+	$(MAKE) rebuild
 
 rebuild_install:
 	$(MAKE) -C cinelerra install
