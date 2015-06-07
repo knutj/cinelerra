@@ -328,8 +328,6 @@ int quicktime_chunk_of_sample(int64_t *chunk_sample, int64_t *chunk,
 		last_samples = table[i++].samples;
 	}
 
-//printf("quicktime_chunk_of_sample chunk1samples=%lld sample=%lld total=%lld chunk1=%lld\n",
-//chunk1samples, sample, total, chunk1);
 	*chunk = !last_samples ? 1 : (sample - chunk_samples) / last_samples + last_chunk;
 	*chunk_sample = chunk_samples + (*chunk - last_chunk) * last_samples;
 	return 0;
@@ -339,9 +337,8 @@ int64_t quicktime_chunk_to_offset(quicktime_t *file, quicktime_trak_t *trak, lon
 {
 	quicktime_stco_table_t *table = trak->mdia.minf.stbl.stco.table;
 	int64_t table_entries = trak->mdia.minf.stbl.stco.total_entries;
-	int64_t result = !table_entries ?  (int64_t)HEADER_LENGTH * 2 :
-			chunk > table_entries ? table[table_entries-1].offset :
-				table[chunk-1].offset ;
+	if( chunk >= table_entries ) chunk = table_entries-1;
+	int64_t result = chunk < 0 ? (int64_t)HEADER_LENGTH * 2 : table[chunk-1].offset;
 // Skip chunk header for AVI.  Skip it here instead of in read_chunk because some
 // codecs can't use read_chunk
 	if(file->use_avi) {
@@ -381,8 +378,7 @@ int64_t quicktime_sample_range_size(quicktime_trak_t *trak, int64_t chunk_sample
 }
 
 int64_t quicktime_sample_to_offset(quicktime_t *file, 
-	quicktime_trak_t *trak, 
-	int64_t sample)
+	quicktime_trak_t *trak, int64_t sample)
 {
 	int64_t chunk, chunk_sample;
 	quicktime_chunk_of_sample(&chunk_sample, &chunk, trak, sample);
@@ -505,6 +501,7 @@ int quicktime_write_vbr_frame(quicktime_t *file, int track,
 	quicktime_trak_t *trak = track_map->track;
 	quicktime_atom_t chunk_atom;
 	int result = 0;
+	if( !samples ) return result;
 
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
@@ -547,7 +544,7 @@ int quicktime_write_vbr_frame(quicktime_t *file, int track,
 		offset);
 	quicktime_update_stsc(&(trak->mdia.minf.stbl.stsc), 
 		total_chunks, 
-		1);
+		samples);
 	quicktime_update_stsz(&(trak->mdia.minf.stbl.stsz), 
 		total_chunks - 1, 
 		data_size);
@@ -581,14 +578,11 @@ int quicktime_trak_duration(quicktime_trak_t *trak,
 
 int quicktime_trak_fix_counts(quicktime_t *file, quicktime_trak_t *trak)
 {
-	long samples = quicktime_track_samples(file, trak);
-
-	if(!trak->mdia.minf.stbl.stts.is_vbr)
-	{
+	if(!trak->mdia.minf.stbl.stts.is_vbr) {
+		long samples = quicktime_track_samples(file, trak);
 		trak->mdia.minf.stbl.stts.table[0].sample_count = samples;
 
-		if(!trak->mdia.minf.stbl.stsz.total_entries)
-		{
+		if(!trak->mdia.minf.stbl.stsz.total_entries) {
 			trak->mdia.minf.stbl.stsz.sample_size = 1;
 			trak->mdia.minf.stbl.stsz.total_entries = samples;
 		}
@@ -598,18 +592,10 @@ int quicktime_trak_fix_counts(quicktime_t *file, quicktime_trak_t *trak)
 
 long quicktime_chunk_samples(quicktime_trak_t *trak, long chunk)
 {
-	long result, current_chunk;
 	quicktime_stsc_t *stsc = &(trak->mdia.minf.stbl.stsc);
-	long i = stsc->total_entries - 1;
-
-	do
-	{
-		current_chunk = stsc->table[i].chunk;
-		result = stsc->table[i].samples;
-		i--;
-	}while(i >= 0 && current_chunk > chunk);
-
-	return result;
+	long i = stsc->total_entries;
+	while( --i>=0 && stsc->table[i].chunk > chunk );
+	return i < 0 ? 0 : stsc->table[i].samples;
 }
 
 int quicktime_trak_shift_offsets(quicktime_trak_t *trak, int64_t offset)

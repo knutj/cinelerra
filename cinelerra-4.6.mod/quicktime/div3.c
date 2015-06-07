@@ -142,25 +142,32 @@ int quicktime_div3_is_key(unsigned char *data, long size)
 
 
 static int decode_wrapper(quicktime_div3_codec_t *codec,
-	unsigned char *data, 
-	long size)
+	unsigned char *data, long size)
 {
 	int got_picture = 0;
-	int result;
+	int result = 0;
 
 	if(!codec->got_key && !quicktime_div3_is_key(data, size)) return 0;
-
 	if(quicktime_div3_is_key(data, size)) codec->got_key = 1;
 
-	result = avcodec_decode_video(codec->decoder_context, 
-		&codec->picture,
-		&got_picture,
-		codec->work_buffer,
-		size);
+	AVPacket avpkt;
+	av_init_packet(&avpkt);
+	avpkt.data = ffmpeg->work_buffer;
+	avpkt.size = bytes;
+	avpkt.flags = AV_PKT_FLAG_KEY;
+
+	while( !result && !got_picture && avpkt.size > 0 ) {
+                result = avcodec_decode_video2(codec->decoder_context,
+			&codec->picture, &got_picture, &avpkt);
+                if( result < 0 ) break;
+                avpkt.data += result;
+                avpkt.size -= result;
+        }
+
 #ifdef ARCH_X86
 	asm("emms");
 #endif
-	return result;
+	return !got_picture;
 }
 
 
