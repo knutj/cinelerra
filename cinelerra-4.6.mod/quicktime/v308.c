@@ -59,123 +59,67 @@ static int writes_colormodel(quicktime_t *file,
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 static int decode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
-	int i;
-	int64_t bytes;
-	int result = 0;
+	unsigned char *data, **input_rows;
+	int i, row_size, result;
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_v308_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	int width = vtrack->track->tkhd.track_width;
 	int height = vtrack->track->tkhd.track_height;
-	unsigned char **input_rows;
+	int sz = width * height, bytes = sz * 3;
 	if(!codec->work_buffer)
-		codec->work_buffer = malloc(vtrack->track->tkhd.track_width * 
-			vtrack->track->tkhd.track_height *
-			3);
-
-
+		codec->work_buffer = (unsigned char *)malloc(bytes);
+	data = codec->work_buffer;
 
 	quicktime_set_video_position(file, vtrack->current_position, track);
 	bytes = quicktime_frame_size(file, vtrack->current_position, track);
 	result = !quicktime_read_data(file, (char*)codec->work_buffer, bytes);
 
+	input_rows = (unsigned char **)malloc(sizeof(*input_rows) * height);
+	row_size = 3 * width;
+	for( i=0; i<height; ++i ) input_rows[i] = data + i*row_size;
 
-
-	input_rows = malloc(sizeof(unsigned char*) * height);
-	for(i = 0; i < height; i++)
-		input_rows[i] = codec->work_buffer + i * width * 3;
-
-	cmodel_transfer(row_pointers, 
-		input_rows,
-		row_pointers[0],
-		row_pointers[1],
-		row_pointers[2],
-		0,
-		0,
-		0,
-		file->in_x, 
-		file->in_y, 
-		file->in_w, 
-		file->in_h,
-		0, 
-		0, 
-		file->out_w, 
-		file->out_h,
-		BC_VYU888, 
-		file->color_model,
-		0,
-		width,
-		file->out_w);
+	cmodel_transfer(row_pointers, input_rows,
+		row_pointers[0], row_pointers[1], row_pointers[2],
+		0, 0, 0,
+		file->in_x, file->in_y, file->in_w, file->in_h,
+		0, 0, file->out_w, file->out_h,
+		BC_VYU888, file->color_model,
+		0, width, file->out_w);
 
 	free(input_rows);
-//for(i = 0; i < 100 * 1000; i++) ((float*)row_pointers[0])[i] = 1.0;
-
 	return result;
 }
-
-
-
-
-
 
 
 static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 {
 //	int64_t offset = quicktime_position(file);
+	unsigned char *data, **output_rows;
+	int i, row_size, result;
 	quicktime_video_map_t *vtrack = &(file->vtracks[track]);
 	quicktime_v308_codec_t *codec = ((quicktime_codec_t*)vtrack->codec)->priv;
 	quicktime_trak_t *trak = vtrack->track;
+	quicktime_atom_t chunk_atom;
 	int width = vtrack->track->tkhd.track_width;
 	int height = vtrack->track->tkhd.track_height;
-	int bytes = width * height * 3;
-	int result = 0;
-	unsigned char **output_rows;
-	int i;
-	quicktime_atom_t chunk_atom;
+	int sz = width * height, bytes = sz * 3;
 	if(!codec->work_buffer)
-		codec->work_buffer = malloc(vtrack->track->tkhd.track_width * 
-			vtrack->track->tkhd.track_height *
-			3);
+		codec->work_buffer = (unsigned char *)malloc(bytes);
+	data = codec->work_buffer;
 
+	output_rows = (unsigned char **)malloc(sizeof(*output_rows) * height);
+	row_size = 3 * width;
+	for( i=0; i<height; ++i ) output_rows[i] = data + i*row_size;
 
-	output_rows = malloc(sizeof(unsigned char*) * height);
-	for(i = 0; i < height; i++)
-		output_rows[i] = codec->work_buffer + i * width * 3;
-
-	cmodel_transfer(output_rows, 
-		row_pointers,
-		0,
-		0,
-		0,
-		row_pointers[0],
-		row_pointers[1],
-		row_pointers[2],
-		0, 
-		0, 
-		width, 
-		height,
-		0, 
-		0, 
-		width, 
-		height,
-		file->color_model,
-		BC_VYU888, 
-		0,
-		width,
-		width);
+	cmodel_transfer(output_rows, row_pointers,
+		0, 0, 0,
+		row_pointers[0], row_pointers[1], row_pointers[2],
+		0, 0, width, height,
+		0, 0, width, height,
+		file->color_model, BC_VYU888, 
+		0, width, width);
 
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
 	result = !quicktime_write_data(file, (char*)codec->work_buffer, bytes);

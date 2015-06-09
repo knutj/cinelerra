@@ -10,53 +10,53 @@
 
 
 
-void quicktime_init_vbr(quicktime_vbr_t *ptr, int channels)
+void quicktime_init_vbr(quicktime_vbr_t *vbr, int channels)
 {
-	ptr->channels = channels;
-	if(!ptr->output_buffer)
+	vbr->channels = channels;
+	if(!vbr->output_buffer)
 	{
 		int i;
-		ptr->output_buffer = calloc(channels, sizeof(double*));
+		vbr->output_buffer = calloc(channels, sizeof(double*));
 		for(i = 0; i < channels; i++)
-			ptr->output_buffer[i] = calloc(MAX_VBR_BUFFER, sizeof(double));
+			vbr->output_buffer[i] = calloc(MAX_VBR_BUFFER, sizeof(double));
 	}
 }
 
-void quicktime_clear_vbr(quicktime_vbr_t *ptr)
+void quicktime_clear_vbr(quicktime_vbr_t *vbr)
 {
 	int i;
 
-	if(ptr->output_buffer)
+	if(vbr->output_buffer)
 	{
-		for(i = 0; i < ptr->channels; i++)
-			free(ptr->output_buffer[i]);
-		free(ptr->output_buffer);
+		for(i = 0; i < vbr->channels; i++)
+			free(vbr->output_buffer[i]);
+		free(vbr->output_buffer);
 	}
 
-	if(ptr->input_buffer)
+	if(vbr->input_buffer)
 	{
-		free(ptr->input_buffer);
+		free(vbr->input_buffer);
 	}
 }
 
-void quicktime_vbr_set_channels(quicktime_vbr_t *ptr, int channels)
+void quicktime_vbr_set_channels(quicktime_vbr_t *vbr, int channels)
 {
-	ptr->channels = channels;
+	vbr->channels = channels;
 }
 
-int64_t quicktime_vbr_end(quicktime_vbr_t *ptr)
+int64_t quicktime_vbr_end(quicktime_vbr_t *vbr)
 {
-	return ptr->buffer_end;
+	return vbr->buffer_end;
 }
 
-unsigned char* quicktime_vbr_input(quicktime_vbr_t *ptr)
+unsigned char* quicktime_vbr_input(quicktime_vbr_t *vbr)
 {
-	return ptr->input_buffer;
+	return vbr->inp_ptr;
 }
 
-int quicktime_vbr_input_size(quicktime_vbr_t *ptr)
+int quicktime_vbr_input_size(quicktime_vbr_t *vbr)
 {
-	return ptr->input_size;
+	return vbr->input_size;
 }
 
 static int limit_samples(int samples)
@@ -74,21 +74,23 @@ static int limit_samples(int samples)
 int quicktime_align_vbr(quicktime_audio_map_t *atrack, 
 	int samples)
 {
-	quicktime_vbr_t *ptr = &atrack->vbr;
+	quicktime_vbr_t *vbr = &atrack->vbr;
 	int64_t start_position = atrack->current_position;
 
 	if(limit_samples(samples)) return 1;
 
 // Desired start point is outside existing range.  Reposition buffer pointer
 // to start time of nearest frame.
-	if(start_position < ptr->buffer_end - ptr->buffer_size ||
-		start_position > ptr->buffer_end)
+	if(start_position < vbr->buffer_end - vbr->buffer_size ||
+		start_position > vbr->buffer_end)
 	{
 		int64_t start_time = start_position;
-		ptr->sample = quicktime_time_to_sample(&atrack->track->mdia.minf.stbl.stts,
+		vbr->sample = quicktime_time_to_sample(&atrack->track->mdia.minf.stbl.stts,
 			&start_time);
-		ptr->buffer_end = start_time;
-		ptr->buffer_size = 0;
+		vbr->buffer_end = start_time;
+		vbr->buffer_size = 0;
+		vbr->inp_ptr = vbr->input_buffer;
+		vbr->input_size = 0;
 	}
 
 	return 0;
@@ -99,6 +101,7 @@ int quicktime_read_vbr(quicktime_t *file,
 {
 	quicktime_vbr_t *vbr = &atrack->vbr;
 	quicktime_trak_t *trak = atrack->track;
+        quicktime_stts_t *stts = &trak->mdia.minf.stbl.stts;
 	int64_t offset = quicktime_sample_to_offset(file, 
 		trak, 
 		vbr->sample);
@@ -108,15 +111,20 @@ int quicktime_read_vbr(quicktime_t *file,
 
 	if(vbr->input_allocation < new_allocation)
 	{
+		int inp_offset = !vbr->input_buffer ? 0 :
+			 vbr->inp_ptr - vbr->input_buffer;
 		vbr->input_buffer = realloc(vbr->input_buffer, new_allocation);
 		vbr->input_allocation = new_allocation;
+		vbr->inp_ptr = vbr->input_buffer + inp_offset;
 	}
 
 
 	quicktime_set_position(file, offset);
-	result = !quicktime_read_data(file, (char*)vbr->input_buffer + vbr->input_size, size);
+	result = !quicktime_read_data(file, (char*)vbr->inp_ptr + vbr->input_size, size);
 	vbr->input_size += size;
-	vbr->sample++;
+	offset = vbr->buffer_end;
+        vbr->buffer_end = quicktime_chunk_to_samples(stts, ++vbr->sample);
+	vbr->buffer_size += vbr->buffer_end - offset;
 	return result;
 }
 
@@ -125,13 +133,12 @@ void quicktime_shift_vbr(quicktime_audio_map_t *atrack, int bytes)
 	quicktime_vbr_t *vbr = &atrack->vbr;
 	if(bytes >= vbr->input_size)
 	{
+		vbr->inp_ptr = vbr->input_buffer;
 		vbr->input_size = 0;
 	}
 	else
 	{
-		int i, j;
-		for(i = 0, j = bytes; j < vbr->input_size; i++, j++)
-			vbr->input_buffer[i] = vbr->input_buffer[j];
+		vbr->inp_ptr += bytes;
 		vbr->input_size -= bytes;
 	}
 }

@@ -495,6 +495,7 @@ void quicktime_stts_dump(quicktime_stts_t *stts);
 void quicktime_read_stts(quicktime_t *file,quicktime_stts_t *stts);
 void quicktime_write_stts(quicktime_t *file,quicktime_stts_t *stts);
 int quicktime_time_to_sample(quicktime_stts_t *stts,int64_t *start_time);
+int64_t quicktime_chunk_to_samples(quicktime_stts_t *stts, long chunk);
 
 /* stbl.c */
 void quicktime_stbl_init(quicktime_stbl_t *stbl);

@@ -207,7 +207,8 @@ CFLAGS += -I. \
 
 FFMPEG_CFLAGS := $(CFLAGS) $(FFMPEG_INCLUDE)
 
-LIBS := $(OUTPUT) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a -lpng -lz -lpthread -ldl -lm
+LIBS := $(OUTPUT) $(thirdparty_libraries) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a \
+	$(static_libraries) -lX11 -lpng -lz -lbz2 -llzma -lpthread -ldl -lm -lstdc++
 
 
 $(shell mkdir -p $(OBJDIR) )

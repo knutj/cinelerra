@@ -1636,6 +1636,16 @@ static inline void transfer_UYVA8888_to_YUVA16161616(uint16_t *(*output), unsign
 						j); \
 					TRANSFER_FRAME_TAIL \
 					break; \
+				case BC_VYU888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGB888_to_VYU888((output), (input));   \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_UYVA8888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGB888_to_UYVA8888((output), (input));   \
+					TRANSFER_FRAME_TAIL \
+					break; \
 			} \
 			break; \
  \
@@ -1783,6 +1793,16 @@ static inline void transfer_UYVA8888_to_YUVA16161616(uint16_t *(*output), unsign
 						output_v, \
 						(input), \
 						j); \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_VYU888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGBA8888_to_VYU888((output), (input));   \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_UYVA8888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGBA8888_to_UYVA8888((output), (input));   \
 					TRANSFER_FRAME_TAIL \
 					break; \
 				case BC_YUV444P: \

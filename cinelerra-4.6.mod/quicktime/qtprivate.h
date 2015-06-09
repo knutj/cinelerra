@@ -26,6 +26,7 @@
 
 #define AVI_FRAME_RATE_BASE 10000
 #define MAX_RIFFS  0x100
+#define MAX_CHANNELS  32
 
 #define QT_TRACE printf("%s: %d\n", __FILE__, __LINE__);
 
@@ -64,8 +65,7 @@ typedef struct
 	int input_size;
 	int input_allocation;
 	unsigned char *input_buffer;
-// Entry in sample size table of next frame of audio to read
-	int sample_size_entry;
+	unsigned char *inp_ptr;
 // Next sample/frame to read
 	int64_t sample;
 } quicktime_vbr_t;

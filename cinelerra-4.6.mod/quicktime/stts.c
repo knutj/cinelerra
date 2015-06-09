@@ -148,34 +148,49 @@ void quicktime_write_stts(quicktime_t *file, quicktime_stts_t *stts)
 
 // Return the sample which contains the start_time argument.
 // Stores the actual starting time of the sample in the start_time argument.
-int quicktime_time_to_sample(quicktime_stts_t *stts,
-	int64_t *start_time)
+int quicktime_time_to_sample(quicktime_stts_t *stts, int64_t *start_time)
 {
-	int result = 0;
-	int current_entry = 0;
-	int64_t current_start_time = 0;
-	while(current_entry < stts->total_entries)
-	{
-		quicktime_stts_table_t *stts_table = &stts->table[current_entry];
-		int sample_count = stts_table->sample_count;
-		while(sample_count > 0)
-		{
-			current_start_time += stts_table->sample_duration;
-// Current sample contains start time
-			if(current_start_time > *start_time)
-			{
-				current_start_time -= stts_table->sample_duration;
-				*start_time = current_start_time;
-				return result;
-			}
+	int64_t cur_time = 0, stime = *start_time;
+	int i = 0, entries = stts->total_entries, result = 0;
+	quicktime_stts_table_t *stts_table = &stts->table[0];
 
-// Next sample
-			sample_count--;
-			result++;
-		}
-		current_entry++;
+	while( i < entries ) {
+		int64_t count = stts_table->sample_count;
+		int64_t end_time = cur_time + count * stts_table->sample_duration;
+		if( end_time > stime ) break;
+		cur_time = end_time;
+		result += count;
+		++stts_table;
+		++i;
 	}
 
-	return result > 0 ? result - 1 : result;
+	if( i >= entries )
+		return entries-1;
+
+	stime = (stime - cur_time) / stts_table->sample_duration;
+	result += stime;
+	*start_time = cur_time + stime * stts_table->sample_duration;
+	return result;
+}
+
+int64_t quicktime_chunk_to_samples(quicktime_stts_t *stts, long chunk)
+{
+	int64_t cur_time = 0;  long chunks = 0;
+	int i = 0, entries = stts->total_entries;
+	quicktime_stts_table_t *stts_table = &stts->table[0];
+
+	while( i < entries ) {
+		int64_t count = stts_table->sample_count;
+		int64_t end_time = cur_time + count * stts_table->sample_duration;
+		long end_chunk = chunks + count;
+		if( end_chunk > chunk ) break;
+		chunks = end_chunk;
+		cur_time = end_time;
+		++stts_table;  ++i;
+	}
+
+	if( i >= entries ) return cur_time;
+	
+	return cur_time + (chunk - chunks) * stts_table->sample_duration;
 }
 

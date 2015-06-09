@@ -622,7 +622,7 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 	if(!codec->encode_initialized[current_field])
 	{
 // Encore section
-		if(codec->ffmpeg_id == CODEC_ID_MPEG4 && codec->use_encore)
+		if(codec->ffmpeg_id == AV_CODEC_ID_MPEG4 && codec->use_encore)
 		{
 			codec->encode_initialized[current_field] = 1;
 			codec->encode_handle[current_field] = encode_handle++;
@@ -689,7 +689,15 @@ static int encode(quicktime_t *file, unsigned char **row_pointers, int track)
 			context->level= FF_LEVEL_UNKNOWN;
 //			context->flags |= CODEC_FLAG_H263P_UMV;
 			context->flags |= CODEC_FLAG_AC_PRED;
-			context->flags |= CODEC_FLAG_4MV;
+
+			if( codec->ffmpeg_id == AV_CODEC_ID_MPEG4 ||
+			    codec->ffmpeg_id == AV_CODEC_ID_H263 ||
+			    codec->ffmpeg_id == AV_CODEC_ID_H263P ||
+			    codec->ffmpeg_id == AV_CODEC_ID_FLV1 )
+				context->flags |= CODEC_FLAG_4MV;
+
+			if( codec->ffmpeg_id == AV_CODEC_ID_MPEG4)
+				context->flags |= CODEC_FLAG_QPEL;
 
 // All the forbidden settings can be extracted from libavcodec/mpegvideo.c of ffmpeg...
  			
@@ -1124,7 +1132,7 @@ void quicktime_init_codec_div3(quicktime_video_map_t *vtrack)
 		QUICKTIME_DIV3,
 		"DIVX",
 		"Mike Row Soft MPEG4 Version 3");
-	result->ffmpeg_id = CODEC_ID_MSMPEG4V3;
+	result->ffmpeg_id = AV_CODEC_ID_MSMPEG4V3;
 }
 
 void quicktime_init_codec_div5(quicktime_video_map_t *vtrack)
@@ -1133,7 +1141,7 @@ void quicktime_init_codec_div5(quicktime_video_map_t *vtrack)
 		QUICKTIME_DX50,
 		"DIVX",
 		"Mike Row Soft MPEG4 Version 5");
-	result->ffmpeg_id = CODEC_ID_MPEG4;
+	result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 }
 
 // Mike Rowe Soft MPEG-4
@@ -1143,7 +1151,7 @@ void quicktime_init_codec_div3lower(quicktime_video_map_t *vtrack)
 		QUICKTIME_DIV3_LOWER,
 		"DIVX",
 		"Mike Row Soft MPEG4 Version 3");
-	result->ffmpeg_id = CODEC_ID_MSMPEG4V3;
+	result->ffmpeg_id = AV_CODEC_ID_MSMPEG4V3;
 }
 
 void quicktime_init_codec_div3v2(quicktime_video_map_t *vtrack)
@@ -1152,7 +1160,7 @@ void quicktime_init_codec_div3v2(quicktime_video_map_t *vtrack)
 		QUICKTIME_MP42,
 		"MP42",
 		"Mike Row Soft MPEG4 Version 2");
-	result->ffmpeg_id = CODEC_ID_MSMPEG4V2;
+	result->ffmpeg_id = AV_CODEC_ID_MSMPEG4V2;
 }
 
 // Generic MPEG-4
@@ -1162,7 +1170,7 @@ void quicktime_init_codec_divx(quicktime_video_map_t *vtrack)
 		QUICKTIME_DIVX,
 		"MPEG-4",
 		"Generic MPEG Four");
-	result->ffmpeg_id = CODEC_ID_MPEG4;
+	result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 	result->use_encore = 1;
 }
 
@@ -1172,7 +1180,7 @@ void quicktime_init_codec_mpg4(quicktime_video_map_t *vtrack)
 		QUICKTIME_MPG4,
 		"MPEG-4",
 		"FFMPEG (msmpeg4)");
-	result->ffmpeg_id = CODEC_ID_MSMPEG4V1;
+	result->ffmpeg_id = AV_CODEC_ID_MSMPEG4V1;
 }
 
 void quicktime_init_codec_dx50(quicktime_video_map_t *vtrack)
@@ -1181,7 +1189,7 @@ void quicktime_init_codec_dx50(quicktime_video_map_t *vtrack)
 		QUICKTIME_DX50,
 		"MPEG-4",
 		"FFMPEG (mpeg4)");
-	result->ffmpeg_id = CODEC_ID_MPEG4;
+	result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 }
 
 // Generic MPEG-4
@@ -1191,7 +1199,7 @@ void quicktime_init_codec_mp4v(quicktime_video_map_t *vtrack)
 		QUICKTIME_MP4V,
 		"MPEG4",
 		"Generic MPEG Four");
-	result->ffmpeg_id = CODEC_ID_MPEG4;
+	result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 //	result->use_encore = 1;
 }
 
@@ -1203,7 +1211,7 @@ void quicktime_init_codec_svq1(quicktime_video_map_t *vtrack)
 		QUICKTIME_SVQ1,
 		"Sorenson Version 1",
 		"From the chearch of codecs of yesterday's sights");
-	result->ffmpeg_id = CODEC_ID_SVQ1;
+	result->ffmpeg_id = AV_CODEC_ID_SVQ1;
 }
 
 void quicktime_init_codec_svq3(quicktime_video_map_t *vtrack)
@@ -1212,7 +1220,7 @@ void quicktime_init_codec_svq3(quicktime_video_map_t *vtrack)
 		QUICKTIME_SVQ3,
 		"Sorenson Version 3",
 		"From the chearch of codecs of yesterday's sights");
-	result->ffmpeg_id = CODEC_ID_SVQ3;
+	result->ffmpeg_id = AV_CODEC_ID_SVQ3;
 }
 
 void quicktime_init_codec_h263(quicktime_video_map_t *vtrack)
@@ -1221,7 +1229,7 @@ void quicktime_init_codec_h263(quicktime_video_map_t *vtrack)
         QUICKTIME_H263,
         "H.263",
         "H.263");
-    result->ffmpeg_id = CODEC_ID_H263;
+    result->ffmpeg_id = AV_CODEC_ID_H263;
 }
 
 void quicktime_init_codec_xvid(quicktime_video_map_t *vtrack)
@@ -1230,7 +1238,7 @@ void quicktime_init_codec_xvid(quicktime_video_map_t *vtrack)
         QUICKTIME_XVID,
         "XVID",
         "FFmpeg MPEG-4");
-    result->ffmpeg_id = CODEC_ID_MPEG4;
+    result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 }
 
 void quicktime_init_codec_dnxhd(quicktime_video_map_t *vtrack)
@@ -1239,7 +1247,7 @@ void quicktime_init_codec_dnxhd(quicktime_video_map_t *vtrack)
         QUICKTIME_DNXHD,
         "DNXHD",
         "DNXHD");
-    result->ffmpeg_id = CODEC_ID_DNXHD;
+    result->ffmpeg_id = AV_CODEC_ID_DNXHD;
 }
 
 // field based MPEG-4
@@ -1250,7 +1258,7 @@ void quicktime_init_codec_hv60(quicktime_video_map_t *vtrack)
 		"Dual MPEG-4",
 		"MPEG 4 with alternating streams every other frame.  (Not standardized)");
 	result->total_fields = 2;
-	result->ffmpeg_id = CODEC_ID_MPEG4;
+	result->ffmpeg_id = AV_CODEC_ID_MPEG4;
 }
 
 

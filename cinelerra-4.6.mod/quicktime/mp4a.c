@@ -74,11 +74,8 @@ static void delete_codec(quicktime_audio_map_t *atrack)
 }
 
 static int decode(quicktime_t *file, 
-					int16_t *output_i, 
-					float *output_f, 
-					long samples, 
-					int track, 
-					int channel)
+		int16_t *output_i, float *output_f, 
+		long samples, int track, int channel)
 {
 	quicktime_audio_map_t *track_map = &(file->atracks[track]);
 	quicktime_trak_t *trak = track_map->track;
@@ -89,8 +86,7 @@ static int decode(quicktime_t *file,
 
 
 // Initialize decoder
-	if(!codec->decoder_initialized)
-	{
+	if( !codec->decoder_initialized ) {
 		unsigned long samplerate = trak->mdia.minf.stbl.stsd.table[0].sample_rate;
 // FAAD needs unsigned char here
 		uint8_t channels = track_map->channels;
@@ -108,106 +104,43 @@ static int decode(quicktime_t *file,
 		int hdr_len = trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header_size;
 		if( !mp4_hdr || !hdr_len ) {
 			quicktime_align_vbr(track_map, samples);
-
-//while(quicktime_vbr_input_size(vbr) < 65536)
 			quicktime_read_vbr(file, track_map);
 
-//printf("decode %d buffer=%p size=%d\n", __LINE__, quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
-//samplerate = -1;
-//channels = 0;
 			if( NeAACDecInit(codec->decoder_handle,
-				quicktime_vbr_input(vbr), 
-				quicktime_vbr_input_size(vbr),
-				&samplerate,
-				&channels) < 0 ) return 1;
+				quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr),
+				&samplerate, &channels) < 0 ) return 1;
 		}
 		else {
 			if( NeAACDecInit2(codec->decoder_handle,
 				(unsigned char *)mp4_hdr, hdr_len,
-				&samplerate,
-				&channels) < 0 ) return 1;
+				&samplerate, &channels) < 0 ) return 1;
 		}
 //printf("decode %d samplerate=%d channels=%d\n", __LINE__, samplerate, channels);
 		codec->decoder_initialized = 1;
 	}
 
-	if(quicktime_align_vbr(track_map, 
-		samples))
-	{
-		return 1;
-	}
-	else
-	{
+	quicktime_align_vbr(track_map, samples);
+
 // Decode until buffer is full
-		while(quicktime_vbr_end(vbr) < end_position)
-		{
-// Fill until min buffer size reached or EOF
-/*
- * 			while(quicktime_vbr_input_size(vbr) <
- * 				FAAD_MIN_STREAMSIZE * track_map->channels)
- * 			{
- * 				if(quicktime_read_vbr(file, track_map)) break;
- * 			}
- */
+	while(quicktime_vbr_end(vbr) < end_position) {
+		if(quicktime_read_vbr(file, track_map)) break;
 
-			if(quicktime_read_vbr(file, track_map)) break;
-
-			bzero(&codec->frame_info, sizeof(NeAACDecFrameInfo));
-			float *sample_buffer =
-				NeAACDecDecode(codec->decoder_handle, &codec->frame_info,
-					quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
-
-//        	if (codec->frame_info.error > 0) {
-//			printf("decode mp4a: %s\n", NeAACDecGetErrorMessage(codec->frame_info.error));
-//        	}
-
-/*
- * printf("decode 1 %d %d %d\n", 
- * quicktime_vbr_input_size(vbr), 
- * codec->frame_info.bytesconsumed,
- * codec->frame_info.samples);
- * 
- * static FILE *test = 0;
- * if(!test) test = fopen("/tmp/test.aac", "w");
- * fwrite(quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr), 1, test);
- */
-
-
-/*
- * static FILE *test = 0;
- * if(!test) test = fopen("/hmov/test.pcm", "w");
- * int i;
- * for(i = 0; i < codec->frame_info.samples; i++)
- * {
- * int16_t sample = (int)(sample_buffer[i] * 32767);
- * fwrite(&sample, 2, 1, test);
- * }
- * fflush(test);
- */
-
-//				quicktime_shift_vbr(track_map, codec->frame_info.bytesconsumed);
-				quicktime_shift_vbr(track_map, quicktime_vbr_input_size(vbr));
-				quicktime_store_vbr_float(track_map,
-					sample_buffer,
-					codec->frame_info.samples / track_map->channels);
-		}
-
+		bzero(&codec->frame_info, sizeof(NeAACDecFrameInfo));
+		float *sample_buffer = NeAACDecDecode(codec->decoder_handle, &codec->frame_info,
+			quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
+		quicktime_shift_vbr(track_map, quicktime_vbr_input_size(vbr));
+		quicktime_store_vbr_float(track_map, sample_buffer,
+			codec->frame_info.samples / track_map->channels);
+	}
 
 // Transfer from buffer to output
-		if(output_i)
-			quicktime_copy_vbr_int16(vbr, 
-				current_position, 
-				samples, 
-				output_i, 
-				channel);
-		else
-		if(output_f)
-			quicktime_copy_vbr_float(vbr, 
-				current_position, 
-				samples,
-				output_f, 
-				channel);
-	}
+	if(output_i)
+		quicktime_copy_vbr_int16(vbr, current_position, 
+			samples, output_i, channel);
+	else if(output_f)
+		quicktime_copy_vbr_float(vbr, current_position, 
+			samples, output_f, channel);
+
 	return 0;
 }
 

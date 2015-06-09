@@ -503,7 +503,6 @@ int quicktime_write_vbr_frame(quicktime_t *file, int track,
 	int result = 0;
 	if( !samples ) return result;
 
-
 	quicktime_write_chunk_header(file, trak, &chunk_atom);
 	result = !quicktime_write_data(file, data, data_size);
 	int64_t offset = chunk_atom.start;
@@ -544,7 +543,7 @@ int quicktime_write_vbr_frame(quicktime_t *file, int track,
 		offset);
 	quicktime_update_stsc(&(trak->mdia.minf.stbl.stsc), 
 		total_chunks, 
-		samples);
+		1);
 	quicktime_update_stsz(&(trak->mdia.minf.stbl.stsz), 
 		total_chunks - 1, 
 		data_size);
