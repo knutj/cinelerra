@@ -26,7 +26,6 @@
 
 #define AVI_FRAME_RATE_BASE 10000
 #define MAX_RIFFS  0x100
-#define MAX_CHANNELS  32
 
 #define QT_TRACE printf("%s: %d\n", __FILE__, __LINE__);
 
@@ -51,21 +50,19 @@ extern pthread_mutex_t ffmpeg_lock;
 // Utility functions for vbr audio.  This is accessed through quicktime_audio_map_t.
 typedef struct
 {
-// End of the output buffer in the file in samples
-	int64_t buffer_end;
-// Number of samples in output buffer before end
-	int buffer_size;
-// Position in output buffer of buffer_end
-	int buffer_ptr;
+// End of the input/output buffer in the file in samples
+	int64_t input_end, output_end;
+// Number of samples in input/output buffer before end
+	int input_size, output_size;
+// Position in input/output buffer of buffer_end
+	int inp_ptr, out_ptr;
 // Output buffer, linear for each channel.
 	double **output_buffer;
 // Copy of channel count for deletion
 	int channels;
 // Input buffer for temporary compressed data
-	int input_size;
 	int input_allocation;
 	unsigned char *input_buffer;
-	unsigned char *inp_ptr;
 // Next sample/frame to read
 	int64_t sample;
 } quicktime_vbr_t;

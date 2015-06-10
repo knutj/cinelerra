@@ -275,42 +275,38 @@ unsigned long quicktime_current_time(void);
 
 // Utility functions for decoding vbr audio codecs
 
-// Delete buffers from the vbr structure when finished
-void quicktime_clear_vbr(quicktime_vbr_t  *ptr);
-void quicktime_vbr_set_channels(quicktime_vbr_t *ptr, int channels);
-void quicktime_init_vbr(quicktime_vbr_t *ptr, int channels);
-
-// Shift the output buffer and fix pointers for the given range.
-// Return 1 if not possible to handle the sample count.
-int quicktime_align_vbr(quicktime_audio_map_t *atrack,
-	int samples);
-
-// The current endpoint of the buffer
-int64_t quicktime_vbr_end(quicktime_vbr_t  *ptr);
-unsigned char* quicktime_vbr_input(quicktime_vbr_t *ptr);
-int quicktime_vbr_input_size(quicktime_vbr_t *ptr);
-
+// init/delete buffers
+void quicktime_init_vbr(quicktime_vbr_t *vbr,int channels);
+void quicktime_clear_vbr(quicktime_vbr_t *vbr);
+// next sample time at end of input/output buffer
+int64_t quicktime_vbr_input_end(quicktime_vbr_t *vbr);
+int64_t quicktime_vbr_output_end(quicktime_vbr_t *vbr);
+// next input byte at input_buffer[inp_ptr]
+unsigned char *quicktime_vbr_input(quicktime_vbr_t *vbr);
+// bytes in quicktime_vbr_input data
+int quicktime_vbr_input_size(quicktime_vbr_t *vbr);
+// check max xfer size bounds
+int quicktime_limit_samples(int samples);
+// seek frame of sample_time, then backup offset frames
+int quicktime_seek_vbr(quicktime_audio_map_t *atrack, int64_t start_time, int offset);
+// shift input buffer down inp_ptr bytes
+int quicktime_align_vbr(quicktime_audio_map_t *atrack, int64_t start_position);
 // Append the next sample/frame of compressed data to the input buffer
-// and advance the counters.
-int quicktime_read_vbr(quicktime_t *file,
-	quicktime_audio_map_t *atrack);
-
-// Shift the input buffer
+int quicktime_read_vbr(quicktime_t *file,quicktime_audio_map_t *atrack);
+// Shift the input buffer by adjusting inp_ptr += bytes
 void quicktime_shift_vbr(quicktime_audio_map_t *atrack, int bytes);
-
-// Put the next sample/frame of uncompressed data in the buffer and advance the
-// counters
+// Put the frame of sample data in output and advance the counters
 void quicktime_store_vbr_float(quicktime_audio_map_t *atrack,
-	float *samples,
-	int sample_count);
+   float *samples, int sample_count);
+void quicktime_store_vbr_floatp(quicktime_audio_map_t *atrack,
+   float **samples, int sample_count);
 void quicktime_store_vbr_int16(quicktime_audio_map_t *atrack,
-	int16_t *samples,
-	int sample_count);
-
-void quicktime_copy_vbr_float(quicktime_vbr_t *vbr, int64_t start_position,
-	int samples, float *output, int channel);
-void quicktime_copy_vbr_int16(quicktime_vbr_t *vbr,int64_t start_position,
-   int samples,int16_t *output,int channel);
+   int16_t *samples, int sample_count);
+// get the frame of sample data from output ring buffer
+void quicktime_copy_vbr_float(quicktime_vbr_t *vbr,
+   int64_t start_position, int sample_count,float *output,int channel);
+void quicktime_copy_vbr_int16(quicktime_vbr_t *vbr,
+   int64_t start_position, int samples,int16_t *output,int channel);
 
 // Frame caching for keyframed video.
 quicktime_cache_t* quicktime_new_cache();

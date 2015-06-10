@@ -152,6 +152,7 @@ flac.cflags="$(call inc_path,libogg,include) $(call ld_path,libogg,src/.libs)"
 giflib.cfg_params=--enable-shared=no
 ilmbase.cfg_params=--prefix=$(call bld_path,ilmbase,usr)
 ilmbase.mak_params=; make -C ilmbase* install; cd $(call bld_path,ilmbase); ln -sf lib64 usr/lib
+lame.cfg_vars= CFLAGS=-O
 lame.cfg_params=--enable-shared=no
 lame.mak_params= ; cd $(call bld_path,lame,include); ln -sf . lame
 mjpegtools.cflags="$(call inc_path,libjpeg) $(call ld_path,libjpeg,.libs)"

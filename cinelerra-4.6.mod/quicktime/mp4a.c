@@ -23,14 +23,15 @@
 typedef struct
 {
 // Decoder objects
-    NeAACDecHandle decoder_handle;
-    NeAACDecFrameInfo frame_info;
-    NeAACDecConfigurationPtr decoder_config;
+	NeAACDecHandle decoder_handle;
+	NeAACDecFrameInfo frame_info;
+	NeAACDecConfigurationPtr decoder_config;
 	int decoder_initialized;
-
 
 	faacEncHandle encoder_handle;
 	faacEncConfigurationPtr encoder_params;
+// Number of first sample in output relative to file
+	int64_t output_position;
 // Number of frames
 	int frame_size;
 	int max_frame_bytes;
@@ -83,7 +84,7 @@ static int decode(quicktime_t *file,
 	int64_t current_position = track_map->current_position;
 	int64_t end_position = current_position + samples;
 	quicktime_vbr_t *vbr = &track_map->vbr;
-
+	if( quicktime_limit_samples(samples) ) return 1;
 
 // Initialize decoder
 	if( !codec->decoder_initialized ) {
@@ -103,7 +104,7 @@ static int decode(quicktime_t *file,
 		char *mp4_hdr = trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header;
 		int hdr_len = trak->mdia.minf.stbl.stsd.table[0].esds.mpeg4_header_size;
 		if( !mp4_hdr || !hdr_len ) {
-			quicktime_align_vbr(track_map, samples);
+			quicktime_seek_vbr(track_map, 0, 0);
 			quicktime_read_vbr(file, track_map);
 
 			if( NeAACDecInit(codec->decoder_handle,
@@ -119,18 +120,24 @@ static int decode(quicktime_t *file,
 		codec->decoder_initialized = 1;
 	}
 
-	quicktime_align_vbr(track_map, samples);
+	if( quicktime_align_vbr(track_map, current_position) ||
+	    codec->output_position != quicktime_vbr_output_end(vbr) ) {
+		quicktime_seek_vbr(track_map, current_position, 1);
+		codec->output_position = quicktime_vbr_output_end(vbr);
+	}
 
 // Decode until buffer is full
-	while(quicktime_vbr_end(vbr) < end_position) {
+	while( quicktime_vbr_output_end(vbr) < end_position ) {
 		if(quicktime_read_vbr(file, track_map)) break;
 
 		bzero(&codec->frame_info, sizeof(NeAACDecFrameInfo));
 		float *sample_buffer = NeAACDecDecode(codec->decoder_handle, &codec->frame_info,
 			quicktime_vbr_input(vbr), quicktime_vbr_input_size(vbr));
+
 		quicktime_shift_vbr(track_map, quicktime_vbr_input_size(vbr));
-		quicktime_store_vbr_float(track_map, sample_buffer,
-			codec->frame_info.samples / track_map->channels);
+		int result = codec->frame_info.samples / track_map->channels;
+		quicktime_store_vbr_float(track_map, sample_buffer, result);
+		codec->output_position += result;
 	}
 
 // Transfer from buffer to output

@@ -25,10 +25,6 @@ typedef struct
 	mpeg3_layer_t *mp3;
 // Number of first sample in output relative to file
 	int64_t output_position;
-// Number of samples in output buffer
-	long output_size;
-// Number of samples allocated in output buffer
-	long output_allocated;
 // Current reading position in file
 	int64_t chunk;
 	int decode_initialized;
@@ -80,52 +76,36 @@ static int decode(quicktime_t *file,
 	quicktime_mp3_codec_t *codec = ((quicktime_codec_t*)track_map->codec)->priv;
 	int64_t current_position = track_map->current_position;
 	int64_t end_position = current_position + samples;
-	int64_t codec_end_position;
-	int i, j, k;
-	float *temp_output[MAX_CHANNELS], *pcm;
-	int frame_size, new_size;
-	int retry = 0, result = 0;
+	int i, retry = 0, result = 0;
 
 	if(output_i) bzero(output_i, sizeof(int16_t) * samples);
 	if(output_f) bzero(output_f, sizeof(float) * samples);
 
-	if( samples > OUTPUT_ALLOCATION ) {
-		printf("decode: can't read more than %d samples at a time.\n", OUTPUT_ALLOCATION);
-		samples = OUTPUT_ALLOCATION;
-	}
-
-	i = MAX_CHANNELS;
-	while( --i >= 0 ) temp_output[i] = 0;
+	if( quicktime_limit_samples(samples) ) return 1;
 
 // Initialize and load initial buffer for decoding
 	if( !codec->decode_initialized ) {
 		codec->decode_initialized = 1;
-		quicktime_init_vbr(vbr, 0);
+		quicktime_init_vbr(vbr, channels);
 		codec->output = malloc(sizeof(float*) * track_map->channels);
 		for(i = 0; i < track_map->channels; i++)
-			codec->output[i] = malloc(sizeof(float) * OUTPUT_ALLOCATION);
-		codec->output_allocated = OUTPUT_ALLOCATION;
+			codec->output[i] = malloc(sizeof(float) * MAXFRAMESAMPLES);
 		codec->mp3 = mpeg3_new_layer();
 	}
 
-	quicktime_align_vbr(track_map, 0);
-	codec_end_position = quicktime_vbr_end(vbr);
-	codec->output_position = codec_end_position - codec->output_size;
-	new_size = end_position - codec->output_position + MAXFRAMESAMPLES;
-	if( new_size > codec->output_allocated ) {
-		int sz = new_size * sizeof(*codec->output);
-		for( j=0; j<channels; ++j )
-			codec->output[j] = realloc(codec->output[j], sz);
-		codec->output_allocated = new_size;
+	if( quicktime_align_vbr(track_map, current_position) ||
+	    codec->output_position != quicktime_vbr_output_end(vbr) ) {
+		quicktime_seek_vbr(track_map, current_position, 1);
+		mpeg3_layer_reset(codec->mp3);
+		codec->output_position = quicktime_vbr_output_end(vbr);
 	}
 
 	retry = 64;
-
-	while( codec_end_position < end_position && retry >= 0 ) {
+	while( quicktime_vbr_output_end(vbr) < end_position && retry >= 0 ) {
 // find a frame header
 		int bfr_sz = quicktime_vbr_input_size(vbr);
 		unsigned char *bfr = quicktime_vbr_input(vbr);
-		frame_size = 0;
+		int frame_size = 0;
 		while( bfr_sz >= 4 ) {
 			frame_size = mpeg3_layer_header(codec->mp3, bfr);
 			if( frame_size ) break;
@@ -149,51 +129,23 @@ static int decode(quicktime_t *file,
 		if( quicktime_vbr_input_size(vbr) < frame_size ) break;
 
 // decode frame
-		for( i=0; i<channels; ++i )
-			temp_output[i] = codec->output[i] + codec->output_size;
-
 		result = mpeg3audio_dolayer3(codec->mp3, 
 				(char *)quicktime_vbr_input(vbr), frame_size,
-				temp_output, 1);
-
+				codec->output, 1);
 		if( result > 0 ) {
-			codec->output_size += result;
-			codec_end_position += result;
+                	quicktime_store_vbr_floatp(track_map, codec->output, result);
+			codec->output_position += result;
 			retry = 64;
 		}
 		quicktime_shift_vbr(track_map, frame_size);
 	}
 
-	pcm = codec->output[channel];
-	if( output_i ) {
-		for( i=current_position-codec->output_position, j=0; 
-			j < samples && i < codec->output_size; j++, i++) {
-			int sample = pcm[i] * 32767;
-			CLAMP(sample, -32768, 32767);
-			output_i[j] = sample;
-		}
-	}
-	if( output_f ) {
-		for( i=current_position-codec->output_position, j=0; 
-			j < samples && i < codec->output_size; j++, i++) {
-			output_f[j] = pcm[i];
-		}
-	}
-
-// Delete excess output
-	if(codec->output_size > OUTPUT_ALLOCATION) {
-		int diff = codec->output_size - OUTPUT_ALLOCATION;
-		for(k = 0; k < track_map->channels; k++) {
-			pcm = codec->output[k];
-			for(i = 0, j = diff; j < codec->output_size; i++, j++) {
-				pcm[i] = pcm[j];
-			}
-		}
-		codec->output_size -= diff;
-		codec->output_position += diff;
-	}
-
-//printf("decode 100\n");
+	if(output_i)
+		quicktime_copy_vbr_int16(vbr, current_position,
+			samples, output_i, channel);
+	if(output_f)
+                quicktime_copy_vbr_float(vbr, current_position,
+			samples, output_f, channel);
 	return 0;
 }
 

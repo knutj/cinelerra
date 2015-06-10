@@ -3082,6 +3082,7 @@ typedef struct {} mpeg3_layer_t;
 int mpeg3audio_dolayer3(mpeg3_layer_t *audio,
    char *frame, int frame_size, float **output, int render);
 int mpeg3_layer_header(mpeg3_layer_t *layer_data, unsigned char *data);
+void mpeg3_layer_reset(mpeg3_layer_t *zlayer_data);
 mpeg3_layer_t* mpeg3_new_layer();
 void mpeg3_delete_layer(mpeg3_layer_t *audio);
 // hooks needed for mplexlo

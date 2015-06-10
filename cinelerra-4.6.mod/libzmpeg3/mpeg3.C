@@ -622,6 +622,13 @@ mpeg3audio_dolayer3(mpeg3_layer_t *zaudio,
   return audio->do_layer3((uint8_t*)frame, frame_size, output, render);
 }
 
+extern "C" void
+mpeg3_layer_reset(mpeg3_layer_t *zlayer_data)
+{
+  zaudio_decoder_layer_t *layer_data = (zaudio_decoder_layer_t *)zlayer_data;
+  layer_data->layer_reset();
+}
+
 extern "C" int
 mpeg3_layer_header(mpeg3_layer_t *zlayer_data, unsigned char *data)
 {
