@@ -65,7 +65,6 @@
 #include "filetiff.h"
 #include "filevorbis.h"
 #include "filexml.h"
-#include "fileyuv.h"
 #include "format.inc"
 #include "formatwindow.h"
 #include "formattools.h"
@@ -2164,7 +2163,6 @@ int File::strtoformat(ArrayList<PluginServer*> *plugindb, const char *format)
 	if(!strcasecmp(format, _(JPEG_LIST_NAME))) return FILE_JPEG_LIST;
 	if(!strcasecmp(format, _(EXR_NAME))) return FILE_EXR;
 	if(!strcasecmp(format, _(EXR_LIST_NAME))) return FILE_EXR_LIST;
-	if(!strcasecmp(format, _(YUV_NAME))) return FILE_YUV;
 	if(!strcasecmp(format, _(FLAC_NAME))) return FILE_FLAC;
 	if(!strcasecmp(format, _(CR2_NAME))) return FILE_CR2;
 	if(!strcasecmp(format, _(CR2_LIST_NAME))) return FILE_CR2_LIST;
@@ -2213,7 +2211,6 @@ const char* File::formattostr(ArrayList<PluginServer*> *plugindb, int format)
 		case FILE_CR2_LIST:	return _(CR2_LIST_NAME);
 		case FILE_FLAC:		return _(FLAC_NAME);
 		case FILE_EXR_LIST:	return _(EXR_LIST_NAME);
-		case FILE_YUV:		return _(YUV_NAME);
 		case FILE_MPEG:		return _(MPEG_NAME);
 		case FILE_AMPEG:	return _(AMPEG_NAME);
 		case FILE_VMPEG:	return _(VMPEG_NAME);
@@ -2485,7 +2482,6 @@ const char* File::get_tag(int format)
 		case FILE_VMPEG:        return "m2v";
 		case FILE_VORBIS:       return "ogg";
 		case FILE_WAV:          return "wav";
-		case FILE_YUV:          return "m2v";
 		case FILE_FFMPEG:       return "media";
 	}
 	return 0;
@@ -2522,7 +2518,6 @@ const char* File::get_prefix(int format)
 	case FILE_EXR:		return "EXR";
 	case FILE_EXR_LIST:	return "EXR_LIST";
 	case FILE_CR2:		return "CR2";
-	case FILE_YUV:		return "YUV";
 	case FILE_OGG:		return "OGG";
 	case FILE_VORBIS:	return "VORBIS";
 	case FILE_FLAC:		return "FLAC";

@@ -24,7 +24,6 @@
 #include "file.h"
 #include "filegif.h"
 #include "gif_lib.h"
-#include "interlacemodes.h"
 #include "mainerror.h"
 #include "vframe.h"
 #include <string.h>
@@ -100,7 +99,6 @@ int FileGIF::read_frame_header(char *path)
 		if( ret < 1 ) return 1;
 		asset->width = test[6] | (test[7] << 8);
 		asset->height = test[8] | (test[9] << 8);
-		asset->interlace_mode = BC_ILACE_MODE_NOTINTERLACED;
 //printf("FileGIF::read_frame_header %d %d %d\n", __LINE__, asset->width, asset->height);
 		return 0;
 	}

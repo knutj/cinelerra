@@ -30,7 +30,6 @@
 #include "filexml.h"
 #include "format.inc"
 #include "indexstate.h"
-#include "interlacemodes.h"
 #include "quicktime.h"
 
 #include <stdio.h>
@@ -85,10 +84,6 @@ int Asset::init_values()
 	strcpy(acodec, QUICKTIME_TWOS);
 	jpeg_quality = 100;
 	aspect_ratio = -1;
-
-	interlace_autofixoption = BC_ILACE_AUTOFIXOPTION_AUTO;
-	interlace_mode = BC_ILACE_MODE_UNDETECTED;
-	interlace_fixmethod = BC_ILACE_FIXMETHOD_NONE;
 
 	ampeg_bitrate = 256;
 	ampeg_derivative = 3;

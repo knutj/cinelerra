@@ -29,7 +29,6 @@
 #include "fileogg.h"
 #include "format.inc"
 #include "guicast.h"
-#include "interlacemodes.h"
 #include "language.h"
 #include "mainerror.h"
 #include "mutex.h"

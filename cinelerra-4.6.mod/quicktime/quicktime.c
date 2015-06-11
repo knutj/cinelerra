@@ -1,7 +1,6 @@
 #include "colormodels.h"
 #include "funcprotos.h"
 #include "qtasf_codes.h"
-#include "interlacemodes.h"
 #include "quicktime.h"
 #include <string.h>
 #include <sys/stat.h>
@@ -241,8 +240,8 @@ int quicktime_set_audio(quicktime_t *file,
 	if(channels)
 	{
 /* Fake the bits parameter for some formats. */
-		if(quicktime_match_32(compressor, QUICKTIME_ULAW) ||
-			quicktime_match_32(compressor, QUICKTIME_IMA4)) bits = 16;
+		if(quicktime_match_32(compressor, QUICKTIME_ULAW)) bits = 8;
+		else if(quicktime_match_32(compressor, QUICKTIME_IMA4)) bits = 16;
 
 		file->atracks = (quicktime_audio_map_t*)calloc(1, sizeof(quicktime_audio_map_t));
 		trak = quicktime_add_track(file);
@@ -633,27 +632,6 @@ int quicktime_video_depth(quicktime_t *file, int track)
 	return 0;
 }
 
-int quicktime_video_interlacemode(quicktime_t *file, int track)
-{
-	if(file->total_vtracks) {
-		if (file->vtracks[track].track->mdia.minf.stbl.stsd.table[0].fields == 1)
-			return BC_ILACE_MODE_NOTINTERLACED;
-		if (file->vtracks[track].track->mdia.minf.stbl.stsd.table[0].fields == 2)
-		{
-			switch (file->vtracks[track].track->mdia.minf.stbl.stsd.table[0].field_dominance)
-			{
-			case 0:
-				return BC_ILACE_MODE_UNDETECTED;
-			case 1:
-				return BC_ILACE_MODE_TOP_FIRST;
-			case 6:
-				return BC_ILACE_MODE_BOTTOM_FIRST;
-			}
-		}
-	}
-  	return BC_ILACE_MODE_UNDETECTED;
-}
-
 void quicktime_set_cmodel(quicktime_t *file, int colormodel)
 {
 	file->color_model = colormodel;
@@ -788,52 +766,35 @@ int quicktime_write_frame(quicktime_t *file,
 long quicktime_read_audio(quicktime_t *file,
 	char *audio_buffer, long samples, int track)
 {
-	int64_t chunk_sample, chunk;
+	quicktime_audio_map_t *track_map = &file->atracks[track];
+	quicktime_trak_t *trak = track_map->track;
+	int64_t position, chunk, chunk_sample;
+	long ret, bytes, chunk_offset, chunk_len;
 	int result = 0;
-	quicktime_trak_t *trak = file->atracks[track].track;
-	int64_t fragment_len, chunk_end;
-	int64_t start_position = file->atracks[track].current_position;
-	int64_t position = file->atracks[track].current_position;
-	int64_t start = position, end = start + samples;
-	int64_t bytes, total_bytes = 0;
-	int64_t buffer_offset;
 
-//printf("quicktime_read_audio 1\n");
+	position = file->atracks[track].current_position;
 	quicktime_chunk_of_sample(&chunk_sample, &chunk, trak, position);
-	buffer_offset = 0;
+	ret = 0;
 
-	while(position < end && !result)
-	{
-		quicktime_set_audio_position(file, position, track);
-		fragment_len = quicktime_chunk_samples(trak, chunk);
-		chunk_end = chunk_sample + fragment_len;
-		fragment_len -= position - chunk_sample;
-		if(position + fragment_len > chunk_end) fragment_len = chunk_end - position;
-		if(position + fragment_len > end) fragment_len = end - position;
-
-		bytes = quicktime_samples_to_bytes(trak, fragment_len);
-/*
- * printf("quicktime_read_audio 2 %llx %llx %d\n",
- * quicktime_position(file),
- * quicktime_position(file) + bytes,
- * samples);
- * sleep(1);
- */
-		result = !quicktime_read_data(file, &audio_buffer[buffer_offset], bytes);
-//printf("quicktime_read_audio 4\n");
-
-		total_bytes += bytes;
-		position += fragment_len;
-		chunk_sample = position;
-		buffer_offset += bytes;
-		chunk++;
+	while( samples > 0 ) {
+		int64_t offset = quicktime_sample_to_offset(file, trak, position);
+		quicktime_set_position(file, offset);
+		chunk_offset = position - chunk_sample;
+		chunk_len = quicktime_chunk_samples(trak, chunk) - chunk_offset;
+		if( chunk_len > samples ) chunk_len = samples;
+		else ++chunk;
+		chunk_sample = (position += chunk_len);
+		bytes = quicktime_samples_to_bytes(trak, chunk_len);
+		result = !quicktime_read_data(file, &audio_buffer[ret], bytes);
+		if( result ) break;
+		ret += bytes;
+		samples -= chunk_len;
 	}
 //printf("quicktime_read_audio 5\n");
 
-// Create illusion of track being advanced only by samples
-	file->atracks[track].current_position = start_position + samples;
-	if(result) return 0;
-	return total_bytes;
+	track_map->current_position = position;
+	track_map->current_chunk = chunk;
+	return !result ? ret : 0;
 }
 
 int quicktime_read_chunk(quicktime_t *file, char *output, int track, int64_t chunk, int64_t byte_start, int64_t byte_len)

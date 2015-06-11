@@ -34,7 +34,6 @@
 #include "fileavi.h"
 #include "fileavi.inc"
 #include "language.h"
-#include "interlacemodes.h"
 #include "mwindow.inc"
 #include "vframe.h"
 
@@ -453,11 +452,10 @@ int FileAVI::open_avifile_in(Asset *asset)
 		if(!asset->frame_rate)
 			asset->frame_rate = (double)1 / vstream_in[0]->GetFrameTime();
 		asset->video_length = stream_info->GetStreamFrames();
-	    BITMAPINFOHEADER bh;
+		BITMAPINFOHEADER bh;
 		vstream_in[0]->GetVideoFormatInfo(&bh, sizeof(bh));
-	    asset->width = bh.biWidth;
-	    asset->height = bh.biHeight;
-		asset->interlace_mode = BC_ILACE_MODE_UNDETECTED; // FIXME
+		asset->width = bh.biWidth;
+		asset->height = bh.biHeight;
 
 		uint32_t fourcc = stream_info->GetFormat();
 		asset->vcodec[0] = ((char*)&fourcc)[0];

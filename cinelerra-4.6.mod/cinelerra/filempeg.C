@@ -35,7 +35,6 @@
 #include "format.inc"
 #include "guicast.h"
 #include "indexfile.h"
-#include "interlacemodes.h"
 #include "indexstate.h"
 #include "language.h"
 #include "mainerror.h"
@@ -448,7 +447,6 @@ int FileMPEG::open_file(int rd, int wr)
 			if(asset->video_data) {
 				if( !asset->layers ) {
 					asset->layers = mpeg3_total_vstreams(fd);
-					asset->interlace_mode = BC_ILACE_MODE_UNDETECTED;
 				}
 				asset->actual_width = mpeg3_video_width(fd, 0);
 				if( !asset->width )

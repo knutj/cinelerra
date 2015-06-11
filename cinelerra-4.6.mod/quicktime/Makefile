@@ -119,7 +119,6 @@ OBJS += \
 	$(OBJDIR)/cmodel_yuv422.o \
 	$(OBJDIR)/codecs.o \
 	$(OBJDIR)/colormodels.o \
-	$(OBJDIR)/interlacemodes.o \
 	$(OBJDIR)/ctab.o \
 	$(OBJDIR)/dinf.o \
 	$(OBJDIR)/dref.o \
@@ -195,7 +194,8 @@ UTILS := \
 	$(OBJDIR)/yuv4toyuv \
 	$(OBJDIR)/recover \
 	$(OBJDIR)/rechunk \
-	$(OBJDIR)/mts2mp4
+
+#	$(OBJDIR)/mts2mp4
 
 
 OUTPUT = $(OBJDIR)/libquicktime.a
@@ -208,7 +208,8 @@ CFLAGS += -I. \
 FFMPEG_CFLAGS := $(CFLAGS) $(FFMPEG_INCLUDE)
 
 LIBS := $(OUTPUT) $(thirdparty_libraries) $(MPEG3_DIR)/$(OBJDIR)/libzmpeg3.a \
-	$(static_libraries) -lX11 -lpng -lz -lbz2 -llzma -lpthread -ldl -lm -lstdc++
+	$(static_libraries) -lpng -lz -lbz2 -llzma -lasound \
+	-lX11 -lpthread -ldl -lm -lstdc++
 
 
 $(shell mkdir -p $(OBJDIR) )
@@ -329,7 +330,7 @@ $(OBJDIR)/yuv2mov: $(OBJDIR)/yuv2mov.o $(OUTPUT)
 $(OBJDIR)/qtinfo: $(OBJDIR)/qtinfo.o
 	$(CC) -o $(OBJDIR)/qtinfo $(OBJDIR)/qtinfo.o $(LIBS)
 
-util:  $(UTILS)
+utils:  $(UTILS)
 
 
 clean:

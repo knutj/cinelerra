@@ -25,7 +25,6 @@
 #include "filelist.h"
 #include "format.inc"
 #include "guicast.h"
-#include "interlacemodes.h"
 #include "mutex.h"
 #include "mwindow.inc"
 #include "render.h"
@@ -237,7 +236,6 @@ int FileList::read_list_header()
 		}while(!feof(stream) && (string[0] == '#' || string[0] == ' '));
 		asset->height = atol(string);
 
-		asset->interlace_mode = BC_ILACE_MODE_UNDETECTED;  // May be good to store the info in the list?
 		asset->layers = 1;
 		asset->audio_data = 0;
 		asset->video_data = 1;

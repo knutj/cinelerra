@@ -257,9 +257,6 @@ int quicktime_video_height(quicktime_t *file, int track);
 /* Number of bytes per pixel for the raw codec */
 int quicktime_video_depth(quicktime_t *file, int track);
 
-/* The interlace mode */
-int quicktime_video_interlacemode(quicktime_t *file, int track);
-
 /* Frames per second */
 double quicktime_frame_rate(quicktime_t *file, int track);
 /* Frames per second as numerator over denominator*/

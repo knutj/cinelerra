@@ -24,7 +24,6 @@
 #include "edit.h"
 #include "file.h"
 #include "filejpeg.h"
-#include "interlacemodes.h"
 #include "jpegwrapper.h"
 #include "language.h"
 #include "libmjpeg.h"
@@ -237,8 +236,6 @@ int FileJPEG::read_frame_header(char *path)
 
 	asset->width = jpeg_decompress.image_width;
 	asset->height = jpeg_decompress.image_height;
-
-	asset->interlace_mode = BC_ILACE_MODE_NOTINTERLACED;
 
 	jpeg_destroy((j_common_ptr)&jpeg_decompress);
 	fclose(stream);

@@ -190,7 +190,6 @@ OBJS = \
 	$(OBJDIR)/patchgui.o \
 	$(OBJDIR)/performanceprefs.o \
 	$(OBJDIR)/picture.o \
-	$(OBJDIR)/pipe.o \
 	$(OBJDIR)/playabletracks.o \
 	$(OBJDIR)/playback3d.o \
 	$(OBJDIR)/playbackconfig.o \

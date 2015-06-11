@@ -23,8 +23,8 @@ rebuild_all:
 	$(MAKE) -C quicktime
 	$(MAKE) -C db clean
 	$(MAKE) -C db
-	$(MAKE) -C db/utils
 	$(MAKE) rebuild
+	$(MAKE) -C db/utils
 
 rebuild_install:
 	$(MAKE) -C cinelerra install

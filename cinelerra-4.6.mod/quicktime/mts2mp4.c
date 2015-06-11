@@ -566,13 +566,13 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	if(!mpegv_fd->total_vstreams)
+	if(!mpeg3_total_vstreams(mpegv_fd))
 	{
 		fprintf(stderr, "No video streams in %s\n", in_path);
 		exit(1);
 	}
 
-	if(!mpegv_fd->total_astreams)
+	if(!mpeg3_total_astreams(mpegv_fd))
 	{
 		fprintf(stderr, "No audio streams in %s\n", in_path);
 		exit(1);
@@ -590,12 +590,6 @@ int main(int argc, char *argv[])
 	for(i = 0; i < audio_channels; i++)
 		audio_buffer[i] = calloc(sizeof(float), AUDIO_BUFFER_SIZE);
 
-
-// Rewind streams
-	mpeg3demux_seek_byte(mpegv_fd->vtrack[0]->demuxer, 0);
-	mpeg3bits_refill(mpegv_fd->vtrack[0]->video->vstream);
-
-	mpeg3demux_seek_byte(mpega_fd->atrack[0]->demuxer, 0);
 
 // Initialize ffmpeg to decode headers
   	avcodec_init();
@@ -630,6 +624,8 @@ int main(int argc, char *argv[])
 
 	for( ; pass < 2; pass++)
 	{
+// Rewind streams
+		mpeg3_seek_byte(mpegv_fd, 0);
 		while(!video_eof &&
 			(pass > 0 || !got_header) 
 
@@ -687,15 +683,10 @@ int main(int argc, char *argv[])
 //printf("main %d\n", __LINE__);
 		}
 
-		if(pass == 0)
-		{
 // Rewind video stream
- 			mpeg3demux_seek_byte(mpegv_fd->vtrack[0]->demuxer, 0);
-			mpeg3bits_refill(mpegv_fd->vtrack[0]->video->vstream);
-			buffer_size = 0;
-			ptr = buffer;
-			end = buffer;
-		}
+		buffer_size = 0;
+		ptr = buffer;
+		end = buffer;
 	}
 
 // Flush

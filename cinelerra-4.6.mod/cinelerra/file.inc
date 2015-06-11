@@ -65,7 +65,6 @@
 #define FILE_EXR                26
 #define FILE_EXR_LIST           27
 #define FILE_CR2                28
-#define FILE_YUV		29
 #define FILE_OGG	        30
 #define FILE_VORBIS             31
 #define FILE_FLAC               32
@@ -145,7 +144,6 @@ N_("Unknown sound")
 #define VMPEG_NAME		"MPEG Video"    // For encoding only
 #define VORBIS_NAME		"OGG Vorbis"
 #define WAV_NAME		"Microsoft WAV"
-#define YUV_NAME		"YUV4MPEG Stream"
 
 #define BITSLINEAR8    8
 #define BITSLINEAR16   16

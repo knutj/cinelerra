@@ -27,7 +27,6 @@
 #include "file.h"
 #include "filedv.h"
 #include "guicast.h"
-#include "interlacemodes.h"
 #include "language.h"
 #include "mutex.h"
 #include "mwindow.inc"
@@ -289,12 +288,6 @@ TRACE("FileDV::open_file 60")
 
 			asset->width = decoder->width;
 			asset->height = decoder->height;
-			
-			if(dv_is_progressive(decoder) > 0)
-				asset->interlace_mode = BC_ILACE_MODE_NOTINTERLACED;
-			else
-				asset->interlace_mode = BC_ILACE_MODE_BOTTOM_FIRST;
-			
 			isPAL = dv_is_PAL(decoder);
 			
 			output_size = (isPAL ? DV1394_PAL_FRAME_SIZE : DV1394_NTSC_FRAME_SIZE);
