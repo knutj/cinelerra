@@ -89,12 +89,11 @@
 	uint32_t output_i = ((y & 0xffc0) << 16) | \
 		((u & 0xffc0) << 6) | \
 		((v & 0xffc0) >> 4); \
-	*(*output)++ = (output_i & 0xff); \
-	*(*output)++ = (output_i & 0xff00) >> 8; \
-	*(*output)++ = (output_i & 0xff0000) >> 16; \
-	*(*output)++ = (output_i & 0xff000000) >> 24; \
+	*(*output)++ = output_i; \
+	*(*output)++ = output_i >> 8; \
+	*(*output)++ = output_i >> 16; \
+	*(*output)++ = output_i >> 24; \
 }
-
 
 
 // ****************************** Pixel transfers *****************************

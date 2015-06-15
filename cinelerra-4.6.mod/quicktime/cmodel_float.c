@@ -1,7 +1,6 @@
 #include "cmodel_permutation.h"
 #include "colormodels.h"
 #include "workarounds.h"
-
 // ********************************** RGB FLOAT -> *******************************
 
 
@@ -565,6 +564,39 @@ static inline void transfer_RGBA_FLOAT_to_YUV444P(unsigned char *output_y,
 	output_v[output_column] = v >> 8;
 }
 
+static inline void transfer_RGBA_FLOAT_to_VYU888(unsigned char *(*output), 
+	float *input)
+{
+	int y, u, v, r, g, b;
+	float a = CLIP(input[3], 0, 1);
+	r = (int)(CLIP(input[0], 0, 1) * a * 0xffff);
+	g = (int)(CLIP(input[1], 0, 1) * a * 0xffff);
+	b = (int)(CLIP(input[2], 0, 1) * a * 0xffff);
+
+	RGB_TO_YUV16(y, u, v, r, g, b);
+
+	*(*output)++ = v >> 8;
+	*(*output)++ = y >> 8;
+	*(*output)++ = u >> 8;
+}
+
+static inline void transfer_RGBA_FLOAT_to_UYVA8888(unsigned char *(*output), 
+	float *input)
+{
+	int y, u, v, r, g, b;
+	float a = CLIP(input[3], 0, 1);
+	r = (int)(CLIP(input[0], 0, 1) * a * 0xffff);
+	g = (int)(CLIP(input[1], 0, 1) * a * 0xffff);
+	b = (int)(CLIP(input[2], 0, 1) * a * 0xffff);
+
+	RGB_TO_YUV16(y, u, v, r, g, b);
+
+	*(*output)++ = u >> 8;
+	*(*output)++ = y >> 8;
+	*(*output)++ = v >> 8;
+	*(*output)++ = 0xff;
+}
+
 
 
 
@@ -697,6 +729,18 @@ static inline void transfer_RGBA_FLOAT_to_YUV444P(unsigned char *output_y,
 						j); \
 					TRANSFER_FRAME_TAIL \
 					break; \
+				case BC_VYU888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGB_FLOAT_to_VYU888((output), \
+						(float*)(input)); \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_UYVA8888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGB_FLOAT_to_UYVA8888((output), \
+						(float*)(input)); \
+					TRANSFER_FRAME_TAIL \
+					break; \
 			} \
 			break; \
  \
@@ -805,6 +849,18 @@ static inline void transfer_RGBA_FLOAT_to_YUV444P(unsigned char *output_y,
 						output_v, \
 						(float*)(input), \
 						j); \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_VYU888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGBA_FLOAT_to_VYU888((output), \
+						(float*)(input)); \
+					TRANSFER_FRAME_TAIL \
+					break; \
+				case BC_UYVA8888: \
+					TRANSFER_FRAME_HEAD \
+					transfer_RGBA_FLOAT_to_UYVA8888((output), \
+						(float*)(input)); \
 					TRANSFER_FRAME_TAIL \
 					break; \
 			} \

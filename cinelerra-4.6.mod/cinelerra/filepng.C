@@ -232,84 +232,51 @@ static void flush_function(png_structp png_ptr)
 }
 
 
-
 int FilePNG::write_frame(VFrame *frame, VFrame *data, FrameWriterUnit *unit)
 {
 	PNGUnit *png_unit = (PNGUnit*)unit;
-	int result = 0;
-	png_structp png_ptr;
-	png_infop info_ptr;
-	//png_infop end_info = 0;
+	png_structp png_ptr = 0;
+	png_infop info_ptr = 0;
 	VFrame *output_frame;
+	int result = 1;
 	data->set_compressed_size(0);
-
-//printf("FilePNG::write_frame 1\n");
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
-	info_ptr = png_create_info_struct(png_ptr);
-	png_set_write_fn(png_ptr,
-               data,
-			   (png_rw_ptr)write_function,
-               (png_flush_ptr)flush_function);
-	png_set_compression_level(png_ptr, 9);
-
-	png_set_IHDR(png_ptr,
-		info_ptr,
-		asset->width,
-		asset->height,
-    	8,
-		asset->png_use_alpha ?
-		  PNG_COLOR_TYPE_RGB_ALPHA :
-		  PNG_COLOR_TYPE_RGB,
-		PNG_INTERLACE_NONE,
-		PNG_COMPRESSION_TYPE_DEFAULT,
-		PNG_FILTER_TYPE_DEFAULT);
-	png_write_info(png_ptr, info_ptr);
-
 //printf("FilePNG::write_frame 1\n");
 	native_cmodel = asset->png_use_alpha ? BC_RGBA8888 : BC_RGB888;
 	if(frame->get_color_model() != native_cmodel)
 	{
 		if(!png_unit->temp_frame) png_unit->temp_frame = new VFrame(0,
-			-1,
-			asset->width,
-			asset->height,
-			native_cmodel,
-			-1);
+			-1, asset->width, asset->height, native_cmodel, -1);
 
-		BC_CModels::transfer(png_unit->temp_frame->get_rows(), /* Leave NULL if non existent */
-			frame->get_rows(),
-			png_unit->temp_frame->get_y(), /* Leave NULL if non existent */
-			png_unit->temp_frame->get_u(),
-			png_unit->temp_frame->get_v(),
-			frame->get_y(), /* Leave NULL if non existent */
-			frame->get_u(),
-			frame->get_v(),
-			0,        /* Dimensions to capture from input frame */
-			0,
-			asset->width,
-			asset->height,
-			0,       /* Dimensions to project on output frame */
-			0,
-			asset->width,
-			asset->height,
-			frame->get_color_model(),
-			png_unit->temp_frame->get_color_model(),
-			0,         /* When transfering BC_RGBA8888 to non-alpha this is the background color in 0xRRGGBB hex */
-			asset->width,       /* For planar use the luma rowspan */
-			asset->height);
-
+		png_unit->temp_frame->transfer_from(frame);
 		output_frame = png_unit->temp_frame;
 	}
 	else
 		output_frame = frame;
 
+//printf("FilePNG::write_frame 1\n");
+	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
+	if( png_ptr && !setjmp(png_jmpbuf(png_ptr)) ) {
+		info_ptr = png_create_info_struct(png_ptr);
+		png_set_write_fn(png_ptr, data,
+			(png_rw_ptr)write_function, (png_flush_ptr)flush_function);
+		png_set_compression_level(png_ptr, 5);
 
-//printf("FilePNG::write_frame 2\n");
-	png_write_image(png_ptr, output_frame->get_rows());
-	png_write_end(png_ptr, info_ptr);
+		png_set_IHDR(png_ptr, info_ptr, asset->width, asset->height, 8,
+			asset->png_use_alpha ?  PNG_COLOR_TYPE_RGB_ALPHA : PNG_COLOR_TYPE_RGB,
+			PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+		png_write_info(png_ptr, info_ptr);
+		png_write_image(png_ptr, output_frame->get_rows());
+		png_write_end(png_ptr, info_ptr);
+		png_destroy_write_struct(&png_ptr, &info_ptr);
+		result = 0;
+	}
+	else {
+		char error[256];  png_error(png_ptr, error);
+		fprintf(stderr, "FilePNG::write_frame failed: %s\n", error);
+	}
+
 	png_destroy_write_struct(&png_ptr, &info_ptr);
 //printf("FilePNG::write_frame 3 %d\n", data->get_compressed_size());
-
 	return result;
 }
 

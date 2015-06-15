@@ -433,6 +433,12 @@ static inline void transfer_YUV422_to_YUV422(unsigned char *(*output),
 			TRANSFER_FRAME_TAIL \
 			break; \
 		case BC_BGR565: \
+			TRANSFER_FRAME_HEAD \
+			transfer_YUV422_to_BGR565((output), \
+				(input), \
+				j); \
+			TRANSFER_FRAME_TAIL \
+			break; \
 		case BC_RGB565: \
 			TRANSFER_FRAME_HEAD \
 			transfer_YUV422_to_RGB565((output), (input), (input_column)); \
