@@ -17,6 +17,7 @@
 #include "fileffmpeg.h"
 #include "file.h"
 #include "ffmpeg.h"
+#include "mwindow.h"
 #include "vframe.h"
 
 
@@ -952,7 +953,9 @@ AVRational FFMPEG::check_frame_rate(AVCodec *codec, double frame_rate)
 AVRational FFMPEG::to_sample_aspect_ratio(double aspect_ratio)
 {
 	int height = 1000000, width = height * aspect_ratio;
-	return (AVRational){height, width};
+	float w, h;
+	MWindow::create_aspect_ratio(w, h, width, height);
+	return (AVRational){(int)w, (int)h};
 }
 
 AVRational FFMPEG::to_time_base(int sample_rate)
@@ -1416,8 +1419,9 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 			int idx = aidx + ffvideo.size();
 			FFAudioStream *aud = new FFAudioStream(this, st, idx);
 			ffaudio.append(aud);  fst = aud;
-			ctx->channels = asset->channels;
-			for( int ch=0; ch<asset->channels; ++ch )
+			aud->sample_rate = asset->sample_rate;
+			ctx->channels = aud->channels = asset->channels;
+			for( int ch=0; ch<aud->channels; ++ch )
 				astrm_index.append(ffidx(aidx, ch));
 			ctx->channel_layout =  av_get_default_channel_layout(ctx->channels);
 			ctx->sample_rate = check_sample_rate(codec, asset->sample_rate);
@@ -1427,7 +1431,7 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 				ret = 1;
 				break;
 			}
-			ctx->time_base = st->time_base = (AVRational){1, asset->sample_rate};
+			ctx->time_base = st->time_base = (AVRational){1, aud->sample_rate};
 			ctx->sample_fmt = codec->sample_fmts[0];
 			uint64_t layout = av_get_default_channel_layout(ctx->channels);
 			aud->resample_context = swr_alloc_set_opts(NULL,
@@ -1454,9 +1458,10 @@ int FFMPEG::open_encoder(const char *path, const char *spec)
 			ctx->width = (vid->width+3) & ~3;
 			vid->height = asset->height;
 			ctx->height = (vid->height+3) & ~3;
+			vid->frame_rate = asset->frame_rate;
 			ctx->sample_aspect_ratio = to_sample_aspect_ratio(asset->aspect_ratio);
 			ctx->pix_fmt = codec->pix_fmts ? codec->pix_fmts[0] : AV_PIX_FMT_YUV420P;
-			AVRational frame_rate = check_frame_rate(codec, asset->frame_rate);
+			AVRational frame_rate = check_frame_rate(codec, vid->frame_rate);
 			if( !frame_rate.num || !frame_rate.den ) {
 				fprintf(stderr, "FFMPEG::open_audio_encode:"
 					" check_frame_rate failed %s\n", filename);

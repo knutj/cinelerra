@@ -256,6 +256,7 @@ void FormatTools::create_objects(int &init_x,
 //printf("FormatTools::create_objects 12\n");
 
 	init_y = y;
+	update_format();
 }
 
 void FormatTools::update_driver(int driver)
@@ -331,7 +332,25 @@ void FormatTools::update_driver(int driver)
 	close_format_windows();
 }
 
-
+void FormatTools::update_format()
+{
+	if( do_audio && audio_switch ) {
+		asset->audio_data = File::supports_audio(asset->format);
+		audio_switch->update(asset->audio_data);
+		if( !asset->audio_data )
+			audio_switch->disable();
+		else
+			audio_switch->enable();
+	}
+	if( do_video && video_switch ) {
+		asset->video_data = File::supports_video(asset->format);
+		video_switch->update(asset->video_data);
+		if( !asset->video_data )
+			video_switch->disable();
+		else
+			video_switch->enable();
+	}
+}
 
 int FormatTools::handle_event()
 {
@@ -773,6 +792,7 @@ int FormatFormat::handle_event()
 			format->format_text->update(get_selection(0, 0)->get_text());
 			format->update_extension();
 			format->close_format_windows();
+			format->update_format();
 		}
 	}
 	return 1;

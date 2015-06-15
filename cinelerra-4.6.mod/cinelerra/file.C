@@ -2210,6 +2210,7 @@ const char* File::formattostr(ArrayList<PluginServer*> *plugindb, int format)
 		case FILE_CR2:		return _(CR2_NAME);
 		case FILE_CR2_LIST:	return _(CR2_LIST_NAME);
 		case FILE_FLAC:		return _(FLAC_NAME);
+		case FILE_EXR:		return _(EXR_NAME);
 		case FILE_EXR_LIST:	return _(EXR_LIST_NAME);
 		case FILE_MPEG:		return _(MPEG_NAME);
 		case FILE_AMPEG:	return _(AMPEG_NAME);

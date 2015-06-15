@@ -2650,7 +2650,7 @@ int MWindow::create_aspect_ratio(float &w, float &h, int width, int height)
 	double ar = (double)width / height;
 	int ww = width, hh = height;
 	// numerator, denominator must be under mx
-	int mx = 25, n = gcd(ww, hh);
+	int mx = 255, n = gcd(ww, hh);
 	if( n > 1 ) { ww /= n; hh /= n; }
 	// search near height in case extra/missing lines
 	if( ww >= mx || hh >= mx ) {
