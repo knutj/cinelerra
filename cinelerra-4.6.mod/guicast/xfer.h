@@ -1,6 +1,16 @@
 #include "bccmodels.h"
 #include "clip.h"
 
+static inline float clp(const int n, float v) {
+ v *= ((float)(n*(1-1./0x1000000)));
+ return v < 0 ? 0 : v >= n ? n-1 : v;
+}
+
+static inline float fclp(float v, const int n) {
+ v /= ((float)(n*(1-1./0x1000000)));
+ return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
 #include <stdint.h>
 
 #define ZTYP(ty) typedef ty z_##ty __attribute__ ((__unused__))

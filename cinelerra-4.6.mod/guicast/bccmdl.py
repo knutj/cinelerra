@@ -14,7 +14,7 @@ base = {
     },
     "fp": {
       "r": " int in = *inp; float r = (in>>6)/3.f, g = ((in>>3)&0x07u)/7.f, b = (in&0x07u)/7.f;",
-      "w": " int vr = 3*r+.5f, vg = 7*g+.5f, vb = 7*b+.5f;\n" +
+      "w": " int vr = clp(4,r), vg = clp(8,g), vb = clp(8,b);\n" +
            " *out++ = ((vr<<6)&0xc0u) | ((vg<<3)&0x38u) | (vb&0x7u);",
     },
   },
@@ -34,7 +34,7 @@ base = {
     "fp": {
       "r": " uint32_t in = *(uint16_t*)inp;\n" +
            " float r = (in>>11)/31.f, g = ((in>>5)&0x3fu)/63.f, b = (in&0x1fu)/31.f;",
-      "w": " uint32_t vr = 31*r+.5f, vg = 63*g+.5f, vb = 31*b+.5f;\n" +
+      "w": " uint32_t vr = clp(32,r), vg = clp(64,g), vb = clp(32,b);\n" +
            " *out++ = ((vr<<11)&0xf800u) | ((vg<<6)&0x07e0u) | (vb&0x001fu);",
     },
   },
@@ -48,8 +48,8 @@ base = {
       "w": " *out++ = r>>8; *out++ = g>>8; *out++ = b>>8;",
     },
     "fp": {
-      "r": " float r = *inp++/255.f, g=*inp++/255.f, b = *inp++/255.f;",
-      "w": " *out++ = 255*r+.5f; *out++ = 255*g+.5f; *out++ = 255*b+.5f;",
+      "r": " float r = fclp(*inp++,256), g=fclp(*inp++,256), b = fclp(*inp++,256);",
+      "w": " *out++ = clp(256,r); *out++ = clp(256,g); *out++ = clp(256,b);",
     },
   },
   "rgb161616": {
@@ -62,18 +62,18 @@ base = {
       "w": " *out++ = r; *out++ = g; *out++ = b;",
     },
     "fp": {
-      "r": " float r = *inp++/65535.f, g=*inp++/65535.f, b = *inp++/65535.f;",
-      "w": " *out++ = 65535.f*r+.5f; *out++ = 65535.f*g+.5f; *out++ = 65535.f*b+.5f;",
+      "r": " float r = fclp(*inp++,65536), g=fclp(*inp++,65536), b = fclp(*inp++,65536);",
+      "w": " *out++ = clp(65536,r); *out++ = clp(65536,g); *out++ = clp(65536,b);",
     },
   },
   "rgbfloat": {
     "i8": {
-      "r": " int r = *inp++*255+.5f, g = *inp++*255+.5f, b = *inp++*255+.5f;",
-      "w": " *out++ = r/255.f; *out++ = g/255.f; *out++ = b/255.f;",
+      "r": " int r = clp(256,*inp++), g = clp(256,*inp++), b = clp(256,*inp++);",
+      "w": " *out++ = fclp(r,256); *out++ = fclp(g,256); *out++ = fclp(b,256);",
     },
     "i16": {
-      "r": " int r = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, b = *inp++*65535.f+.5f;",
-      "w": " *out++ = r/65535.f; *out++ = g/65535.f; *out++ = b/65535.f;",
+      "r": " int r = clp(65536,*inp++), g = clp(65536,*inp++), b = clp(65536,*inp++);",
+      "w": " *out++ = fclp(r,65536); *out++ = fclp(g,65536); *out++ = fclp(b,65536);",
     },
     "fp": {
       "r": " float r = *inp++, g=*inp++, b = *inp++;",
@@ -97,7 +97,7 @@ base = {
     "fp": {
       "r": " uint32_t in = *(uint16_t*)inp;\n" +
            " float b = (in>>11)/31.f, g = ((in>>5)&0x3fu)/63.f, r = (in&0x1fu)/31.f;",
-      "w": " uint32_t vb = 31*b+.5f, vg = 63*g+.5f, vr = 31*r+.5f;\n" +
+      "w": " uint32_t vb = clp(32,b), vg = clp(64,g), vr = clp(32,r);\n" +
            " *out++ = ((vb<<11)&0xf800u) | ((vg<<6)&0x03e0u) | (vr&0x001fu);",
     },
   },
@@ -111,8 +111,8 @@ base = {
       "w": " *out.16++ = b>>8; *out.16++ = g>>8; *out.16++ = r>>8;",
     },
     "fp": {
-      "r": " float b = *inp++/255.f, g=*inp++/255.f, r = *inp++/255.f;",
-      "w": " *out++ = 255*b+.5f; *out++ = 255*g+.5f; *out++ = 255*r+.5f;",
+      "r": " float b = fclp(*inp++,256), g=fclp(*inp++,256), r = fclp(*inp++,256);",
+      "w": " *out++ = clp(256,b); *out++ = clp(256,g); *out++ = clp(256,r);",
     },
   },
   "bgr8888": {
@@ -125,8 +125,8 @@ base = {
       "w": " *out++ = b>>8; *out++ = g>>8; *out++ = r>>8; ++out;",
     },
     "fp": {
-      "r": " float b = *inp++/255.f, g=*inp++/255.f, r = *inp++/255.f;",
-      "w": " *out++ = 255*b+.5f; *out++ = 255*g+.5f; *out++ = 255*r+.5f; ++out;",
+      "r": " float b = fclp(*inp++,256), g=fclp(*inp++,256), r = fclp(*inp++,256);",
+      "w": " *out++ = clp(256,b); *out++ = clp(256,g); *out++ = clp(256,r); ++out;",
     },
   },
   "bgr161616": {
@@ -139,18 +139,18 @@ base = {
       "w": " *out++ = b; *out++ = g; *out++ = r;",
     },
     "fp": {
-      "r": " float b = *inp++/65535.f, g=*inp++/65535.f, r = *inp++/65535.f;",
-      "w": " *out++ = 65535.f*b+.5f; *out++ = 65535.f*g+.5f; *out++ = 65535.f*r+.5f;",
+      "r": " float b = fclp(*inp++,65536), g=fclp(*inp++,65536), r = fclp(*inp++,65536);",
+      "w": " *out++ = clp(65536,b); *out++ = clp(65536,g); *out++ = clp(65536,r);",
     },
   },
   "bgrfloat": {
     "i8": {
-      "r": " int b = *inp++*255+.5f, g = *inp++*255+.5f, r = *inp++*255+.5f;",
-      "w": " *out++ = b/255.f; *out++ = g/255.f; *out++ = r/255.f;",
+      "r": " int b = clp(256,*inp++), g = clp(256,*inp++), r = clp(256,*inp++);",
+      "w": " *out++ = fclp(b,256); *out++ = fclp(g,256); *out++ = fclp(r,256);",
     },
     "i16": {
-      "r": " int b = *inp++*65535.f+.5f, g = *inp++*65535.f+.5f, r = *inp++*65535.f+.5f;",
-      "w": " *out++ = b/65535.f; *out++ = g/65535.f; *out++ = r/65535.f;",
+      "r": " int b = clp(65536,*inp++), g = clp(65536,*inp++), r = clp(65536,*inp++);",
+      "w": " *out++ = fclp(b,65536); *out++ = fclp(g,65536); *out++ = fclp(r,65536);",
     },
     "fp": {
       "r": " float b = *inp++, g=*inp++, r = *inp++;",
@@ -286,12 +286,12 @@ base = {
 
   "rgbfltp": {
     "i8": {
-      "r": " int r = *rip++*255+.5f, g = *gip++*255+.5f, b = *bip++*255+.5f;",
-      "w": " *rop++ = r/255.f; *gop++ = g/255.f; *bop++ = b/255.f;",
+      "r": " int r = clp(256,*rip++), g = clp(256,*gip++), b = clp(256,*bip++);",
+      "w": " *rop++ = fclp(r,256); *gop++ = fclp(g,256); *bop++ = fclp(b,256);",
     },
     "i16": {
-      "r": " int r = *rip++*65535.f+.5f, g = *gip++*65535.f+.5f, b = *bip++*65535.f+.5f;",
-      "w": " *rop++ = r/65535.f; *gop++ = g/65535.f; *bop++ = b/65535.f;",
+      "r": " int r = clp(65536,*rip++), g = clp(65536,*gip++), b = clp(65536,*bip++);",
+      "w": " *rop++ = fclp(r,65536); *gop++ = fclp(g,65536); *bop++ = fclp(b,65536);",
     },
     "fp": {
       "r": " float r = *rip++, g = *gip++, b = *bip++;",
@@ -310,8 +310,8 @@ base = {
       "w": " *out++ = a>>8;",
     },
     "fp": {
-      "r": " z_float fa = *inp++/255.f;",
-      "w": " *out++ = a*255.f+.5f;",
+      "r": " z_float fa = fclp(*inp++,256);",
+      "w": " *out++ = clp(256,a)",
     },
   },
   "a16": {
@@ -324,18 +324,18 @@ base = {
       "w": " *out++ = a;",
     },
     "fp": {
-      "r": " z_float fa = *inp++/65535.f;",
-      "w": " *out++ = a*65535.f+.5f;",
+      "r": " z_float fa = fclp(*inp++,65536);",
+      "w": " *out++ = clp(65536,a);",
     },
   },
   "afp": {
     "i8": {
-      "r": " z_int a = *inp++*255+.5f;",
-      "w": " *out++ = a/255.f;",
+      "r": " z_int a = clp(256,*inp++);",
+      "w": " *out++ = fclp(a,256);",
     },
     "i16": {
-      "r": " z_int a = *inp++*65535.f+.5f;",
-      "w": " *out++ = a/65535.f;",
+      "r": " z_int a = clp(65536,*inp++);",
+      "w": " *out++ = fclp(a,65536);",
     },
     "fp": {
       "r": " z_float fa = *inp++;",
@@ -344,12 +344,12 @@ base = {
   },
   "afpp": {
     "i8": {
-      "r": " z_int a = *aip++*255+.5f;",
-      "w": " *aop++ = a/255.f;",
+      "r": " z_int a = clp(256,*aip++);",
+      "w": " *aop++ = fclp(a,256);",
     },
     "i16": {
-      "r": " z_int a = *aip++*65535.f+.5f;",
-      "w": " *aop++ = a/65535.f;",
+      "r": " z_int a = clp(65536,*aip++);",
+      "w": " *aop++ = fclp(a,65536);",
     },
     "fp": {
       "r": " z_float fa = *aip++;",
@@ -510,9 +510,9 @@ def gen_xfer_fn(fr_cmdl, to_cmdl):
       if( not has_alpha(fr_cmdl) ):
         print " z_float fa = 1;",
       elif( ityp == "i8" ):
-        print " float fa = a/255.f;",
+        print " float fa = fclp(a,256);",
       elif( ityp == "i16" ):
-        print " float fa = a/65535.f;",
+        print " float fa = fclp(a,65536);",
   else:
     for ic in layout[fr_cmdl]: print "%s" % (base[ic][otyp]['r']),
     if( has_alpha(to_cmdl) and not has_alpha(fr_cmdl) ):
