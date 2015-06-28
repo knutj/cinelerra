@@ -28,6 +28,7 @@
 #include "browsebutton.h"
 #include "compresspopup.h"
 #include "file.inc"
+#include "ffmpeg.h"
 #include "formatpopup.h"
 #include "mwindow.inc"
 
@@ -39,6 +40,8 @@ class FormatChannels;
 class FormatPathButton;
 class FormatPathText;
 class FormatFormat;
+class FormatFFMPEG;
+class FFMpegType;
 class FormatAudio;
 class FormatVideo;
 class FormatMultiple;
@@ -97,6 +100,8 @@ public:
 	BC_Title *format_title;
 	FormatFormat *format_button;
 	BC_TextBox *format_text;
+	FormatFFMPEG *format_ffmpeg;
+	FFMpegType *ffmpeg_type;
 	BC_ITumbler *channels_tumbler;
 
 	BC_Title *audio_title;
@@ -150,6 +155,37 @@ public:
 	
 	int handle_event();
 	FormatTools *format;
+};
+
+class FormatFFMPEG : public FFMPEGPopup
+{
+public:
+	FormatFFMPEG(int x, int y, FormatTools *format);
+	~FormatFFMPEG();
+	
+	int handle_event();
+	FormatTools *format;
+	static int load_defaults(const char *path, const char *type,
+		char *codec, char *codec_options, int len);
+
+// squash show/hide window
+	int show_window(int flush=1) { return 0; }
+	int hide_window(int flush=1) { return 0; }
+	int show(int flush=1) { return BC_SubWindow::show_window(flush); }
+	int hide(int flush=1) { return BC_SubWindow::hide_window(flush); }
+};
+
+class FFMpegType : public BC_TextBox
+{
+public:
+	FFMpegType(int x, int y, int w, int h, const char *text)
+	 : BC_TextBox(x, y, w, h, text) {}
+	~FFMpegType() {}
+// squash show/hide window
+	int show_window(int flush=1) { return 0; }
+	int hide_window(int flush=1) { return 0; }
+	int show(int flush=1) { return BC_SubWindow::show_window(flush); }
+	int hide(int flush=1) { return BC_SubWindow::hide_window(flush); }
 };
 
 class FormatAParams : public BC_Button

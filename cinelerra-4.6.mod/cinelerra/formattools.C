@@ -201,12 +201,17 @@ void FormatTools::create_objects(int &init_x,
 
 	window->add_subwindow(format_title = new BC_Title(x, y, _("File Format:")));
 	x += 90;
-	window->add_subwindow(format_text = new BC_TextBox(x, y, 200, 1, 
+	window->add_subwindow(format_text = new BC_TextBox(x, y, 180, 1, 
 		File::formattostr(asset->format)));
 	x += format_text->get_w();
 //printf("FormatTools::create_objects %d %p\n", __LINE__, window);
 	window->add_subwindow(format_button = new FormatFormat(x, y, this));
 	format_button->create_objects();
+	x += format_button->get_w() + 5;
+	window->add_subwindow(ffmpeg_type = new FFMpegType(x, y, 50, 1, asset->fformat));
+	x += ffmpeg_type->get_w();
+	window->add_subwindow(format_ffmpeg = new FormatFFMPEG(x, y, this));
+	format_ffmpeg->create_objects();
 
 	x = init_x;
 	y += format_button->get_h() + 10;
@@ -359,7 +364,6 @@ void FormatTools::update_driver(int driver)
 void FormatTools::update_format()
 {
 	if( do_audio && prompt_audio && audio_switch ) {
-		asset->audio_data = File::supports_audio(asset->format);
 		audio_switch->update(asset->audio_data);
 		if( !asset->audio_data )
 			audio_switch->disable();
@@ -367,12 +371,19 @@ void FormatTools::update_format()
 			audio_switch->enable();
 	}
 	if( do_video && prompt_video && video_switch ) {
-		asset->video_data = File::supports_video(asset->format);
 		video_switch->update(asset->video_data);
 		if( !asset->video_data )
 			video_switch->disable();
 		else
 			video_switch->enable();
+	}
+	if( asset->format == FILE_FFMPEG ) {
+		ffmpeg_type->show();
+		format_ffmpeg->show();
+	}
+	else {
+		ffmpeg_type->hide();
+		format_ffmpeg->hide();
 	}
 }
 
@@ -444,7 +455,8 @@ void FormatTools::update_extension()
 		if(need_extension) 
 		{
 			char *ptr1 = ptr;
-			extension_ptr = extensions.get(0);
+			extension_ptr = asset->format != FILE_FFMPEG ?
+				extensions.get(0) : asset->fformat;
 			while(*extension_ptr != 0 && *extension_ptr != '/')
 				*ptr1++ = *extension_ptr++;
 			*ptr1 = 0;
@@ -809,13 +821,16 @@ FormatFormat::~FormatFormat()
 
 int FormatFormat::handle_event()
 {
-	if(get_selection(0, 0) >= 0)
-	{
+	BC_ListBoxItem *selection = get_selection(0, 0);
+	if( selection ) {
 		int new_format = File::strtoformat(format->plugindb, get_selection(0, 0)->get_text());
 //		if(new_format != format->asset->format)
 		{
-			format->asset->format = new_format;
-			format->format_text->update(get_selection(0, 0)->get_text());
+			Asset *asset = format->asset;
+			asset->format = new_format;
+			asset->audio_data = File::supports_audio(asset->format);
+			asset->video_data = File::supports_video(asset->format);
+			format->format_text->update(selection->get_text());
 			format->update_extension();
 			format->close_format_windows();
 			format->update_format();
@@ -823,6 +838,55 @@ int FormatFormat::handle_event()
 	}
 	return 1;
 }
+
+
+FormatFFMPEG::FormatFFMPEG(int x, int y, FormatTools *format)
+ : FFMPEGPopup(format->plugindb, x, y)
+{ 
+	this->format = format; 
+}
+
+FormatFFMPEG::~FormatFFMPEG() 
+{
+}
+
+int FormatFFMPEG::load_defaults(const char *path, const char *type,
+		 char *codec, char *codec_options, int len)
+{
+	char default_file[BCTEXTLEN];
+	FFMPEG::set_option_path(default_file, "%s/%s.dfl", path, type);
+	FILE *fp = fopen(default_file,"r");
+	if( !fp ) return 1;
+	fgets(codec, BCSTRLEN, fp);
+	fclose(fp);
+	char *cp = codec;
+	while( *cp && *cp!='\n' ) ++cp;
+	*cp = 0;
+	FFMPEG::set_option_path(default_file, "%s/%s", path, codec);
+	return FFMPEG::load_options(default_file, codec_options, len);
+}
+
+int FormatFFMPEG::handle_event()
+{
+	BC_ListBoxItem *selection = get_selection(0, 0);
+	if( selection ) {
+		char *text = get_selection(0, 0)->get_text();
+		format->ffmpeg_type->update(text);
+		Asset *asset = format->asset;
+		strcpy(asset->fformat, text);
+		strcpy(asset->ff_audio_options, "");
+		strcpy(asset->ff_video_options, "");
+		asset->audio_data = !load_defaults("audio", text, asset->acodec,
+			asset->ff_audio_options, sizeof(asset->ff_audio_options));
+		asset->video_data = !load_defaults("video", text, asset->vcodec,
+			asset->ff_video_options, sizeof(asset->ff_video_options));
+		format->update_extension();
+		format->close_format_windows();
+		format->update_format();
+	}
+	return 1;
+}
+
 
 
 
